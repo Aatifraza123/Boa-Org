@@ -1,0 +1,493 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { adminAPI } from '@/lib/api';
+import { Plus, Edit, Trash2, DollarSign } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+
+export default function FeeStructureTab() {
+  const { toast } = useToast();
+  const [seminars, setSeminars] = useState<any[]>([]);
+  const [selectedSeminar, setSelectedSeminar] = useState<string>('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [slabs, setSlabs] = useState<any[]>([]);
+  const [fees, setFees] = useState<any[]>([]);
+  const [feeChanges, setFeeChanges] = useState<{[key: string]: number}>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isSlabDialogOpen, setIsSlabDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingSlab, setEditingSlab] = useState<any>(null);
+
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    is_popular: false,
+    is_enabled: true
+  });
+
+  const [slabForm, setSlabForm] = useState({
+    label: '',
+    date_range: '',
+    start_date: '',
+    end_date: ''
+  });
+
+  useEffect(() => {
+    loadSeminars();
+  }, []);
+
+  useEffect(() => {
+    if (selectedSeminar) {
+      loadFeeStructure();
+    }
+  }, [selectedSeminar]);
+
+  const loadSeminars = async () => {
+    try {
+      const response = await adminAPI.getAllSeminars();
+      setSeminars(response.seminars || []);
+      if (response.seminars?.length > 0) {
+        setSelectedSeminar(response.seminars[0].id.toString());
+      }
+    } catch (error) {
+      console.error('Failed to load seminars:', error);
+    }
+  };
+
+  const loadFeeStructure = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/fee-structure/${selectedSeminar}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        }
+      });
+      const data = await response.json();
+      setCategories(data.categories || []);
+      setSlabs(data.slabs || []);
+      setFees(data.fees || []);
+    } catch (error) {
+      console.error('Failed to load fee structure:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:5000/api/admin/fee-categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify({ ...categoryForm, seminar_id: selectedSeminar })
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Category created successfully' });
+        setIsCategoryDialogOpen(false);
+        resetCategoryForm();
+        loadFeeStructure();
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to create category', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/fee-categories/${editingCategory.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify(categoryForm)
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Category updated successfully' });
+        setIsCategoryDialogOpen(false);
+        resetCategoryForm();
+        loadFeeStructure();
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to update category', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!confirm('Delete this category? All associated fees will be deleted.')) return;
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/fee-categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Category deleted successfully' });
+        loadFeeStructure();
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to delete category', variant: 'destructive' });
+    }
+  };
+
+  const handleCreateSlab = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:5000/api/admin/fee-slabs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify({ ...slabForm, seminar_id: selectedSeminar })
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Fee slab created successfully' });
+        setIsSlabDialogOpen(false);
+        resetSlabForm();
+        loadFeeStructure();
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to create slab', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateSlab = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/fee-slabs/${editingSlab.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify(slabForm)
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Fee slab updated successfully' });
+        setIsSlabDialogOpen(false);
+        resetSlabForm();
+        loadFeeStructure();
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to update slab', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteSlab = async (id: number) => {
+    if (!confirm('Delete this fee slab? All associated fees will be deleted.')) return;
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/fee-slabs/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Fee slab deleted successfully' });
+        loadFeeStructure();
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to delete slab', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateFeeAmount = async (categoryId: number, slabId: number, amount: string) => {
+    const key = `${categoryId}-${slabId}`;
+    setFeeChanges({
+      ...feeChanges,
+      [key]: parseFloat(amount) || 0
+    });
+  };
+
+  const handleSaveAllFees = async () => {
+    if (Object.keys(feeChanges).length === 0) {
+      toast({ title: 'No Changes', description: 'No fee amounts were modified' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const promises = Object.entries(feeChanges).map(([key, amount]) => {
+        const [categoryId, slabId] = key.split('-').map(Number);
+        return fetch('http://localhost:5000/api/admin/fee-amount', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
+          },
+          body: JSON.stringify({ category_id: categoryId, slab_id: slabId, amount })
+        });
+      });
+
+      await Promise.all(promises);
+      
+      toast({ 
+        title: 'Success', 
+        description: `${Object.keys(feeChanges).length} fee amounts updated successfully` 
+      });
+      
+      setFeeChanges({});
+      loadFeeStructure();
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to update fee amounts', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getFeeAmount = (categoryId: number, slabId: number) => {
+    const key = `${categoryId}-${slabId}`;
+    if (feeChanges[key] !== undefined) {
+      return feeChanges[key];
+    }
+    const fee = fees.find(f => f.category_id === categoryId && f.slab_id === slabId);
+    return fee ? fee.amount : '';
+  };
+
+  const resetCategoryForm = () => {
+    setEditingCategory(null);
+    setCategoryForm({ name: '', description: '', is_popular: false, is_enabled: true });
+  };
+
+  const resetSlabForm = () => {
+    setEditingSlab(null);
+    setSlabForm({ label: '', date_range: '', start_date: '', end_date: '' });
+  };
+
+  const editCategory = (category: any) => {
+    setEditingCategory(category);
+    setCategoryForm({
+      name: category.name,
+      description: category.description || '',
+      is_popular: category.is_popular,
+      is_enabled: category.is_enabled
+    });
+    setIsCategoryDialogOpen(true);
+  };
+
+  const editSlab = (slab: any) => {
+    setEditingSlab(slab);
+    setSlabForm({
+      label: slab.label,
+      date_range: slab.date_range,
+      start_date: slab.start_date?.split('T')[0] || '',
+      end_date: slab.end_date?.split('T')[0] || ''
+    });
+    setIsSlabDialogOpen(true);
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Fee Structure Management</h2>
+        <Select value={selectedSeminar} onValueChange={setSelectedSeminar}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Select Seminar" />
+          </SelectTrigger>
+          <SelectContent>
+            {seminars.map(s => (
+              <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Categories Section */}
+      <div className="bg-card rounded-lg border p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Fee Categories</h3>
+          <Dialog open={isCategoryDialogOpen} onOpenChange={(open) => { setIsCategoryDialogOpen(open); if (!open) resetCategoryForm(); }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gradient-primary text-primary-foreground">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
+                <div>
+                  <Label>Name *</Label>
+                  <Input value={categoryForm.name} onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})} required />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={categoryForm.is_popular} onCheckedChange={(checked) => setCategoryForm({...categoryForm, is_popular: checked})} />
+                  <Label>Popular</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={categoryForm.is_enabled} onCheckedChange={(checked) => setCategoryForm({...categoryForm, is_enabled: checked})} />
+                  <Label>Enabled</Label>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit" className="gradient-primary text-primary-foreground">{editingCategory ? 'Update' : 'Create'}</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-2">
+          {categories.map(cat => (
+            <div key={cat.id} className="flex items-center justify-between p-3 border rounded">
+              <div>
+                <span className="font-semibold">{cat.name}</span>
+                {cat.is_popular && <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Popular</span>}
+                <p className="text-sm text-muted-foreground">{cat.description}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => editCategory(cat)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(cat.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Slabs Section */}
+      <div className="bg-card rounded-lg border p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Fee Slabs</h3>
+          <Dialog open={isSlabDialogOpen} onOpenChange={(open) => { setIsSlabDialogOpen(open); if (!open) resetSlabForm(); }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gradient-primary text-primary-foreground">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Slab
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingSlab ? 'Edit Fee Slab' : 'Add Fee Slab'}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={editingSlab ? handleUpdateSlab : handleCreateSlab} className="space-y-4">
+                <div>
+                  <Label>Label *</Label>
+                  <Input value={slabForm.label} onChange={(e) => setSlabForm({...slabForm, label: e.target.value})} required />
+                </div>
+                <div>
+                  <Label>Date Range *</Label>
+                  <Input value={slabForm.date_range} onChange={(e) => setSlabForm({...slabForm, date_range: e.target.value})} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Start Date *</Label>
+                    <Input type="date" value={slabForm.start_date} onChange={(e) => setSlabForm({...slabForm, start_date: e.target.value})} required />
+                  </div>
+                  <div>
+                    <Label>End Date *</Label>
+                    <Input type="date" value={slabForm.end_date} onChange={(e) => setSlabForm({...slabForm, end_date: e.target.value})} required />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsSlabDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit" className="gradient-primary text-primary-foreground">{editingSlab ? 'Update' : 'Create'}</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-2">
+          {slabs.map(slab => (
+            <div key={slab.id} className="flex items-center justify-between p-3 border rounded">
+              <div>
+                <span className="font-semibold">{slab.label}</span>
+                <p className="text-sm text-muted-foreground">{slab.date_range}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => editSlab(slab)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDeleteSlab(slab.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Fee Matrix */}
+      {categories.length > 0 && slabs.length > 0 && (
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Fee Matrix (Rs)
+            </h3>
+            <div className="flex items-center gap-3">
+              {Object.keys(feeChanges).length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {Object.keys(feeChanges).length} unsaved changes
+                </span>
+              )}
+              <Button 
+                onClick={handleSaveAllFees}
+                disabled={Object.keys(feeChanges).length === 0 || isSaving}
+                className="gradient-primary text-primary-foreground"
+              >
+                {isSaving ? 'Saving...' : 'Save All Changes'}
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2">
+                  <th className="text-left p-3 font-semibold">Category</th>
+                  {slabs.map(slab => (
+                    <th key={slab.id} className="text-center p-3 font-semibold min-w-[120px]">
+                      <div>{slab.label}</div>
+                      <div className="text-xs font-normal text-muted-foreground">{slab.date_range}</div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map(cat => (
+                  <tr key={cat.id} className="border-b">
+                    <td className="p-3 font-medium">{cat.name}</td>
+                    {slabs.map(slab => (
+                      <td key={slab.id} className="p-3">
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={getFeeAmount(cat.id, slab.id)}
+                          onChange={(e) => handleUpdateFeeAmount(cat.id, slab.id, e.target.value)}
+                          className="text-center"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

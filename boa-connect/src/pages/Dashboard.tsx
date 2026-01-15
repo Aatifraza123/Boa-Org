@@ -1,0 +1,646 @@
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { User, FileText, CreditCard, Download, Calendar, ArrowRight } from 'lucide-react';
+import jsPDF from 'jspdf';
+import { Layout } from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { userAPI, registrationAPI, seminarAPI } from '@/lib/api';
+import { titleOptions, genderOptions, indianStates } from '@/lib/mockData';
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [activeSeminar, setActiveSeminar] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    first_name: '',
+    surname: '',
+    mobile: '',
+    gender: '',
+    city: '',
+    state: ''
+  });
+  const [passwordFormData, setPasswordFormData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      // Load user profile
+      const profileResponse = await userAPI.getProfile();
+      setUser(profileResponse.user);
+
+      // Load registrations
+      const regResponse = await registrationAPI.getMyRegistrations();
+      setRegistrations(regResponse.registrations || []);
+
+      // Load active seminar
+      try {
+        const seminarResponse = await seminarAPI.getActive();
+        setActiveSeminar(seminarResponse.seminar);
+      } catch (error) {
+        console.log('No active seminar found');
+      }
+
+    } catch (error: any) {
+      console.error('Load data error:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditProfile = () => {
+    setEditFormData({
+      title: user.title || '',
+      first_name: user.first_name || '',
+      surname: user.surname || '',
+      mobile: user.mobile || '',
+      gender: user.gender || '',
+      city: user.city || '',
+      state: user.state || ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+
+    try {
+      // Prepare complete profile data
+      const updateData = {
+        title: editFormData.title,
+        first_name: editFormData.first_name,
+        surname: editFormData.surname,
+        mobile: editFormData.mobile,
+        phone: user.phone || '',
+        gender: editFormData.gender,
+        dob: user.dob || null,
+        house: user.house || '',
+        street: user.street || '',
+        landmark: user.landmark || '',
+        city: editFormData.city,
+        state: editFormData.state,
+        country: user.country || 'India',
+        pin_code: user.pin_code || ''
+      };
+
+      await userAPI.updateProfile(updateData);
+      
+      // Reload user data
+      const profileResponse = await userAPI.getProfile();
+      setUser(profileResponse.user);
+      
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(profileResponse.user));
+
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully',
+      });
+
+      setIsEditDialogOpen(false);
+    } catch (error: any) {
+      console.error('Update error:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update profile',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordFormData.new_password !== passwordFormData.confirm_password) {
+      toast({
+        title: 'Error',
+        description: 'New passwords do not match',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (passwordFormData.new_password.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      await userAPI.changePassword({
+        current_password: passwordFormData.current_password,
+        new_password: passwordFormData.new_password
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Password changed successfully',
+      });
+
+      setPasswordFormData({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+      setIsPasswordDialogOpen(false);
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to change password',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDownloadPDF = (reg: any) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+
+    // Header
+    doc.setFillColor(0, 128, 128);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Registration Receipt', pageWidth / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(reg.seminar_name, pageWidth / 2, 23, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text(reg.location || '', pageWidth / 2, 30, { align: 'center' });
+
+    let yPos = 50;
+    doc.setTextColor(0, 0, 0);
+
+    // Receipt details
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 128, 128);
+    doc.text('REGISTRATION DETAILS', margin + 3, yPos + 5.5);
+    yPos += 14;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    const details = [
+      { label: 'Registration No', value: reg.registration_no },
+      { label: 'Name', value: `${user.title} ${user.first_name} ${user.surname}` },
+      { label: 'Email', value: user.email },
+      { label: 'Mobile', value: user.mobile },
+      { label: 'Category', value: reg.category_name },
+      { label: 'Fee Slab', value: reg.slab_label },
+      { label: 'Amount', value: `Rs ${parseFloat(reg.amount).toLocaleString()}` },
+      { label: 'Status', value: reg.status.toUpperCase() },
+      { label: 'Transaction ID', value: reg.transaction_id || 'N/A' },
+      { label: 'Date', value: new Date(reg.created_at).toLocaleDateString() },
+    ];
+
+    details.forEach(item => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.label + ':', margin, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(item.value, margin + 50, yPos);
+      yPos += 8;
+    });
+
+    // Additional persons
+    if (reg.additional_persons && reg.additional_persons.length > 0) {
+      yPos += 5;
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 128, 128);
+      doc.text('ADDITIONAL PERSONS', margin + 3, yPos + 5.5);
+      yPos += 14;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+
+      reg.additional_persons.forEach((person: any, index: number) => {
+        doc.text(`${index + 1}. ${person.name}`, margin, yPos);
+        doc.text(`${person.category_name} - Rs ${parseFloat(person.amount).toLocaleString()}`, margin + 50, yPos);
+        yPos += 7;
+      });
+    }
+
+    // Footer
+    doc.setFillColor(0, 128, 128);
+    doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text('Bihar Ophthalmic Association | www.boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+
+    doc.save(`Registration_${reg.registration_no}.pdf`);
+  };
+
+  const getDisplayTitle = (title: string) => {
+    const titleMap: any = {
+      'dr': 'Dr.',
+      'mr': 'Mr.',
+      'mrs': 'Mrs.',
+      'ms': 'Ms.',
+      'prof': 'Prof.'
+    };
+    return titleMap[title?.toLowerCase()] || title || '';
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const totalPaid = registrations.reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
+  return (
+    <Layout>
+      <div className="min-h-[calc(100vh-4rem)] py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                Welcome, {getDisplayTitle(user.title)} {user.first_name}!
+              </h1>
+              <p className="text-muted-foreground">
+                Manage your registrations and profile
+              </p>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Profile Card */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-card">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-16 w-16 rounded-full gradient-primary flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      {getDisplayTitle(user.title)} {user.first_name} {user.surname}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    {user.membership_no && (
+                      <Badge className="mt-1 bg-yellow-400 text-black border-0 hover:bg-yellow-500">
+                        {user.membership_no}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mobile</span>
+                    <span className="text-foreground">{user.mobile}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">City</span>
+                    <span className="text-foreground">{user.city || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">State</span>
+                    <span className="text-foreground">{user.state || 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-6">
+                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full" onClick={handleEditProfile}>
+                        Edit Profile
+                      </Button>
+                    </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Profile</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Title</Label>
+                          <Select value={editFormData.title} onValueChange={(v) => setEditFormData({...editFormData, title: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {titleOptions.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Gender</Label>
+                          <Select value={editFormData.gender} onValueChange={(v) => setEditFormData({...editFormData, gender: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {genderOptions.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>First Name</Label>
+                          <Input value={editFormData.first_name} onChange={(e) => setEditFormData({...editFormData, first_name: e.target.value})} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Surname</Label>
+                          <Input value={editFormData.surname} onChange={(e) => setEditFormData({...editFormData, surname: e.target.value})} required />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Mobile</Label>
+                        <Input value={editFormData.mobile} onChange={(e) => setEditFormData({...editFormData, mobile: e.target.value})} required />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>City</Label>
+                          <Input value={editFormData.city} onChange={(e) => setEditFormData({...editFormData, city: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>State</Label>
+                          <Select value={editFormData.state} onValueChange={(v) => setEditFormData({...editFormData, state: v})}>
+                            <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                            <SelectContent>
+                              {indianStates.map(state => (
+                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end">
+                        <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" className="gradient-primary text-primary-foreground" disabled={isUpdating}>
+                          {isUpdating ? 'Updating...' : 'Update Profile'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      Change Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Change Password</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Current Password</Label>
+                        <Input 
+                          type="password" 
+                          value={passwordFormData.current_password} 
+                          onChange={(e) => setPasswordFormData({...passwordFormData, current_password: e.target.value})} 
+                          required 
+                          placeholder="Enter current password"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>New Password</Label>
+                        <Input 
+                          type="password" 
+                          value={passwordFormData.new_password} 
+                          onChange={(e) => setPasswordFormData({...passwordFormData, new_password: e.target.value})} 
+                          required 
+                          placeholder="Enter new password (min 6 characters)"
+                          minLength={6}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Confirm New Password</Label>
+                        <Input 
+                          type="password" 
+                          value={passwordFormData.confirm_password} 
+                          onChange={(e) => setPasswordFormData({...passwordFormData, confirm_password: e.target.value})} 
+                          required 
+                          placeholder="Re-enter new password"
+                          minLength={6}
+                        />
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-4">
+                        <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" className="gradient-primary text-primary-foreground" disabled={isUpdating}>
+                          {isUpdating ? 'Changing...' : 'Change Password'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-card">
+                <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
+                <div className="space-y-2">
+                  {activeSeminar && (
+                    <Link to={`/seminar/${activeSeminar.id}/register`}>
+                      <Button className="w-full justify-start gradient-primary text-primary-foreground">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Register for {activeSeminar.name}
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/seminars">
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileText className="mr-2 h-4 w-4" />
+                      View All Seminars
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-card rounded-xl border border-border p-4 shadow-card">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{registrations.length}</p>
+                      <p className="text-sm text-muted-foreground">Registrations</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-card rounded-xl border border-border p-4 shadow-card">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg gradient-gold flex items-center justify-center">
+                      <CreditCard className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        Rs {totalPaid.toLocaleString()}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total Paid</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-card rounded-xl border border-border p-4 shadow-card col-span-2 md:col-span-1">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{registrations.length}</p>
+                      <p className="text-sm text-muted-foreground">PDFs Available</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Registrations */}
+              <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                  <h3 className="text-lg font-semibold text-foreground">Your Registrations</h3>
+                </div>
+                
+                {registrations.length > 0 ? (
+                  <div className="divide-y divide-border">
+                    {registrations.map((reg) => (
+                      <div key={reg.id} className="p-6 hover:bg-muted/50 transition-colors">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-foreground">{reg.seminar_name}</h4>
+                              <Badge 
+                                className={reg.status === 'completed' 
+                                  ? 'bg-green-100 text-green-700 border-0' 
+                                  : reg.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-700 border-0'
+                                  : 'bg-red-100 text-red-700 border-0'
+                                }
+                              >
+                                {reg.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {reg.category_name} • Rs {parseFloat(reg.amount).toLocaleString()} • {new Date(reg.created_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Reg ID: {reg.registration_no} {reg.transaction_id && `| Txn: ${reg.transaction_id}`}
+                            </p>
+                            {reg.additional_persons && reg.additional_persons.length > 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                Additional: {reg.additional_persons.map((p: any) => p.name).join(', ')}
+                              </p>
+                            )}
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => handleDownloadPDF(reg)}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download PDF
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-12 text-center">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">No registrations yet</p>
+                    {activeSeminar ? (
+                      <Link to={`/seminar/${activeSeminar.id}/register`}>
+                        <Button className="gradient-primary text-primary-foreground">
+                          Register for {activeSeminar.name}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/seminars">
+                        <Button className="gradient-primary text-primary-foreground">
+                          View All Seminars
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
