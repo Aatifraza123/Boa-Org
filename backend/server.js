@@ -1,9 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 const { testConnection } = require('./config/database');
 
 const app = express();
+
+// Helper function to log to file
+function logToFile(message) {
+  const logPath = path.join(__dirname, 'server-debug.log');
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+}
 
 // Middleware
 app.use(cors({
@@ -175,13 +184,98 @@ try {
     }
   });
 
+  // Generate PDF from HTML template routes
+  app.get('/api/generate-membership-pdf', async (req, res) => {
+    try {
+      const { promisePool } = require('./config/database');
+      const htmlToPdfService = require('./services/htmlToPdf.service');
+      
+      // Get HTML template from database
+      const [config] = await promisePool.query('SELECT membership_form_html FROM offline_forms_config ORDER BY id DESC LIMIT 1');
+      
+      if (!config[0] || !config[0].membership_form_html) {
+        return res.status(404).json({
+          success: false,
+          message: 'Membership form template not found'
+        });
+      }
+
+      // Generate PDF from HTML template
+      const pdfBuffer = await htmlToPdfService.generateMembershipFormPdf(config[0].membership_form_html);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="BOA_Membership_Application_Form.pdf"');
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Failed to generate membership PDF:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate PDF'
+      });
+    }
+  });
+
+  app.get('/api/generate-seminar-pdf/:seminarId', async (req, res) => {
+    try {
+      const { promisePool } = require('./config/database');
+      const htmlToPdfService = require('./services/htmlToPdf.service');
+      const { seminarId } = req.params;
+      
+      // Get seminar details and HTML template
+      const [seminars] = await promisePool.query('SELECT * FROM seminars WHERE id = ?', [seminarId]);
+      
+      if (!seminars[0]) {
+        return res.status(404).json({
+          success: false,
+          message: 'Seminar not found'
+        });
+      }
+
+      const seminar = seminars[0];
+      let htmlTemplate = seminar.offline_form_html;
+
+      // If seminar doesn't have custom template, use global template
+      if (!htmlTemplate) {
+        const [config] = await promisePool.query('SELECT seminar_form_html FROM offline_forms_config ORDER BY id DESC LIMIT 1');
+        htmlTemplate = config[0]?.seminar_form_html || '';
+      }
+
+      if (!htmlTemplate) {
+        return res.status(404).json({
+          success: false,
+          message: 'Seminar form template not found'
+        });
+      }
+
+      // Generate PDF from HTML template with seminar data
+      const pdfBuffer = await htmlToPdfService.generateSeminarFormPdf(htmlTemplate, seminar);
+      
+      // Set response headers for PDF download
+      const fileName = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Failed to generate seminar PDF:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate PDF'
+      });
+    }
+  });
+
   // Public stats route
   app.get('/api/stats', async (req, res) => {
     try {
       const { promisePool } = require('./config/database');
       
-      // Get total members count
-      const [memberCount] = await promisePool.query('SELECT COUNT(*) as count FROM users WHERE role = "member"');
+      // Get total members count (all users except admin)
+      const [memberCount] = await promisePool.query('SELECT COUNT(*) as count FROM users WHERE role = "user"');
       
       // Get seminars count
       const [seminarCount] = await promisePool.query('SELECT COUNT(*) as count FROM seminars');
@@ -212,6 +306,13 @@ try {
   // Public membership categories route
   app.get('/api/membership-categories', async (req, res) => {
     try {
+      // Set cache control headers to prevent caching
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       const { promisePool } = require('./config/database');
       
       const [categories] = await promisePool.query(
@@ -297,6 +398,20 @@ try {
   console.error(error.stack);
 }
 
+// Global error handler for JSON parsing errors
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    logToFile(`JSON parsing error: ${err.message}`);
+    console.error('JSON parsing error:', err.message);
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid JSON format in request body',
+      error: 'Please check your request data format'
+    });
+  }
+  next(err);
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -324,6 +439,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+      console.log('=== SERVER STARTED - CONSOLE LOG TEST ===');
     });
   } catch (error) {
     console.error('Failed to start server:', error);

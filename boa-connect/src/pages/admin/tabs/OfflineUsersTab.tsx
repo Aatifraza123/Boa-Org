@@ -11,7 +11,7 @@ export default function OfflineUsersTab() {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     membership_no: '',
-    title: 'Dr.',
+    title: 'dr',
     first_name: '',
     surname: '',
     email: '',
@@ -44,7 +44,7 @@ export default function OfflineUsersTab() {
         // Reset form
         setFormData({
           membership_no: '',
-          title: 'Dr.',
+          title: 'dr',
           first_name: '',
           surname: '',
           email: '',
@@ -57,9 +57,20 @@ export default function OfflineUsersTab() {
         });
       }
     } catch (error: any) {
+      let errorMessage = 'Failed to add user';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        
+        // Special handling for membership number conflicts
+        if (error.response.data.message.includes('already exists')) {
+          errorMessage = `❌ Conflict: ${error.response.data.message}`;
+        }
+      }
+      
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to add user',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -68,7 +79,7 @@ export default function OfflineUsersTab() {
   };
 
   const downloadTemplate = () => {
-    const csvContent = 'membership_no,title,first_name,surname,email,mobile,password,gender,city,state,pin_code\nBOA-2024-0001,Dr.,Rajesh,Kumar,rajesh@example.com,9876543210,password123,male,Patna,Bihar,800001';
+    const csvContent = 'membership_no,title,first_name,surname,email,mobile,password,gender,city,state,pin_code\nBOA-2024-0001,dr,Rajesh,Kumar,rajesh@example.com,9876543210,password123,male,Patna,Bihar,800001';
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -117,11 +128,11 @@ export default function OfflineUsersTab() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Dr.">Dr.</SelectItem>
-                  <SelectItem value="Prof.">Prof.</SelectItem>
-                  <SelectItem value="Mr.">Mr.</SelectItem>
-                  <SelectItem value="Mrs.">Mrs.</SelectItem>
-                  <SelectItem value="Ms.">Ms.</SelectItem>
+                  <SelectItem value="dr">Dr.</SelectItem>
+                  <SelectItem value="prof">Prof.</SelectItem>
+                  <SelectItem value="mr">Mr.</SelectItem>
+                  <SelectItem value="mrs">Mrs.</SelectItem>
+                  <SelectItem value="ms">Ms.</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -245,7 +256,7 @@ export default function OfflineUsersTab() {
               variant="outline"
               onClick={() => setFormData({
                 membership_no: '',
-                title: 'Dr.',
+                title: 'dr',
                 first_name: '',
                 surname: '',
                 email: '',

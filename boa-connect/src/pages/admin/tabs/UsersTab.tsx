@@ -19,6 +19,18 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 
+// Helper function to format title consistently
+const formatTitle = (title: string) => {
+  const titleMap: { [key: string]: string } = {
+    'dr': 'Dr.',
+    'mr': 'Mr.',
+    'mrs': 'Mrs.',
+    'ms': 'Ms.',
+    'prof': 'Prof.'
+  };
+  return titleMap[title?.toLowerCase()] || title || '';
+};
+
 export default function UsersTab() {
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
@@ -221,7 +233,7 @@ export default function UsersTab() {
               filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
-                    {user.title} {user.first_name} {user.surname}
+                    {formatTitle(user.title)} {user.first_name} {user.surname}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
@@ -263,7 +275,7 @@ export default function UsersTab() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              User Details - {selectedUser?.title} {selectedUser?.first_name} {selectedUser?.surname}
+              User Details - {formatTitle(selectedUser?.title)} {selectedUser?.first_name} {selectedUser?.surname}
             </DialogTitle>
           </DialogHeader>
 
@@ -285,7 +297,7 @@ export default function UsersTab() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                    <p className="text-base">{selectedUser?.title} {selectedUser?.first_name} {selectedUser?.surname}</p>
+                    <p className="text-base">{formatTitle(selectedUser?.title)} {selectedUser?.first_name} {selectedUser?.surname}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Email</label>

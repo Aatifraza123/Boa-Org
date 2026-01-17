@@ -133,12 +133,12 @@ export function HeroSection() {
 
               <div className="flex gap-3">
                 <Link to={`/seminar/${activeSeminar.id}/register`} className="flex-1">
-                  <button className="w-full gov-button-primary">
+                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 h-12 text-base px-6">
                     Register Now
-                    <ArrowRight className="ml-2 h-4 w-4 inline" />
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </Link>
-                <button className="gov-button-secondary" onClick={handleClosePopup}>
+                <button className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors h-12 text-base px-6" onClick={handleClosePopup}>
                   Maybe Later
                 </button>
               </div>
@@ -152,8 +152,8 @@ export function HeroSection() {
           {/* Content */}
           <div className="space-y-8">
             <div className="gov-badge-accent">
-              <span className="w-2 h-2 rounded-full mr-2 inline-block" style={{background: '#C9A227'}} />
-              {activeSeminar.name} - Registration Open
+              <span className="w-2 h-2 rounded-full mr-2 inline-block bg-green-500" />
+              <span className="text-black">{activeSeminar.name} - Registration Open</span>
             </div>
 
             <div className="space-y-4">
@@ -167,13 +167,13 @@ export function HeroSection() {
 
             <div className="flex flex-wrap gap-4">
               <Link to={`/seminar/${activeSeminar.id}/register`}>
-                <button className="gov-button-primary text-lg px-6 py-3">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 h-12 text-base px-6 md:h-11 md:text-sm md:px-5">
                   Register for {activeSeminar.name}
-                  <ArrowRight className="ml-2 h-5 w-5 inline" />
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <Link to="/seminars">
-                <button className="bg-white border-2 px-6 py-3 rounded font-medium hover:bg-gray-50 transition-colors text-lg" style={{color: '#0B3C5D', borderColor: '#0B3C5D'}}>
+                <button className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold rounded-lg transition-colors h-12 text-base px-6 md:h-11 md:text-sm md:px-5">
                   View All Seminars
                 </button>
               </Link>

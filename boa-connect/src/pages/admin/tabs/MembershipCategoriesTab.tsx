@@ -59,7 +59,15 @@ export default function MembershipCategoriesTab() {
   const loadCategories = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/api/membership-categories');
+      // Add cache-busting parameter
+      const timestamp = new Date().getTime();
+      const response = await fetch(`http://localhost:5000/api/membership-categories?t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setCategories(data.categories || []);

@@ -10,8 +10,11 @@ export function CommitteeSection() {
 
   const loadCommitteeMembers = async () => {
     try {
+      console.log('Loading committee members...');
       const response = await fetch('http://localhost:5000/api/committee-members?page_type=home');
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Committee data:', data);
       if (data.success) {
         setCommitteeMembers(data.members || []);
       }

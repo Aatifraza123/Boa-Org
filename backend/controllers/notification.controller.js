@@ -1,13 +1,13 @@
 const { promisePool } = require('../config/database');
 
-// Get all active notifications
+// Get all active notifications (only admin-created announcements)
 exports.getAllNotifications = async (req, res) => {
   try {
     const [notifications] = await promisePool.query(
       `SELECT n.*, s.name as seminar_name, s.location, s.start_date, s.end_date
        FROM notifications n
        LEFT JOIN seminars s ON n.seminar_id = s.id
-       WHERE n.is_active = TRUE
+       WHERE n.is_active = TRUE AND n.type = 'announcement'
        ORDER BY n.created_at DESC`
     );
 

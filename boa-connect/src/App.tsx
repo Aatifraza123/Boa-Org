@@ -17,6 +17,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Gallery from "./pages/Gallery";
 import Membership from "./pages/Membership";
+import MembershipDetails from "./pages/MembershipDetails";
 import Resources from "./pages/Resources";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPanel from "./pages/admin/AdminPanel";
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/seminar/:id" element={<SeminarDetail />} />
           <Route path="/seminar/:id/register" element={<SeminarRegistration />} />
           <Route path="/membership" element={<Membership />} />
+          <Route path="/membership-details" element={<MembershipDetails />} />
           <Route path="/membership-form" element={<MembershipForm />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/about" element={<About />} />

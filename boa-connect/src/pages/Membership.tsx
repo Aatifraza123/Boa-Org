@@ -31,7 +31,15 @@ export default function Membership() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/membership-categories');
+      // Add cache-busting parameter to force fresh data
+      const timestamp = new Date().getTime();
+      const response = await fetch(`http://localhost:5000/api/membership-categories?t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setCategories(data.categories || []);
@@ -55,50 +63,31 @@ export default function Membership() {
     }
   };
 
-  const handleDownloadOfflineForm = () => {
-    if (!offlineFormHtml) {
-      alert('Offline form is not available at the moment. Please try again later.');
-      return;
+  const handleDownloadOfflineForm = async () => {
+    try {
+      // Call backend API to generate PDF from HTML template
+      const response = await fetch('http://localhost:5000/api/generate-membership-pdf');
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Get PDF blob
+      const pdfBlob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'BOA_Membership_Application_Form.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download form:', error);
+      alert('Failed to download form. Please try again.');
     }
-
-    // Create a complete HTML document
-    const fullHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOA Membership Application Form</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        @media print {
-            body {
-                padding: 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    ${offlineFormHtml}
-</body>
-</html>
-    `;
-
-    // Create blob and download
-    const blob = new Blob([fullHtml], { type: 'text/html' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'BOA_Membership_Application_Form.html';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
   };
 
   const getIcon = (iconName: string) => {

@@ -163,6 +163,7 @@ exports.loginWithMembership = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ 
         success: false, 
         errors: errors.array() 
@@ -170,6 +171,7 @@ exports.loginWithMembership = async (req, res) => {
     }
 
     const { membership_no, password } = req.body;
+    console.log('Login attempt with membership:', membership_no);
 
     // Find user by membership number
     const [users] = await promisePool.query(
@@ -177,7 +179,10 @@ exports.loginWithMembership = async (req, res) => {
       [membership_no]
     );
 
+    console.log('Users found:', users.length);
+
     if (users.length === 0) {
+      console.log('No user found with membership:', membership_no);
       return res.status(401).json({
         success: false,
         message: 'Invalid membership number or password'
@@ -185,10 +190,15 @@ exports.loginWithMembership = async (req, res) => {
     }
 
     const user = users[0];
+    console.log('User found:', user.id, user.email);
+    console.log('Password hash length:', user.password?.length);
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log('Password valid:', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('Invalid password for user:', membership_no);
       return res.status(401).json({
         success: false,
         message: 'Invalid membership number or password'
@@ -197,6 +207,8 @@ exports.loginWithMembership = async (req, res) => {
 
     // Generate token
     const token = generateToken(user.id);
+
+    console.log('Login successful for:', membership_no);
 
     res.json({
       success: true,

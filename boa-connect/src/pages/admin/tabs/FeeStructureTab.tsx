@@ -64,15 +64,10 @@ export default function FeeStructureTab() {
   const loadFeeStructure = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/fee-structure/${selectedSeminar}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        }
-      });
-      const data = await response.json();
-      setCategories(data.categories || []);
-      setSlabs(data.slabs || []);
-      setFees(data.fees || []);
+      const response = await adminAPI.get(`/admin/fee-structure/${selectedSeminar}`);
+      setCategories(response.categories || []);
+      setSlabs(response.slabs || []);
+      setFees(response.fees || []);
     } catch (error) {
       console.error('Failed to load fee structure:', error);
     } finally {
@@ -83,21 +78,11 @@ export default function FeeStructureTab() {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/admin/fee-categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify({ ...categoryForm, seminar_id: selectedSeminar })
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Success', description: 'Category created successfully' });
-        setIsCategoryDialogOpen(false);
-        resetCategoryForm();
-        loadFeeStructure();
-      }
+      await adminAPI.post('/admin/fee-categories', { ...categoryForm, seminar_id: selectedSeminar });
+      toast({ title: 'Success', description: 'Category created successfully' });
+      setIsCategoryDialogOpen(false);
+      resetCategoryForm();
+      loadFeeStructure();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to create category', variant: 'destructive' });
     }
@@ -106,21 +91,11 @@ export default function FeeStructureTab() {
   const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/fee-categories/${editingCategory.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify(categoryForm)
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Success', description: 'Category updated successfully' });
-        setIsCategoryDialogOpen(false);
-        resetCategoryForm();
-        loadFeeStructure();
-      }
+      await adminAPI.put(`/admin/fee-categories/${editingCategory.id}`, categoryForm);
+      toast({ title: 'Success', description: 'Category updated successfully' });
+      setIsCategoryDialogOpen(false);
+      resetCategoryForm();
+      loadFeeStructure();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to update category', variant: 'destructive' });
     }
@@ -129,17 +104,9 @@ export default function FeeStructureTab() {
   const handleDeleteCategory = async (id: number) => {
     if (!confirm('Delete this category? All associated fees will be deleted.')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/fee-categories/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Success', description: 'Category deleted successfully' });
-        loadFeeStructure();
-      }
+      await adminAPI.delete(`/admin/fee-categories/${id}`);
+      toast({ title: 'Success', description: 'Category deleted successfully' });
+      loadFeeStructure();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to delete category', variant: 'destructive' });
     }
@@ -148,21 +115,11 @@ export default function FeeStructureTab() {
   const handleCreateSlab = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/admin/fee-slabs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify({ ...slabForm, seminar_id: selectedSeminar })
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Success', description: 'Fee slab created successfully' });
-        setIsSlabDialogOpen(false);
-        resetSlabForm();
-        loadFeeStructure();
-      }
+      await adminAPI.post('/admin/fee-slabs', { ...slabForm, seminar_id: selectedSeminar });
+      toast({ title: 'Success', description: 'Fee slab created successfully' });
+      setIsSlabDialogOpen(false);
+      resetSlabForm();
+      loadFeeStructure();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to create slab', variant: 'destructive' });
     }
@@ -171,21 +128,11 @@ export default function FeeStructureTab() {
   const handleUpdateSlab = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/fee-slabs/${editingSlab.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify(slabForm)
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Success', description: 'Fee slab updated successfully' });
-        setIsSlabDialogOpen(false);
-        resetSlabForm();
-        loadFeeStructure();
-      }
+      await adminAPI.put(`/admin/fee-slabs/${editingSlab.id}`, slabForm);
+      toast({ title: 'Success', description: 'Fee slab updated successfully' });
+      setIsSlabDialogOpen(false);
+      resetSlabForm();
+      loadFeeStructure();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to update slab', variant: 'destructive' });
     }
@@ -194,17 +141,9 @@ export default function FeeStructureTab() {
   const handleDeleteSlab = async (id: number) => {
     if (!confirm('Delete this fee slab? All associated fees will be deleted.')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/fee-slabs/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Success', description: 'Fee slab deleted successfully' });
-        loadFeeStructure();
-      }
+      await adminAPI.delete(`/admin/fee-slabs/${id}`);
+      toast({ title: 'Success', description: 'Fee slab deleted successfully' });
+      loadFeeStructure();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to delete slab', variant: 'destructive' });
     }
@@ -228,14 +167,7 @@ export default function FeeStructureTab() {
     try {
       const promises = Object.entries(feeChanges).map(([key, amount]) => {
         const [categoryId, slabId] = key.split('-').map(Number);
-        return fetch('http://localhost:5000/api/admin/fee-amount', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('adminToken')}`
-          },
-          body: JSON.stringify({ category_id: categoryId, slab_id: slabId, amount })
-        });
+        return adminAPI.post('/admin/fee-amount', { category_id: categoryId, slab_id: slabId, amount });
       });
 
       await Promise.all(promises);
@@ -301,19 +233,85 @@ export default function FeeStructureTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Fee Structure Management</h2>
-        <Select value={selectedSeminar} onValueChange={setSelectedSeminar}>
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="Select Seminar" />
-          </SelectTrigger>
-          <SelectContent>
-            {seminars.map(s => (
-              <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Header with Instructions */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-blue-900">Fee Structure Management</h2>
+            <p className="text-blue-700 mt-1">Create and manage fee categories, slabs, and pricing for seminars</p>
+          </div>
+          <Select value={selectedSeminar} onValueChange={setSelectedSeminar}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select Seminar" />
+            </SelectTrigger>
+            <SelectContent>
+              {seminars.map(s => (
+                <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {selectedSeminar && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <div className="font-semibold text-blue-900">📋 Categories</div>
+              <div className="text-blue-700">Define delegate types (BOA Member, Non-Member, etc.)</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <div className="font-semibold text-blue-900">📅 Slabs</div>
+              <div className="text-blue-700">Set time-based pricing periods (Early Bird, Regular, etc.)</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <div className="font-semibold text-blue-900">💰 Matrix</div>
+              <div className="text-blue-700">Set specific amounts for each category-slab combination</div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {!selectedSeminar && (
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a Seminar</h3>
+          <p className="text-gray-600 mb-4">Choose a seminar from the dropdown above to manage its fee structure</p>
+        </div>
+      )}
+
+      {selectedSeminar && (
+        <>
+          {/* Quick Actions */}
+          <div className="bg-card rounded-lg border p-4">
+            <h3 className="text-lg font-semibold mb-3">Quick Actions</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                onClick={() => setIsCategoryDialogOpen(true)}
+                size="sm" 
+                className="gradient-primary text-primary-foreground"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+              <Button 
+                onClick={() => setIsSlabDialogOpen(true)}
+                size="sm" 
+                variant="outline"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Slab
+              </Button>
+              {Object.keys(feeChanges).length > 0 && (
+                <Button 
+                  onClick={handleSaveAllFees}
+                  disabled={isSaving}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isSaving ? 'Saving...' : `Save ${Object.keys(feeChanges).length} Changes`}
+                </Button>
+              )}
+            </div>
+          </div>
 
       {/* Categories Section */}
       <div className="bg-card rounded-lg border p-4">
@@ -487,6 +485,8 @@ export default function FeeStructureTab() {
             </table>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

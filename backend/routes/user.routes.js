@@ -12,4 +12,7 @@ router.put('/profile', auth, userController.updateProfile);
 // Change password
 router.put('/change-password', auth, userController.changePassword);
 
+// Get membership details
+router.get('/membership', auth, userController.getMembershipDetails);
+
 module.exports = router;

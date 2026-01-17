@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Government-style animations */
+@import './styles/animations.css';
+
 @layer base {
   :root {
     /* Medical/Healthcare Theme - Professional & Clean */

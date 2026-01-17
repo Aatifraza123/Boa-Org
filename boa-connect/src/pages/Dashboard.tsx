@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, FileText, CreditCard, Download, Calendar, ArrowRight } from 'lucide-react';
+import { User, FileText, CreditCard, Download, Calendar, ArrowRight, Award } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
+  const [membershipData, setMembershipData] = useState<any>(null);
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [activeSeminar, setActiveSeminar] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +55,14 @@ export default function Dashboard() {
       // Load user profile
       const profileResponse = await userAPI.getProfile();
       setUser(profileResponse.user);
+
+      // Load membership details
+      try {
+        const membershipResponse = await userAPI.getMembershipDetails();
+        setMembershipData(membershipResponse.membership);
+      } catch (error) {
+        console.log('No membership data found');
+      }
 
       // Load registrations
       const regResponse = await registrationAPI.getMyRegistrations();
@@ -233,7 +242,7 @@ export default function Dashboard() {
 
     const details = [
       { label: 'Registration No', value: reg.registration_no },
-      { label: 'Name', value: `${user.title} ${user.first_name} ${user.surname}` },
+      { label: 'Name', value: `${getDisplayTitle(user.title)} ${user.first_name} ${user.surname}` },
       { label: 'Email', value: user.email },
       { label: 'Mobile', value: user.mobile },
       { label: 'Category', value: reg.category_name },
@@ -351,9 +360,39 @@ export default function Dashboard() {
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="text-foreground">{user.email}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Mobile</span>
                     <span className="text-foreground">{user.mobile}</span>
                   </div>
+                  {membershipData?.membership_type && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Membership Type</span>
+                      <Badge variant="outline" className="capitalize">
+                        {membershipData.membership_type}
+                      </Badge>
+                    </div>
+                  )}
+                  {membershipData?.payment_status && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Payment Status</span>
+                      <Badge className={`${
+                        membershipData.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                        membershipData.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                        'bg-gray-100 text-gray-800 border-gray-200'
+                      }`}>
+                        {membershipData.payment_status}
+                      </Badge>
+                    </div>
+                  )}
+                  {membershipData?.amount && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Amount Paid</span>
+                      <span className="text-foreground font-medium">₹{parseFloat(membershipData.amount).toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">City</span>
                     <span className="text-foreground">{user.city || 'N/A'}</span>
@@ -365,6 +404,14 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-2 mt-6">
+                  <Button 
+                    variant="outline" 
+                    className="w-full mb-2"
+                    onClick={() => navigate('/membership-details')}
+                  >
+                    <Award className="mr-2 h-4 w-4" />
+                    View Membership Details
+                  </Button>
                   <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" className="w-full" onClick={handleEditProfile}>
@@ -375,7 +422,47 @@ export default function Dashboard() {
                     <DialogHeader>
                       <DialogTitle>Edit Profile</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <form onSubmit={handleUpdateProfile} className="space-y-4" noValidate>
+                      {/* Read-only Information Section */}
+                      <div className="bg-accent/30 rounded-lg p-4 mb-4">
+                        <h3 className="font-semibold mb-2 text-foreground">Account Information (Read-Only)</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          These details are managed by BOA administrators and cannot be changed by users.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <Label className="text-muted-foreground">Email Address</Label>
+                            <div className="mt-1 p-2 bg-muted rounded border text-foreground">
+                              {user.email}
+                            </div>
+                          </div>
+                          {membershipData?.membership_type && (
+                            <div>
+                              <Label className="text-muted-foreground">Membership Type</Label>
+                              <div className="mt-1 p-2 bg-muted rounded border">
+                                <Badge variant="outline" className="capitalize">
+                                  {membershipData.membership_type}
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
+                          {user.membership_no && (
+                            <div>
+                              <Label className="text-muted-foreground">Membership Number</Label>
+                              <div className="mt-1 p-2 bg-muted rounded border">
+                                <Badge className="bg-yellow-400 text-black border-0">
+                                  {user.membership_no}
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Editable Information Section */}
+                      <div>
+                        <h3 className="font-semibold mb-3 text-foreground">Personal Information (Editable)</h3>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Title</Label>
@@ -457,7 +544,7 @@ export default function Dashboard() {
                     <DialogHeader>
                       <DialogTitle>Change Password</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleChangePassword} className="space-y-4">
+                    <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
                       <div className="space-y-2">
                         <Label>Current Password</Label>
                         <Input 

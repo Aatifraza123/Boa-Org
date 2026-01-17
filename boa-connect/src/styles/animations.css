@@ -1,0 +1,222 @@
+/* Government-Style Professional Animations */
+/* Respects accessibility and follows Indian Government website standards */
+
+/* Accessibility: Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Base Animation Classes */
+.gov-fade-in {
+  animation: govFadeIn 200ms ease-out forwards;
+  opacity: 0;
+}
+
+.gov-slide-up {
+  animation: govSlideUp 250ms ease-out forwards;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.gov-transition {
+  transition: all 200ms ease-out;
+}
+
+.gov-transition-fast {
+  transition: all 150ms ease-out;
+}
+
+.gov-transition-colors {
+  transition: background-color 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+}
+
+/* Keyframe Animations */
+@keyframes govFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes govSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Component-Specific Animations */
+
+/* Navbar */
+.navbar-sticky {
+  transition: box-shadow 200ms ease-out;
+}
+
+.navbar-link {
+  position: relative;
+  transition: color 200ms ease-out;
+}
+
+.navbar-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: currentColor;
+  transition: width 200ms ease-out;
+}
+
+.navbar-link.active::after,
+.navbar-link:hover::after {
+  width: 100%;
+}
+
+/* Buttons */
+.gov-button {
+  transition: background-color 200ms ease-out, color 200ms ease-out, transform 150ms ease-out;
+}
+
+.gov-button:hover {
+  transform: translateY(-1px);
+}
+
+.gov-button:active {
+  transform: scale(0.98);
+  transition-duration: 100ms;
+}
+
+/* Cards */
+.gov-card {
+  transition: box-shadow 200ms ease-out, transform 200ms ease-out;
+}
+
+.gov-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Form Elements */
+.gov-input {
+  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+.gov-input:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Error Messages */
+.gov-error {
+  animation: govFadeIn 200ms ease-out forwards;
+}
+
+/* Loading States */
+.gov-loading {
+  animation: govPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes govPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Notification Animations */
+.notification-badge {
+  animation: govFadeIn 200ms ease-out forwards;
+}
+
+.notification-pulse {
+  animation: govNotificationPulse 2s ease-in-out infinite;
+}
+
+@keyframes govNotificationPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Page Transitions */
+.page-enter {
+  animation: govFadeIn 300ms ease-out forwards;
+}
+
+.section-enter {
+  animation: govSlideUp 250ms ease-out forwards;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .gov-slide-up {
+    animation-duration: 200ms;
+    transform: translateY(4px);
+  }
+  
+  .gov-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .gov-button:hover {
+    transform: none;
+  }
+}
+
+/* Utility Classes */
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Focus States for Accessibility */
+.gov-focus {
+  transition: box-shadow 150ms ease-out;
+}
+
+.gov-focus:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Disable animations on mobile for performance */
+@media (max-width: 640px) {
+  .gov-slide-up,
+  .section-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

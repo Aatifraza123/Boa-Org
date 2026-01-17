@@ -2,6 +2,18 @@ const ExcelJS = require('exceljs');
 const { promisePool } = require('../config/database');
 const { ACTIVITY_TYPES, createActivityNotification } = require('../utils/activity-logger');
 
+// Helper function to format title consistently
+const formatTitle = (title) => {
+  const titleMap = {
+    'dr': 'Dr.',
+    'mr': 'Mr.',
+    'mrs': 'Mrs.',
+    'ms': 'Ms.',
+    'prof': 'Prof.'
+  };
+  return titleMap[title?.toLowerCase()] || title || '';
+};
+
 // ============ SEMINARS CRUD ============
 
 // Get all seminars (admin)
@@ -436,7 +448,7 @@ exports.exportUserDetails = async (req, res) => {
       { header: 'Value', key: 'value', width: 40 }
     ];
     userSheet.addRows([
-      { field: 'Name', value: `${user.title} ${user.first_name} ${user.surname}` },
+      { field: 'Name', value: `${formatTitle(user.title)} ${user.first_name} ${user.surname}` },
       { field: 'Email', value: user.email },
       { field: 'Mobile', value: user.mobile },
       { field: 'DOB', value: user.dob },
@@ -543,7 +555,7 @@ exports.exportAllUsers = async (req, res) => {
 
     worksheet.addRows(users.map(user => ({
       id: user.id,
-      name: `${user.title} ${user.first_name} ${user.surname}`,
+      name: `${formatTitle(user.title)} ${user.first_name} ${user.surname}`,
       email: user.email,
       mobile: user.mobile,
       dob: user.dob,
@@ -642,20 +654,49 @@ exports.getAllRegistrations = async (req, res) => {
 // Update registration status
 exports.updateRegistrationStatus = async (req, res) => {
   try {
+    console.log('=== UPDATE REGISTRATION STATUS ===');
+    console.log('Registration ID:', req.params.id);
+    console.log('New Status:', req.body.status);
+    console.log('==================================');
+    
     const { id } = req.params;
     const { status } = req.body;
 
-    await promisePool.query(
+    // First check if this is a completed Razorpay payment
+    const [existing] = await promisePool.query(
+      'SELECT status, payment_method, razorpay_payment_id FROM registrations WHERE id = ?',
+      [id]
+    );
+
+    if (existing.length > 0) {
+      const registration = existing[0];
+      
+      // Prevent editing completed Razorpay payments
+      if (registration.status === 'completed' && 
+          registration.payment_method === 'razorpay' && 
+          registration.razorpay_payment_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot modify status of completed Razorpay payments'
+        });
+      }
+    }
+
+    const [result] = await promisePool.query(
       'UPDATE registrations SET status = ? WHERE id = ?',
       [status, id]
     );
+
+    console.log('Update result:', result);
 
     res.json({
       success: true,
       message: 'Registration status updated successfully'
     });
   } catch (error) {
-    console.error('Update registration error:', error);
+    console.error('=== UPDATE REGISTRATION STATUS ERROR ===');
+    console.error('Error:', error);
+    console.error('========================================');
     res.status(500).json({
       success: false,
       message: 'Failed to update registration',
@@ -671,7 +712,7 @@ exports.deleteRegistration = async (req, res) => {
 
     // Get registration details before deleting
     const [regDetails] = await promisePool.query(
-      `SELECT u.full_name, s.name as seminar_name, s.id as seminar_id
+      `SELECT CONCAT(u.first_name, ' ', u.surname) as full_name, s.name as seminar_name, s.id as seminar_id
        FROM registrations r
        JOIN users u ON r.user_id = u.id
        JOIN seminars s ON r.seminar_id = s.id
@@ -783,7 +824,244 @@ exports.deleteNotification = async (req, res) => {
   }
 };
 
-// ============ EXCEL EXPORT ============
+// ============ MEMBERSHIP MANAGEMENT ============
+
+// Get all members for admin management
+exports.getAllMembers = async (req, res) => {
+  try {
+    const [members] = await promisePool.query(`
+      SELECT u.*, 
+             mr.membership_type, mr.status, mr.valid_from, mr.valid_until, mr.notes,
+             mr.created_at as membership_created_at
+      FROM users u
+      LEFT JOIN membership_registrations mr ON u.email = mr.email
+      WHERE u.role = 'user'
+      ORDER BY u.created_at DESC
+    `);
+
+    // Remove passwords
+    members.forEach(member => delete member.password);
+
+    res.json({
+      success: true,
+      count: members.length,
+      members
+    });
+  } catch (error) {
+    console.error('Get all members error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch members',
+      error: error.message
+    });
+  }
+};
+
+// Update membership details
+exports.updateMembershipDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { membership_no, membership_type, status, valid_from, valid_until, notes } = req.body;
+
+    // Check if membership number already exists (excluding current user)
+    if (membership_no) {
+      const [existing] = await promisePool.query(
+        'SELECT id, CONCAT(first_name, " ", surname) as name FROM users WHERE membership_no = ? AND id != ?',
+        [membership_no, id]
+      );
+
+      if (existing.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Membership number ${membership_no} is already assigned to ${existing[0].name}`,
+          conflict: true
+        });
+      }
+    }
+
+    // Update user's membership number
+    await promisePool.query(
+      'UPDATE users SET membership_no = ? WHERE id = ?',
+      [membership_no, id]
+    );
+
+    // Get user's email for membership_registrations update
+    const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
+    
+    if (user.length > 0) {
+      const userEmail = user[0].email;
+      
+      // Check if membership registration exists
+      const [existing] = await promisePool.query(
+        'SELECT id FROM membership_registrations WHERE email = ?',
+        [userEmail]
+      );
+
+      if (existing.length > 0) {
+        // Update existing membership registration
+        await promisePool.query(`
+          UPDATE membership_registrations 
+          SET membership_type = ?, status = ?, valid_from = ?, valid_until = ?, notes = ?
+          WHERE email = ?
+        `, [membership_type, status, valid_from || null, valid_until || null, notes, userEmail]);
+      } else {
+        // Create new membership registration record
+        await promisePool.query(`
+          INSERT INTO membership_registrations 
+          (email, name, membership_type, status, valid_from, valid_until, notes, created_at)
+          SELECT email, CONCAT(title, ' ', first_name, ' ', surname), ?, ?, ?, ?, ?, NOW()
+          FROM users WHERE id = ?
+        `, [membership_type, status, valid_from || null, valid_until || null, notes, id]);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Membership details updated successfully'
+    });
+  } catch (error) {
+    console.error('Update membership details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update membership details',
+      error: error.message
+    });
+  }
+};
+
+// Check membership number availability
+exports.checkMembershipAvailability = async (req, res) => {
+  try {
+    const { membership_no, user_id } = req.query;
+
+    if (!membership_no) {
+      return res.status(400).json({
+        success: false,
+        message: 'Membership number is required'
+      });
+    }
+
+    // Check if membership number exists (excluding current user if provided)
+    let query = 'SELECT id, CONCAT(first_name, " ", surname) as name FROM users WHERE membership_no = ?';
+    let params = [membership_no];
+
+    if (user_id) {
+      query += ' AND id != ?';
+      params.push(user_id);
+    }
+
+    const [existing] = await promisePool.query(query, params);
+
+    if (existing.length > 0) {
+      return res.json({
+        success: false,
+        available: false,
+        message: `Membership number ${membership_no} is already assigned to ${existing[0].name}`,
+        conflict: {
+          user_id: existing[0].id,
+          user_name: existing[0].name
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      available: true,
+      message: `Membership number ${membership_no} is available`
+    });
+
+  } catch (error) {
+    console.error('Check membership availability error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check membership availability',
+      error: error.message
+    });
+  }
+};
+
+// Export members list
+exports.exportMembers = async (req, res) => {
+  try {
+    const [members] = await promisePool.query(`
+      SELECT u.id, u.membership_no, u.title, u.first_name, u.surname, u.email, u.mobile, u.gender, u.dob,
+             a.city, a.state, a.country, a.pin_code,
+             mr.membership_type, mr.status, mr.valid_from, mr.valid_until, mr.notes,
+             u.created_at as registration_date
+      FROM users u
+      LEFT JOIN addresses a ON u.id = a.user_id
+      LEFT JOIN membership_registrations mr ON u.email = mr.email
+      WHERE u.role = 'user'
+      ORDER BY u.created_at DESC
+    `);
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('BOA Members');
+
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Membership No', key: 'membership_no', width: 20 },
+      { header: 'Name', key: 'name', width: 30 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Mobile', key: 'mobile', width: 15 },
+      { header: 'Gender', key: 'gender', width: 10 },
+      { header: 'DOB', key: 'dob', width: 15 },
+      { header: 'City', key: 'city', width: 20 },
+      { header: 'State', key: 'state', width: 20 },
+      { header: 'Country', key: 'country', width: 15 },
+      { header: 'Pin Code', key: 'pin_code', width: 10 },
+      { header: 'Membership Type', key: 'membership_type', width: 20 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Valid From', key: 'valid_from', width: 15 },
+      { header: 'Valid Until', key: 'valid_until', width: 15 },
+      { header: 'Registration Date', key: 'registration_date', width: 20 },
+      { header: 'Notes', key: 'notes', width: 30 }
+    ];
+
+    worksheet.addRows(members.map(member => ({
+      id: member.id,
+      membership_no: member.membership_no || 'Not Assigned',
+      name: `${formatTitle(member.title)} ${member.first_name} ${member.surname}`,
+      email: member.email,
+      mobile: member.mobile,
+      gender: member.gender,
+      dob: member.dob ? new Date(member.dob).toLocaleDateString() : '',
+      city: member.city || '',
+      state: member.state || '',
+      country: member.country || '',
+      pin_code: member.pin_code || '',
+      membership_type: member.membership_type || 'Standard',
+      status: member.status || 'Active',
+      valid_from: member.valid_from ? new Date(member.valid_from).toLocaleDateString() : '',
+      valid_until: member.valid_until ? new Date(member.valid_until).toLocaleDateString() : 'Lifetime',
+      registration_date: new Date(member.registration_date).toLocaleDateString(),
+      notes: member.notes || ''
+    })));
+
+    // Style header row
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0B3C5D' }
+    };
+
+    // Send file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=BOA_Members_${Date.now()}.xlsx`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export members error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export members',
+      error: error.message
+    });
+  }
+};
 
 // Export all registrations to Excel
 exports.exportRegistrations = async (req, res) => {
@@ -1319,7 +1597,7 @@ exports.importOfflineUser = async (req, res) => {
       user: {
         id: userId,
         membership_no,
-        name: `${title} ${first_name} ${surname}`,
+        name: `${formatTitle(title)} ${first_name} ${surname}`,
         email: userEmail
       }
     });
@@ -2522,7 +2800,7 @@ exports.getLatestPayments = async (req, res) => {
     seminarPayments.forEach(p => {
       payments.push({
         id: `sem_${p.id}`,
-        user_name: `${p.title} ${p.first_name} ${p.surname}`,
+        user_name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
         user_email: p.email,
         payment_type: 'seminar',
         payment_for: p.seminar_name,
@@ -2597,7 +2875,7 @@ exports.getPaymentDetails = async (req, res) => {
       if (payments.length > 0) {
         const p = payments[0];
         paymentData = {
-          user_name: `${p.title} ${p.first_name} ${p.surname}`,
+          user_name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
           user_email: p.email,
           user_mobile: p.mobile,
           payment_type: 'seminar',
@@ -2690,7 +2968,7 @@ exports.getAllPayments = async (req, res) => {
       payments.push({
         id: `sem_${payment.id}`,
         user_id: payment.user_id,
-        user_name: `${payment.title} ${payment.first_name} ${payment.surname}`,
+        user_name: `${formatTitle(payment.title)} ${payment.first_name} ${payment.surname}`,
         user_email: payment.email,
         user_mobile: payment.mobile,
         payment_type: 'seminar',
@@ -2804,7 +3082,7 @@ exports.downloadPaymentPDF = async (req, res) => {
         const p = payments[0];
         paymentData = {
           type: 'Seminar Registration',
-          user_name: `${p.title} ${p.first_name} ${p.surname}`,
+          user_name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
           user_email: p.email,
           user_mobile: p.mobile,
           user_address: p.address,
@@ -2991,7 +3269,7 @@ exports.exportAllPayments = async (req, res) => {
       
       seminarSheet.addRows(seminarPayments.map(p => ({
         reg_no: p.registration_no,
-        name: `${p.title} ${p.first_name} ${p.surname}`,
+        name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
         email: p.email,
         mobile: p.mobile,
         seminar: p.seminar_name,

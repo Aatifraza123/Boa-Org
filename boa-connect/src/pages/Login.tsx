@@ -169,7 +169,7 @@ export default function Login() {
                   </TabsList>
                 </Tabs>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                   <div className="space-y-1.5">
                     <Label htmlFor="identifier" className="text-sm">
                       {loginMethod === 'email' ? 'Email Address' : 'Membership Number'}

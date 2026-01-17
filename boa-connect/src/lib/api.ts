@@ -21,6 +21,12 @@ const adminApi = axios.create({
 // Add user token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  console.log('🔍 User API Request:', {
+    url: config.url,
+    method: config.method,
+    hasToken: !!token,
+    tokenLength: token?.length
+  });
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -38,7 +44,25 @@ adminApi.interceptors.request.use((config) => {
   return config;
 });
 
-// Add response interceptor to handle 401 errors
+// Add response interceptor to handle 401 errors for user API
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('🔒 Unauthorized: User token invalid or expired');
+      // Clear invalid token
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Redirect to login
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle 401 errors for admin API
 adminApi.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -90,36 +114,6 @@ export const adminAuthAPI = {
     const response = await adminApi.post('/admin-auth/logout');
     return response.data;
   },
-
-  // Generic methods for admin routes
-  get: async (url: string) => {
-    const response = await adminApi.get(url);
-    return response.data;
-  },
-
-  post: async (url: string, data: any) => {
-    const response = await adminApi.post(url, data);
-    return response.data;
-  },
-
-  put: async (url: string, data: any) => {
-    const response = await adminApi.put(url, data);
-    return response.data;
-  },
-
-  delete: async (url: string) => {
-    const response = await adminApi.delete(url);
-    return response.data;
-  },
-
-  uploadCertificateImage: async (formData: FormData) => {
-    const response = await adminApi.post('/admin/certification/upload-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
 };
 
 // User APIs
@@ -136,6 +130,11 @@ export const userAPI = {
   
   changePassword: async (data: { current_password: string; new_password: string }) => {
     const response = await api.put('/users/change-password', data);
+    return response.data;
+  },
+
+  getMembershipDetails: async () => {
+    const response = await api.get('/users/membership');
     return response.data;
   },
 };
@@ -186,6 +185,27 @@ export const notificationAPI = {
 
 // Admin APIs
 export const adminAPI = {
+  // Generic methods for admin routes
+  get: async (url: string) => {
+    const response = await adminApi.get(url);
+    return response.data;
+  },
+
+  post: async (url: string, data: any) => {
+    const response = await adminApi.post(url, data);
+    return response.data;
+  },
+
+  put: async (url: string, data: any) => {
+    const response = await adminApi.put(url, data);
+    return response.data;
+  },
+
+  delete: async (url: string) => {
+    const response = await adminApi.delete(url);
+    return response.data;
+  },
+
   // Seminars
   getAllSeminars: async () => {
     const response = await adminApi.get('/admin/seminars');
@@ -302,6 +322,25 @@ export const adminAPI = {
   },
   deleteGalleryItem: async (id: number) => {
     const response = await adminApi.delete(`/admin/gallery/${id}`);
+    return response.data;
+  },
+
+  uploadCertificateImage: async (formData: FormData) => {
+    const response = await adminApi.post('/admin/certification/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Membership Management
+  getAllMembers: async () => {
+    const response = await adminApi.get('/admin/members');
+    return response.data;
+  },
+  updateMembershipDetails: async (id: string, data: any) => {
+    const response = await adminApi.put(`/admin/members/${id}`, data);
     return response.data;
   },
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { Calendar, MapPin, ArrowRight, Bell, Download } from 'lucide-react';
+import { Calendar, Bell, Download, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -15,7 +15,7 @@ export default function Notifications() {
 
   const loadNotifications = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/notifications');
+      const response = await fetch('/api/notifications');
       const data = await response.json();
       if (data.success) {
         // Filter only active notifications
@@ -31,51 +31,43 @@ export default function Notifications() {
 
   const handleDownloadForm = async (seminarId: number, seminarName: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/seminars/${seminarId}`);
-      const data = await response.json();
+      const response = await fetch(`/api/generate-seminar-pdf/${seminarId}`);
       
-      if (data.success && data.seminar.offline_form_html) {
-        // Create HTML file with proper structure
-        const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${seminarName} - Offline Registration Form</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        @media print { body { margin: 0; } }
-    </style>
-</head>
-<body>
-${data.seminar.offline_form_html}
-</body>
-</html>`;
-        
-        // Create blob and download
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${seminarName.replace(/[^a-z0-9]/gi, '_')}_Registration_Form.html`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert('Offline form not available for this seminar');
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
       }
+
+      const pdfBlob = await response.blob();
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${seminarName.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download form:', error);
-      alert('Failed to download form');
+      alert('Failed to download form. Please try again.');
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
   };
 
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-20 flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading notifications...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -83,96 +75,100 @@ ${data.seminar.offline_form_html}
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="py-12 md:py-16" style={{background: '#F9FAFB'}}>
-        <div className="container max-w-3xl text-center">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-xl mb-6" style={{background: '#0B3C5D'}}>
-            <Bell className="h-8 w-8 text-white" />
+      {/* Simple Header */}
+      <div className="bg-white border-b page-enter">
+        <div className="container py-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Bell className="h-5 w-5 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+            {notifications.length > 0 && (
+              <Badge variant="secondary" className="notification-badge bg-blue-100 text-blue-700">
+                {notifications.length} Active
+              </Badge>
+            )}
           </div>
-          <h1 className="text-3xl md:text-4xl font-semibold mb-4" style={{color: '#1F2933'}}>
-            Notifications
-          </h1>
-          <p className="text-lg" style={{color: '#616E7C'}}>
-            Stay updated with our latest seminars and events
-          </p>
+          <p className="text-gray-600">Latest updates and announcements</p>
         </div>
-      </section>
+      </div>
 
-      {/* Notifications List */}
-      <section className="py-12 md:py-16">
-        <div className="container max-w-4xl px-4">
+      {/* Content */}
+      <div className="bg-gray-50 min-h-screen">
+        <div className="container py-8">
           {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" style={{color: '#616E7C'}} />
-              <h3 className="text-xl font-semibold mb-2" style={{color: '#1F2933'}}>No Active Notifications</h3>
-              <p style={{color: '#616E7C'}}>
-                There are no active seminars or events at the moment. Check back soon!
-              </p>
+            /* Empty State */
+            <div className="bg-white rounded-lg border p-12 text-center gov-fade-in">
+              <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bell className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
+              <p className="text-gray-600">There are no active notifications at the moment.</p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className="gov-card p-6 relative"
+            /* Notifications List */
+            <div className="space-y-4">
+              {notifications.map((notification, index) => (
+                <div 
+                  key={notification.id} 
+                  className="gov-card bg-white rounded-lg border section-enter"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  {/* Active Badge */}
-                  <div className="absolute top-4 right-4">
-                    <span className="gov-badge-accent">
-                      <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{background: '#C9A227'}} />
-                      Active
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-start gap-4">
-                    <div className="flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center" style={{background: '#0B3C5D'}}>
-                      <Calendar className="h-6 w-6 text-white" />
+                  <div className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start gap-4">
+                        <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Calendar className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {notification.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Clock className="h-4 w-4" />
+                            <span>{formatDate(notification.created_at)}</span>
+                            <Badge className="bg-green-100 text-green-700 border-green-200">
+                              Active
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex-1 w-full">
-                      <h3 className="text-xl font-semibold mb-2 pr-16" style={{color: '#1F2933'}}>
-                        {notification.title}
-                      </h3>
-                      <p className="mb-4" style={{color: '#616E7C'}}>
+                    {/* Content */}
+                    <div className="mb-6">
+                      <p className="text-gray-700 leading-relaxed">
                         {notification.message}
                       </p>
-
-                      {notification.seminar_id && (
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <Link to={`/seminar/${notification.seminar_id}/register`} className="flex-1 sm:flex-initial">
-                            <button className="gov-button-primary w-full sm:w-auto">
-                              Register Now
-                              <ArrowRight className="ml-2 h-4 w-4 inline" />
-                            </button>
-                          </Link>
-                          <button 
-                            className="bg-white border-2 px-5 py-2.5 rounded font-medium hover:bg-gray-50 transition-colors w-full sm:w-auto"
-                            style={{color: '#0B3C5D', borderColor: '#0B3C5D'}}
-                            onClick={() => handleDownloadForm(notification.seminar_id, notification.title)}
-                          >
-                            <Download className="mr-2 h-4 w-4 inline" />
-                            Download Offline Form
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  </div>
 
-                  <div className="mt-4 pt-4 border-t" style={{borderColor: '#E5E7EB'}}>
-                    <p className="text-xs" style={{color: '#616E7C'}}>
-                      Posted on {new Date(notification.created_at).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </p>
+                    {/* Actions */}
+                    {notification.seminar_id && (
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Link to={`/seminar/${notification.seminar_id}/register`}>
+                          <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-12 text-base px-6 sm:h-11 sm:text-sm sm:px-5">
+                            Register Now
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="outline"
+                          className="w-full sm:w-auto h-12 text-base px-6 sm:h-11 sm:text-sm sm:px-5"
+                          onClick={() => handleDownloadForm(notification.seminar_id, notification.title)}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download Form
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </section>
+      </div>
     </Layout>
   );
 }

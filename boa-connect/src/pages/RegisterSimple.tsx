@@ -115,7 +115,7 @@ export default function RegisterSimple() {
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-8 shadow-card">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* Personal Information */}
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-4">Personal Information</h2>
@@ -181,7 +181,6 @@ export default function RegisterSimple() {
                         }
                       }}
                       required 
-                      pattern="[0-9]{10}"
                       maxLength={10}
                       placeholder="10 digit mobile number"
                     />
@@ -197,7 +196,6 @@ export default function RegisterSimple() {
                       value={formData.email} 
                       onChange={(e) => handleChange('email', e.target.value)} 
                       required 
-                      pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
                     />
                   </div>
                 </div>
@@ -257,7 +255,6 @@ export default function RegisterSimple() {
                         }
                       }}
                       required 
-                      pattern="[0-9]{6}"
                       maxLength={6}
                       placeholder="6 digit pin code"
                     />

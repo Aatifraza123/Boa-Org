@@ -33,10 +33,19 @@ const generateMembershipNo = async (connection) => {
 
 // Create registration
 exports.createRegistration = async (req, res) => {
-  const connection = await promisePool.getConnection();
+  let connection;
   
   try {
+    console.log('=== CREATE REGISTRATION CALLED ===');
+    console.log('User ID:', req.user?.id);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('==================================');
+    
+    connection = await promisePool.getConnection();
+    console.log('Database connection acquired');
+    
     await connection.beginTransaction();
+    console.log('Transaction started');
 
     const userId = req.user.id;
     const {
@@ -45,21 +54,46 @@ exports.createRegistration = async (req, res) => {
       slab_id,
       delegate_type,
       amount,
-      additional_persons = []
+      additional_persons = [],
+      razorpay_order_id,
+      razorpay_payment_id
     } = req.body;
+
+    console.log('Extracted data:', {
+      userId,
+      seminar_id,
+      category_id,
+      slab_id,
+      delegate_type,
+      amount,
+      additional_persons,
+      razorpay_order_id,
+      razorpay_payment_id
+    });
 
     // Convert delegate_type to proper format for ENUM
     // "BOA Member" -> "boa-member", "Non BOA Member" -> "non-boa-member", "Accompanying Person" -> "accompanying-person"
-    const normalizedDelegateType = delegate_type
+    let normalizedDelegateType = delegate_type
       .toLowerCase()
+      .trim()
       .replace(/\s+/g, '-');
+    
+    // Handle special case for "boa" to ensure it stays as "boa-member" not "b-o-a-member"
+    normalizedDelegateType = normalizedDelegateType
+      .replace('b-o-a', 'boa')
+      .replace('non-boa', 'non-boa');
+
+    console.log('Original delegate_type:', delegate_type);
+    console.log('Normalized delegate_type:', normalizedDelegateType);
 
     // Generate registration number
     const registration_no = generateRegistrationNo();
+    console.log('Generated registration_no:', registration_no);
 
     // Calculate total amount
     const additionalAmount = additional_persons.reduce((sum, person) => sum + parseFloat(person.amount), 0);
     const totalAmount = parseFloat(amount) + additionalAmount;
+    console.log('Total amount:', totalAmount);
 
     // Check if user already has membership number
     const [userCheck] = await connection.query(
@@ -88,12 +122,30 @@ exports.createRegistration = async (req, res) => {
       console.log('User already has membership number:', membershipNo);
     }
 
+    // Determine payment status based on Razorpay data
+    const paymentStatus = razorpay_payment_id ? 'confirmed' : 'pending';
+    const paymentMethod = razorpay_payment_id ? 'razorpay' : null;
+
     // Insert registration
     const [regResult] = await connection.query(
       `INSERT INTO registrations 
-       (registration_no, user_id, seminar_id, category_id, slab_id, delegate_type, amount, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [registration_no, userId, seminar_id, category_id, slab_id, normalizedDelegateType, totalAmount]
+       (registration_no, user_id, seminar_id, category_id, slab_id, delegate_type, amount, status, 
+        payment_method, payment_date, razorpay_order_id, razorpay_payment_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        registration_no, 
+        userId, 
+        seminar_id, 
+        category_id, 
+        slab_id, 
+        normalizedDelegateType, 
+        totalAmount,
+        paymentStatus,
+        paymentMethod,
+        razorpay_payment_id ? new Date() : null,
+        razorpay_order_id,
+        razorpay_payment_id
+      ]
     );
 
     const registrationId = regResult.insertId;
@@ -119,7 +171,7 @@ exports.createRegistration = async (req, res) => {
 
     // Get user and seminar details for notification
     const [userDetails] = await connection.query(
-      'SELECT full_name FROM users WHERE id = ?',
+      'SELECT CONCAT(first_name, " ", surname) as full_name FROM users WHERE id = ?',
       [userId]
     );
     
@@ -128,12 +180,14 @@ exports.createRegistration = async (req, res) => {
       [seminar_id]
     );
 
-    // Create activity notification for admin
-    await createActivityNotification(ACTIVITY_TYPES.NEW_REGISTRATION, {
-      name: userDetails[0]?.full_name || 'User',
-      seminar_name: seminarDetails[0]?.name || 'Seminar',
-      seminar_id: seminar_id
-    });
+    // Create activity notification for admin only if payment is confirmed
+    if (paymentStatus === 'confirmed') {
+      await createActivityNotification(ACTIVITY_TYPES.NEW_REGISTRATION, {
+        name: userDetails[0]?.full_name || 'User',
+        seminar_name: seminarDetails[0]?.name || 'Seminar',
+        seminar_id: seminar_id
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -143,20 +197,33 @@ exports.createRegistration = async (req, res) => {
         registration_no,
         membership_no: membershipNo,
         amount: totalAmount,
-        status: 'pending'
+        status: paymentStatus
       }
     });
 
   } catch (error) {
-    await connection.rollback();
-    console.error('Create registration error:', error);
+    if (connection) {
+      await connection.rollback();
+    }
+    console.error('=== CREATE REGISTRATION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('SQL Message:', error.sqlMessage);
+    console.error('SQL:', error.sql);
+    console.error('Request body:', req.body);
+    console.error('User ID:', req.user?.id);
+    console.error('================================');
     res.status(500).json({
       success: false,
       message: 'Failed to create registration',
-      error: error.message
+      error: error.message,
+      details: error.sqlMessage || error.message
     });
   } finally {
-    connection.release();
+    if (connection) {
+      connection.release();
+    }
   }
 };
 

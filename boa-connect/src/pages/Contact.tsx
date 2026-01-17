@@ -46,7 +46,7 @@ export default function Contact() {
             {/* Contact Form */}
             <div className="bg-card rounded-2xl border border-border p-8 shadow-card">
               <h2 className="text-xl font-semibold text-foreground mb-6">Send us a message</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>

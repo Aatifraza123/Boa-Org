@@ -8,17 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
+import jsPDF from 'jspdf';
+import { razorpayService } from '@/lib/razorpay';
 
 export default function MembershipForm() {
   const [loading, setLoading] = useState(false);
-  const [showOnlineForm, setShowOnlineForm] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentMode, setPaymentMode] = useState('');
-  const [paymentTimer, setPaymentTimer] = useState(60);
-  const [paymentVerifying, setPaymentVerifying] = useState(false);
-  const [transactionId, setTransactionId] = useState('');
-  const [offlineFormHtml, setOfflineFormHtml] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     father_name: '',
@@ -36,170 +31,26 @@ export default function MembershipForm() {
   });
 
   useEffect(() => {
-    loadOfflineForm();
-    
-    // Listen for event to auto-open form
-    const handleOpenForm = () => {
-      setShowOnlineForm(true);
-    };
-    
-    window.addEventListener('openMembershipForm', handleOpenForm);
-    
-    return () => {
-      window.removeEventListener('openMembershipForm', handleOpenForm);
-    };
+    loadCategories();
   }, []);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (showPaymentModal && paymentMode && paymentTimer > 0) {
-      interval = setInterval(() => {
-        setPaymentTimer(prev => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [showPaymentModal, paymentMode, paymentTimer]);
-
-  // Separate effect to handle payment completion when timer reaches 0
-  useEffect(() => {
-    if (showPaymentModal && paymentMode && paymentTimer === 0) {
-      // Timer expired - check payment one last time
-      checkPaymentStatus();
-    }
-  }, [paymentTimer, showPaymentModal, paymentMode]);
-
-  // Payment verification polling - check every 3 seconds
-  useEffect(() => {
-    let pollInterval: NodeJS.Timeout;
-    if (showPaymentModal && paymentMode && !paymentVerifying) {
-      pollInterval = setInterval(() => {
-        checkPaymentStatus();
-      }, 3000); // Check every 3 seconds
-    }
-    return () => {
-      if (pollInterval) clearInterval(pollInterval);
-    };
-  }, [showPaymentModal, paymentMode, paymentVerifying]);
-
-  const checkPaymentStatus = async () => {
-    if (paymentVerifying || !transactionId) return; // Prevent multiple simultaneous checks
-    
-    setPaymentVerifying(true);
+  const loadCategories = async () => {
     try {
-      // Check payment status from backend
-      const response = await axios.post('http://localhost:5000/api/payment/check-payment', {
-        transaction_id: transactionId
+      const timestamp = new Date().getTime();
+      const response = await fetch(`http://localhost:5000/api/membership-categories?t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
-      
-      if (response.data.success && response.data.payment_verified) {
-        // Payment verified successfully
-        handlePaymentComplete();
+      const data = await response.json();
+      if (data.success) {
+        setCategories(data.categories || []);
       }
     } catch (error) {
-      console.error('Payment verification error:', error);
-    } finally {
-      setPaymentVerifying(false);
+      console.error('Failed to load membership categories:', error);
     }
-  };
-
-  const loadOfflineForm = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/offline-forms-config');
-      if (response.data.success && response.data.config) {
-        setOfflineFormHtml(response.data.config.membership_form_html || getDefaultOfflineForm());
-      } else {
-        setOfflineFormHtml(getDefaultOfflineForm());
-      }
-    } catch (error) {
-      console.error('Failed to load offline form:', error);
-      setOfflineFormHtml(getDefaultOfflineForm());
-    }
-  };
-
-  const getDefaultOfflineForm = () => {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MEMBERSHIP FORM - OPHTHALMIC ASSOCIATION OF BIHAR</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-size: 16px; margin: 5px 0; text-decoration: underline; }
-        .header h2 { font-size: 14px; margin: 5px 0; }
-        .header p { font-size: 12px; margin: 3px 0; }
-        .form-row { margin: 15px 0; border-bottom: 1px dotted #000; padding-bottom: 5px; }
-        .form-row label { font-size: 12px; font-weight: normal; }
-        .inline-fields { display: flex; gap: 20px; }
-        .inline-fields .form-row { flex: 1; }
-        .declaration { margin: 30px 0; padding: 15px; border: 1px solid #000; background: #f9f9f9; }
-        .declaration h3 { text-align: center; font-size: 14px; margin-bottom: 15px; text-decoration: underline; }
-        .declaration p { font-size: 11px; margin: 8px 0; text-align: justify; }
-        .signature-section { margin-top: 30px; display: flex; justify-content: space-between; }
-        .enclosures { margin-top: 30px; font-size: 11px; }
-        .enclosures h4 { font-size: 12px; margin-bottom: 10px; }
-        .notes { margin-top: 20px; font-size: 11px; font-weight: bold; }
-        @media print { body { margin: 0; padding: 15px; max-width: 800px; margin: 0 auto; } }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>MEMBERSHIP FORM</h1>
-        <h2>OPHTHALMIC ASSOCIATION OF BIHAR(Reg.no.-S00403/21-22)</h2>
-        <p>Shivpuri Road,Anishabad,Patna 800002</p>
-        <p>Email:biharophthalmic2022@gmail.com</p>
-        <p>Contact no :9334332714/7903220742/9572212739</p>
-    </div>
-    <hr>
-    <div class="form-row"><label>NAME....................................................................................................................................................</label></div>
-    <div class="form-row"><label>FATHER'S/HUSBAND NAME....................................................................................................................................................</label></div>
-    <div class="form-row"><label>ACADEMIC QUALIFICATION....................................................................................................................................................</label></div>
-    <div class="form-row"><label>....................................................................................................................................................</label></div>
-    <div class="inline-fields">
-        <div class="form-row"><label>YEAR OF PASSING........................</label></div>
-        <div class="form-row"><label>DOB....................................................</label></div>
-    </div>
-    <div class="form-row"><label>NAME OF INSTITUTION....................................................................................................................................................</label></div>
-    <div class="form-row"><label>WORKING PLACE....................................................................................................................................................</label></div>
-    <div class="inline-fields">
-        <div class="form-row"><label>SEX..............................................</label></div>
-        <div class="form-row"><label>AGE ON 1st APR 22....................................................</label></div>
-    </div>
-    <div class="form-row"><label>ADDRESS....................................................................................................................................................</label></div>
-    <div class="form-row"><label>....................................................................................................................................................</label></div>
-    <div class="form-row"><label>....................................................................................................................................................</label></div>
-    <div class="inline-fields">
-        <div class="form-row"><label>MOB..............................................</label></div>
-        <div class="form-row"><label>EMAIL....................................................</label></div>
-    </div>
-    <div class="declaration">
-        <h3>SELF DECLARATION</h3>
-        <p>I Smt/Sri/Kumari .................................................. Son/Daughter/wife of Mr. .........................................................................Age...................Sex.................</p>
-        <p>Do hereby declare that,the information given above and enclosed documents are true to the best of my knowledge and belief.I am well aware of the fact that If the information given by me is proved false/not true ,I will be liable for action as per the law of association.</p>
-        <p>I also declare that after getting membership of association</p>
-        <p>Never violate the rule & regulation of association or never jeopardizes the objective of association & never discloses the matter which were bring in notice directly or indirectly affect the objective of association.I will always try to my best for getting the Objectives/goal of association.</p>
-    </div>
-    <div class="signature-section">
-        <div><p>PLACE................................................</p><p>DATE................................................</p></div>
-        <div><p>SIGNATURE</p></div>
-    </div>
-    <div class="enclosures">
-        <h4>Enclosures</h4>
-        <p>1. Self attested copy of marksheet of diploma in ophthalmic assistant/para ophthalmology<br>&nbsp;&nbsp;&nbsp;Or bachelor in ophthalmic technology/technique ,/for student ID card</p>
-        <p>2. Two passport size colour photo.</p>
-        <p>3. Self attested copy of AADHAR</p>
-        <p><strong>NOTE-FOR ANY PAYMENT A/C NO(current) 40983059661  IFSC CODE SBIN0000152</strong></p>
-        <p><strong>OPTHALMIC ASSOCIATION OF BIHAR (SBI MAIN BRANCH GANDHI MAIDAN PATNA)</strong></p>
-    </div>
-    <div class="notes">
-        <p>NOTES  1.For student Rs 300/half yearly /500 yearly</p>
-        <p>2. For passport/professionals  600/half yearly or 1000 /yearly or 5000/10 yearly or 10000/for lifetime.</p>
-    </div>
-</body>
-</html>`;
   };
 
   const handleChange = (field: string, value: string) => {
@@ -207,114 +58,294 @@ export default function MembershipForm() {
   };
 
   const handleDownloadOfflineForm = () => {
-    if (!offlineFormHtml) {
-      toast.error('Offline form not available');
-      return;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const contentWidth = pageWidth - (margin * 2);
+
+    // Header with BOA branding
+    doc.setFillColor(11, 60, 93); // BOA Blue
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MEMBERSHIP FORM', pageWidth / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.text('OPHTHALMIC ASSOCIATION OF BIHAR', pageWidth / 2, 25, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text('(Reg.no.-S00403/21-22)', pageWidth / 2, 32, { align: 'center' });
+
+    let yPos = 55;
+    doc.setTextColor(0, 0, 0);
+
+    // Contact Information
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Shivpuri Road, Anishabad, Patna 800002', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 5;
+    doc.text('Email: biharophthalmic2022@gmail.com', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 5;
+    doc.text('Contact: 9334332714 / 7903220742 / 9572212739', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 15;
+
+    // Form Fields
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    
+    // Name field
+    doc.text('NAME:', margin, yPos);
+    doc.line(margin + 20, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Father's/Husband's name
+    doc.text("FATHER'S/HUSBAND NAME:", margin, yPos);
+    doc.line(margin + 50, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Academic Qualification
+    doc.text('ACADEMIC QUALIFICATION:', margin, yPos);
+    doc.line(margin + 50, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Two column fields
+    const midPoint = pageWidth / 2;
+    
+    // Year of Passing and DOB
+    doc.text('YEAR OF PASSING:', margin, yPos);
+    doc.line(margin + 35, yPos, midPoint - 5, yPos);
+    doc.text('DOB:', midPoint + 5, yPos);
+    doc.line(midPoint + 15, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Institution
+    doc.text('NAME OF INSTITUTION:', margin, yPos);
+    doc.line(margin + 45, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Working Place
+    doc.text('WORKING PLACE:', margin, yPos);
+    doc.line(margin + 35, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Sex and Age
+    doc.text('SEX:', margin, yPos);
+    doc.line(margin + 15, yPos, midPoint - 5, yPos);
+    doc.text('AGE:', midPoint + 5, yPos);
+    doc.line(midPoint + 15, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Address (3 lines)
+    doc.text('ADDRESS:', margin, yPos);
+    doc.line(margin + 25, yPos, pageWidth - margin, yPos);
+    yPos += 8;
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 8;
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Mobile and Email
+    doc.text('MOBILE:', margin, yPos);
+    doc.line(margin + 20, yPos, midPoint - 5, yPos);
+    doc.text('EMAIL:', midPoint + 5, yPos);
+    doc.line(midPoint + 15, yPos, pageWidth - margin, yPos);
+    yPos += 15;
+
+    // Self Declaration Box
+    doc.setFillColor(249, 249, 249);
+    doc.rect(margin, yPos, contentWidth, 35, 'F');
+    doc.setDrawColor(0, 0, 0);
+    doc.rect(margin, yPos, contentWidth, 35);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SELF DECLARATION', pageWidth / 2, yPos + 8, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const declarationText = [
+      'I Smt/Sri/Kumari _________________________ Son/Daughter/wife of Mr. _________________________',
+      'Age _______ Sex _______ Do hereby declare that, the information given above and enclosed documents',
+      'are true to the best of my knowledge and belief. I am well aware of the fact that if the information',
+      'given by me is proved false/not true, I will be liable for action as per the law of association.',
+      'I also declare that after getting membership of association I will never violate the rule & regulation',
+      'of association and will always try my best for getting the objectives/goal of association.'
+    ];
+
+    let textY = yPos + 15;
+    declarationText.forEach(line => {
+      doc.text(line, margin + 2, textY);
+      textY += 4;
+    });
+
+    yPos += 45;
+
+    // Signature section
+    doc.text('PLACE: ________________________', margin, yPos);
+    doc.text('SIGNATURE: ________________________', pageWidth - margin - 60, yPos);
+    yPos += 8;
+    doc.text('DATE: ________________________', margin, yPos);
+    yPos += 15;
+
+    // Enclosures
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Enclosures:', margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const enclosures = [
+      '1. Self attested copy of marksheet of diploma in ophthalmic assistant/para ophthalmology',
+      '   Or bachelor in ophthalmic technology/technique, for student ID card',
+      '2. Two passport size colour photo',
+      '3. Self attested copy of AADHAR'
+    ];
+
+    enclosures.forEach(item => {
+      doc.text(item, margin, yPos);
+      yPos += 5;
+    });
+
+    yPos += 5;
+
+    // Payment Details
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NOTE - FOR ANY PAYMENT:', margin, yPos);
+    yPos += 6;
+    doc.text('A/C NO (current): 40983059661', margin, yPos);
+    yPos += 5;
+    doc.text('IFSC CODE: SBIN0000152', margin, yPos);
+    yPos += 5;
+    doc.text('OPHTHALMIC ASSOCIATION OF BIHAR (SBI MAIN BRANCH GANDHI MAIDAN PATNA)', margin, yPos);
+    yPos += 10;
+
+    // Fee Structure
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MEMBERSHIP FEES:', margin, yPos);
+    yPos += 6;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    // Generate dynamic fee structure from categories
+    const studentCategories = categories.filter(cat => cat.category === 'student_fee');
+    const passoutCategories = categories.filter(cat => cat.category === 'passout_fee');
+    
+    const feeStructure = [];
+    
+    if (studentCategories.length > 0) {
+      const studentFees = studentCategories.map(cat => 
+        `Rs ${parseFloat(cat.price).toLocaleString()}/${cat.duration.toLowerCase()}`
+      ).join(' or ');
+      feeStructure.push(`1. For student: ${studentFees}`);
+    }
+    
+    if (passoutCategories.length > 0) {
+      const passoutFees = passoutCategories.map(cat => 
+        `Rs ${parseFloat(cat.price).toLocaleString()}/${cat.duration.toLowerCase()}`
+      ).join(' or ');
+      feeStructure.push(`2. For passout/professionals: ${passoutFees}`);
     }
 
-    const blob = new Blob([offlineFormHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'BOA_Membership_Form_Offline.html';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Offline form downloaded successfully!');
+    feeStructure.forEach(item => {
+      doc.text(item, margin, yPos);
+      yPos += 5;
+    });
+
+    // Footer
+    doc.setFillColor(11, 60, 93);
+    doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text('Bihar Ophthalmic Association | www.boabihar.org | Email: biharophthalmic2022@gmail.com', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+
+    // Save the PDF
+    doc.save('BOA_Membership_Form_Offline.pdf');
+    toast.success('Offline form downloaded as PDF successfully!');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate membership type is selected
     if (!formData.membership_type) {
       toast.error('Please select a membership type');
       return;
     }
 
-    // Show payment mode selection first
-    setShowPaymentModal(true);
-    setPaymentMode('');
-    setPaymentTimer(60);
-  };
-
-  const handlePaymentModeSelect = async (mode: string) => {
-    setPaymentMode(mode);
-    // Generate transaction ID for tracking
-    const txnId = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    setTransactionId(txnId);
+    const requiredFields = ['name', 'father_name', 'qualification', 'year_passing', 'dob', 'institution', 'working_place', 'sex', 'age', 'address', 'mobile', 'email'];
+    const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
     
-    // Create payment request in backend
-    try {
-      await axios.post('http://localhost:5000/api/payment/create-payment', {
-        transaction_id: txnId,
-        amount: getMembershipAmount(),
-        user_data: formData
-      });
-      console.log('Payment request created:', txnId);
-    } catch (error) {
-      console.error('Failed to create payment request:', error);
-      toast.error('Failed to initiate payment');
+    if (missingFields.length > 0) {
+      toast.error('Please fill all required fields');
+      return;
     }
-    
-    // Start timer when payment mode is selected
-    setPaymentTimer(60);
-  };
 
-  const handlePaymentComplete = async () => {
     setLoading(true);
-    setShowPaymentModal(false);
 
     try {
-      // Add your API call here to submit membership form
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated API call
+      // Create dynamic amount map from categories
+      const amountMap: Record<string, number> = {
+        'test': 1
+      };
       
-      toast.success('Payment successful! Membership form submitted. You will receive confirmation via email.');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        father_name: '',
-        qualification: '',
-        year_passing: '',
-        dob: '',
-        institution: '',
-        working_place: '',
-        sex: '',
-        age: '',
-        address: '',
-        mobile: '',
-        email: '',
-        membership_type: ''
+      // Add dynamic amounts from categories
+      categories.forEach(cat => {
+        const key = cat.title.toLowerCase().replace(/\s+/g, '_');
+        amountMap[key] = parseFloat(cat.price);
       });
-      setShowOnlineForm(false);
-    } catch (error) {
-      toast.error('Failed to submit form. Please try again.');
+
+      const amount = amountMap[formData.membership_type] || 0;
+
+      if (amount === 0) {
+        toast.error('Invalid membership type selected');
+        return;
+      }
+
+      const paymentResult = await razorpayService.processMembershipPayment(amount, formData);
+
+      if (paymentResult.success) {
+        toast.success('Payment successful! Membership form submitted.');
+        
+        setFormData({
+          name: '',
+          father_name: '',
+          qualification: '',
+          year_passing: '',
+          dob: '',
+          institution: '',
+          working_place: '',
+          sex: '',
+          age: '',
+          address: '',
+          mobile: '',
+          email: '',
+          membership_type: ''
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      
+      if (error.message === 'Payment cancelled by user') {
+        toast.error('Payment cancelled. You can try again when ready.');
+      } else {
+        toast.error(error.message || 'Payment failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  const getMembershipAmount = () => {
-    const amounts: any = {
-      'test': '₹1',
-      'yearly_passout': '₹1200',
-      'yearly_student': '₹600',
-      '5yearly_passout': '₹5000',
-      '5yearly_student': '₹2000',
-      'lifetime': '₹8000'
-    };
-    return amounts[formData.membership_type] || '₹0';
   };
 
   return (
     <Layout>
       <div className="container py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Online Form - Always show */}
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left Side - Form (2 columns) */}
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
@@ -324,8 +355,7 @@ export default function MembershipForm() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Personal Information */}
+                  <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold text-[#0B3C5D]">Personal Information</h3>
                       
@@ -474,7 +504,6 @@ export default function MembershipForm() {
                       </div>
                     </div>
 
-                    {/* Membership Selection */}
                     <div className="space-y-4 pt-4 border-t">
                       <h3 className="text-lg font-semibold text-[#0B3C5D]">Membership Selection</h3>
 
@@ -486,11 +515,11 @@ export default function MembershipForm() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="test">Test Payment (₹1)</SelectItem>
-                            <SelectItem value="yearly_passout">Yearly - Passout (₹1200)</SelectItem>
-                            <SelectItem value="yearly_student">Yearly - Student (₹600)</SelectItem>
-                            <SelectItem value="5yearly_passout">5-Yearly - Passout (₹5000)</SelectItem>
-                            <SelectItem value="5yearly_student">5-Yearly - Student (₹2000)</SelectItem>
-                            <SelectItem value="lifetime">Lifetime - Passout (₹8000)</SelectItem>
+                            {categories.map(cat => (
+                              <SelectItem key={cat.id} value={cat.title.toLowerCase().replace(/\s+/g, '_')}>
+                                {cat.title} - {cat.category === 'student_fee' ? 'Student' : 'Passout'} (₹{parseFloat(cat.price).toLocaleString()})
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -498,277 +527,105 @@ export default function MembershipForm() {
 
                     <Button type="submit" className="w-full gradient-primary text-primary-foreground h-11" disabled={loading}>
                       <Send className="mr-2 h-5 w-5" />
-                      Pay Now {formData.membership_type && `- ${getMembershipAmount()}`}
+                      {loading ? 'Processing Payment...' : 'Pay Now'}
                     </Button>
                   </form>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Right Side - Fee Structure (1 column) */}
             <div className="lg:col-span-1">
               <div className="sticky top-6 space-y-4">
-                {/* Fee Structure Card */}
                 <Card className="border-2 border-[#0B3C5D]">
                   <CardHeader className="bg-[#0B3C5D] text-white">
                     <CardTitle className="text-lg text-white">Membership Fee Structure</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="space-y-3">
-                      <div className="bg-gray-50 rounded-lg p-3 border">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-sm">Yearly</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Passout:</span>
-                          <span className="font-bold text-[#0B3C5D]">₹1,200</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Student:</span>
-                          <span className="font-bold text-[#0B3C5D]">₹600</span>
-                        </div>
-                      </div>
+                      {categories.length > 0 ? (
+                        <>
+                          {/* Yearly Plans */}
+                          {categories.filter(cat => cat.title.includes('Yearly') && !cat.title.includes('5-Yearly')).length > 0 && (
+                            <div className="bg-gray-50 rounded-lg p-3 border">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-semibold text-sm">Yearly</span>
+                              </div>
+                              {categories.filter(cat => cat.title.includes('Yearly') && !cat.title.includes('5-Yearly')).map(cat => (
+                                <div key={cat.id} className="flex justify-between text-sm">
+                                  <span className="text-gray-600">
+                                    {cat.category === 'student_fee' ? 'Student:' : 'Passout:'}
+                                  </span>
+                                  <span className="font-bold text-[#0B3C5D]">₹{parseFloat(cat.price).toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
-                      <div className="bg-gray-50 rounded-lg p-3 border">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-sm">5-Yearly</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Passout:</span>
-                          <span className="font-bold text-[#0B3C5D]">₹5,000</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Student:</span>
-                          <span className="font-bold text-[#0B3C5D]">₹2,000</span>
-                        </div>
-                      </div>
+                          {/* 5-Yearly Plans */}
+                          {categories.filter(cat => cat.title.includes('5-Yearly')).length > 0 && (
+                            <div className="bg-gray-50 rounded-lg p-3 border">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-semibold text-sm">5-Yearly</span>
+                              </div>
+                              {categories.filter(cat => cat.title.includes('5-Yearly')).map(cat => (
+                                <div key={cat.id} className="flex justify-between text-sm">
+                                  <span className="text-gray-600">
+                                    {cat.category === 'student_fee' ? 'Student:' : 'Passout:'}
+                                  </span>
+                                  <span className="font-bold text-[#0B3C5D]">₹{parseFloat(cat.price).toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
-                      <div className="bg-gray-50 rounded-lg p-3 border">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-sm">Lifetime</span>
+                          {/* Lifetime Plans */}
+                          {categories.filter(cat => cat.title.includes('Lifetime')).length > 0 && (
+                            <div className="bg-gray-50 rounded-lg p-3 border">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-semibold text-sm">Lifetime</span>
+                              </div>
+                              {categories.filter(cat => cat.title.includes('Lifetime')).map(cat => (
+                                <div key={cat.id} className="flex justify-between text-sm">
+                                  <span className="text-gray-600">
+                                    {cat.category === 'student_fee' ? 'Student:' : 'Passout:'}
+                                  </span>
+                                  <span className="font-bold text-[#0B3C5D]">₹{parseFloat(cat.price).toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-center text-gray-500 py-4">
+                          Loading fee structure...
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Passout:</span>
-                          <span className="font-bold text-[#0B3C5D]">₹8,000</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Special Offer Card */}
-                <Card className="bg-yellow-50 border-yellow-300">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start gap-2">
-                      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg">🎉</span>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm mb-1">Special Offer</h4>
-                        <p className="text-xs text-gray-700">
-                          Get 20% discount when you pay membership along with conference registration before the conference date.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Benefits Card */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Membership Benefits</CardTitle>
+                    <CardTitle className="text-base">Offline Form</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-600 mt-0.5">✓</span>
-                        <span>Access to all CME programs</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-600 mt-0.5">✓</span>
-                        <span>Discounted conference fees</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-600 mt-0.5">✓</span>
-                        <span>Professional networking</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-600 mt-0.5">✓</span>
-                        <span>Free publications & journals</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-600 mt-0.5">✓</span>
-                        <span>Recognition & awards eligibility</span>
-                      </li>
-                    </ul>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Prefer to fill the form offline? Download the printable form.
+                    </p>
+                    <Button 
+                      onClick={handleDownloadOfflineForm}
+                      variant="outline" 
+                      className="w-full"
+                      size="sm"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Offline Form
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
             </div>
           </div>
-
-          {/* Payment Modal */}
-          {showPaymentModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-center text-xl">
-                    {!paymentMode ? 'Select Payment Method' : 'Complete Payment'}
-                  </CardTitle>
-                  {!paymentMode && (
-                    <CardDescription className="text-center">
-                      Choose your preferred payment method
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-center py-2">
-                    <div className="text-2xl font-bold text-primary">
-                      {getMembershipAmount()}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formData.membership_type.replace('_', ' - ').replace('yearly', 'Yearly').replace('passout', 'Passout').replace('student', 'Student').replace('lifetime', 'Lifetime')}
-                    </p>
-                  </div>
-
-                  {!paymentMode ? (
-                    /* Payment Mode Selection */
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => handlePaymentModeSelect('phonepe')}
-                          className="border-2 rounded-lg p-3 hover:border-primary hover:bg-accent transition-all flex flex-col items-center gap-1.5"
-                        >
-                          <div className="w-10 h-10 flex items-center justify-center">
-                            <svg viewBox="0 0 24 24" className="w-10 h-10">
-                              <circle cx="12" cy="12" r="12" fill="#5f259f"/>
-                              <text x="12" y="16" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Pe</text>
-                            </svg>
-                          </div>
-                          <span className="text-xs font-medium">PhonePe</span>
-                        </button>
-
-                        <button
-                          onClick={() => handlePaymentModeSelect('paytm')}
-                          className="border-2 rounded-lg p-3 hover:border-primary hover:bg-accent transition-all flex flex-col items-center gap-1.5"
-                        >
-                          <div className="w-10 h-10 flex items-center justify-center">
-                            <svg viewBox="0 0 24 24" className="w-10 h-10">
-                              <circle cx="12" cy="12" r="12" fill="#00BAF2"/>
-                              <text x="12" y="16" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">P</text>
-                            </svg>
-                          </div>
-                          <span className="text-xs font-medium">Paytm</span>
-                        </button>
-
-                        <button
-                          onClick={() => handlePaymentModeSelect('googlepay')}
-                          className="border-2 rounded-lg p-3 hover:border-primary hover:bg-accent transition-all flex flex-col items-center gap-1.5"
-                        >
-                          <div className="w-10 h-10 flex items-center justify-center">
-                            <svg viewBox="0 0 24 24" className="w-10 h-10">
-                              <circle cx="12" cy="12" r="12" fill="white" stroke="#dadce0" strokeWidth="1"/>
-                              <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="bold">
-                                <tspan fill="#4285f4">G</tspan>
-                              </text>
-                            </svg>
-                          </div>
-                          <span className="text-xs font-medium">Google Pay</span>
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => handlePaymentModeSelect('upi')}
-                          className="border-2 rounded-lg p-3 hover:border-primary hover:bg-accent transition-all flex items-center justify-center gap-2"
-                        >
-                          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded flex items-center justify-center text-white font-bold text-xs">
-                            UPI
-                          </div>
-                          <span className="text-xs font-medium">Other UPI</span>
-                        </button>
-
-                        <button
-                          onClick={() => handlePaymentModeSelect('card')}
-                          className="border-2 rounded-lg p-3 hover:border-primary hover:bg-accent transition-all flex items-center justify-center gap-2"
-                        >
-                          <div className="w-8 h-6 bg-gradient-to-r from-blue-600 to-blue-700 rounded flex items-center justify-center text-white font-bold text-[10px]">
-                            CARD
-                          </div>
-                          <span className="text-xs font-medium">Debit/Credit</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* QR Code Display */
-                    <>
-                      <div className="bg-accent/50 p-3 rounded-lg text-center">
-                        <p className="text-xs mb-1">
-                          <strong>Payment via:</strong> {paymentMode === 'phonepe' ? 'PhonePe' : paymentMode === 'paytm' ? 'Paytm' : paymentMode === 'googlepay' ? 'Google Pay' : paymentMode === 'card' ? 'Card' : 'UPI'}
-                        </p>
-                        <p className="text-xs"><strong>UPI:</strong> OABIHAR@SBI</p>
-                      </div>
-
-                      <div className="flex justify-center py-2">
-                        <div className="w-48 h-48 border-2 rounded flex items-center justify-center bg-white p-2">
-                          <img 
-                            src="https://res.cloudinary.com/derzj7d4u/image/upload/v1768484804/boa-certificates/letccpxsyolezskxohzk.jpg" 
-                            alt="UPI QR Code" 
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="text-center py-2">
-                        <div className="text-3xl font-bold text-primary">
-                          {Math.floor(paymentTimer / 60)}:{(paymentTimer % 60).toString().padStart(2, '0')}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Auto-verifying payment...
-                        </p>
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 p-2 rounded-lg">
-                        <p className="text-xs text-blue-800 text-center">
-                          {paymentVerifying ? '🔄 Verifying payment...' : '⏳ Complete payment using QR code'}
-                        </p>
-                      </div>
-
-                      <div className="bg-yellow-50 border border-yellow-200 p-2 rounded-lg">
-                        <p className="text-xs text-yellow-800 text-center">
-                          <strong>Ref ID:</strong> {transactionId}
-                        </p>
-                      </div>
-
-                      <Button 
-                        className="w-full gradient-primary text-primary-foreground"
-                        size="lg"
-                        onClick={handlePaymentComplete}
-                        disabled={loading}
-                      >
-                        {loading ? 'Processing...' : 'I Have Paid - Submit Form'}
-                      </Button>
-                    </>
-                  )}
-
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    size="sm"
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      setPaymentMode('');
-                      setPaymentTimer(60);
-                      setPaymentVerifying(false);
-                      setTransactionId('');
-                    }}
-                  >
-                    Cancel Payment
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
       </div>
     </Layout>

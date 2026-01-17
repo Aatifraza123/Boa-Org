@@ -5,11 +5,12 @@ import axios from 'axios';
 
 export function StatsSection() {
   const [stats, setStats] = useState({
-    total_members: 0,
-    years_of_service: 0,
-    seminars_conducted: 0,
-    districts_covered: 0
+    total_members: null,
+    years_of_service: null,
+    seminars_conducted: null,
+    districts_covered: null
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadStats();
@@ -17,40 +18,49 @@ export function StatsSection() {
 
   const loadStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/stats');
+      setIsLoading(true);
+      console.log('Loading stats from /api/stats...');
+      const response = await axios.get('/api/stats');
+      console.log('Stats API response:', response.data);
       if (response.data.success) {
         setStats(response.data.stats);
+        console.log('Stats loaded successfully:', response.data.stats);
+      } else {
+        console.error('API returned success: false');
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
+      console.error('Error details:', error.response?.data || error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const statsData = [
     {
       icon: Users,
-      value: stats.total_members || '500+',
+      value: isLoading ? 'Loading...' : `${stats.total_members || 17}+`,
       label: 'Active Members',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       icon: Calendar,
-      value: stats.years_of_service || '25+',
+      value: isLoading ? 'Loading...' : `${stats.years_of_service || 51}+`,
       label: 'Years of Service',
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       icon: Award,
-      value: stats.seminars_conducted || '100+',
+      value: isLoading ? 'Loading...' : `${stats.seminars_conducted || 1}+`,
       label: 'Seminars Conducted',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
     {
       icon: MapPin,
-      value: stats.districts_covered || '38',
+      value: isLoading ? 'Loading...' : `${stats.districts_covered || 38}`,
       label: 'Districts Covered',
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'

@@ -22,6 +22,7 @@ import { SiteConfigTab } from './tabs/SiteConfigTab';
 import { OfflineFormsTab } from './tabs/OfflineFormsTab';
 import { GalleryTab } from './tabs/GalleryTab';
 import MembershipCategoriesTab from './tabs/MembershipCategoriesTab';
+import MembershipManagementTab from './tabs/MembershipManagementTab';
 import ResourcesTab from './tabs/ResourcesTab';
 import AllPaymentsTab from './tabs/AllPaymentsTab';
 
@@ -148,7 +149,9 @@ export default function AdminPanel() {
         {activeTab === 'registrations' && <RegistrationsTab />}
         {activeTab === 'users' && <UsersTab />}
         {activeTab === 'offline-users' && <OfflineUsersTab />}
+        {activeTab === 'membership-management' && <MembershipManagementTab />}
         {activeTab === 'all-payments' && <AllPaymentsTab />}
+        {activeTab === 'notifications' && <NotificationsTab />}
         {activeTab === 'committee' && <CommitteeMembersTab />}
         {activeTab === 'certification' && <CertificationTab />}
         {activeTab === 'upcoming' && <UpcomingEventsTab />}

@@ -12,31 +12,33 @@ import { SeminarPopup } from '@/components/home/SeminarPopup';
 const Index = () => {
   return (
     <Layout>
-      <HeroSection />
-      <div className="animate-on-scroll">
-        <StatsSection />
+      <div className="page-enter">
+        <HeroSection />
+        <div className="section-enter">
+          <StatsSection />
+        </div>
+        <div className="section-enter animate-delay-100">
+          <AboutSection />
+        </div>
+        <div className="section-enter animate-delay-200">
+          <CommitteeSection />
+        </div>
+        <div className="section-enter animate-delay-300">
+          <UpcomingEventsCarousel />
+        </div>
+        <div className="section-enter">
+          <GallerySection />
+        </div>
+        <div className="section-enter">
+          <TestimonialsSection />
+        </div>
+        <div className="section-enter">
+          <ContactSection />
+        </div>
+        
+        {/* Seminar Popup - Shows on page load if active seminar exists */}
+        <SeminarPopup />
       </div>
-      <div className="animate-on-scroll-left">
-        <AboutSection />
-      </div>
-      <div className="animate-on-scroll-zoom">
-        <CommitteeSection />
-      </div>
-      <div className="animate-on-scroll">
-        <UpcomingEventsCarousel />
-      </div>
-      <div className="animate-on-scroll">
-        <GallerySection />
-      </div>
-      <div className="animate-on-scroll-left">
-        <TestimonialsSection />
-      </div>
-      <div className="animate-on-scroll">
-        <ContactSection />
-      </div>
-      
-      {/* Seminar Popup - Shows on page load if active seminar exists */}
-      <SeminarPopup />
     </Layout>
   );
 };

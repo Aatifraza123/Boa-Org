@@ -190,3 +190,47 @@ exports.changePassword = async (req, res) => {
     });
   }
 };
+
+// Get user membership details
+exports.getMembershipDetails = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get user details with membership information and payment details
+    const [user] = await promisePool.query(`
+      SELECT u.*, 
+             mr.membership_type, mr.status, mr.valid_from, mr.valid_until, mr.notes,
+             mr.amount, mr.payment_status, mr.payment_method, mr.transaction_id,
+             mr.razorpay_payment_id, mr.payment_date, mr.qualification, mr.year_passing,
+             mr.institution, mr.working_place,
+             mr.created_at as membership_created_at,
+             mc.title as category_title, mc.price as category_price
+      FROM users u
+      LEFT JOIN membership_registrations mr ON u.email = mr.email
+      LEFT JOIN membership_categories mc ON mr.membership_type = mc.title
+      WHERE u.id = ?
+    `, [userId]);
+
+    if (user.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const userData = user[0];
+    delete userData.password;
+
+    res.json({
+      success: true,
+      membership: userData
+    });
+  } catch (error) {
+    console.error('Get membership details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch membership details',
+      error: error.message
+    });
+  }
+};

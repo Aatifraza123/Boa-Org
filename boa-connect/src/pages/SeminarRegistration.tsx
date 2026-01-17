@@ -12,7 +12,20 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { seminarAPI, registrationAPI } from '@/lib/api';
 import { titleOptions, genderOptions, indianStates } from '@/lib/mockData';
+import { razorpayService } from '@/lib/razorpay';
 type Step = 'personal' | 'address' | 'registration' | 'fee' | 'consent' | 'payment';
+
+// Helper function to format title consistently
+const formatTitle = (title: string) => {
+  const titleMap: { [key: string]: string } = {
+    'dr': 'Dr.',
+    'mr': 'Mr.',
+    'mrs': 'Mrs.',
+    'ms': 'Ms.',
+    'prof': 'Prof.'
+  };
+  return titleMap[title?.toLowerCase()] || title || '';
+};
 
 export default function SeminarRegistration() {
   const { id } = useParams();
@@ -50,8 +63,12 @@ export default function SeminarRegistration() {
   const [feeSlabs, setFeeSlabs] = useState<any[]>([]);
   const [delegateCategories, setDelegateCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [committeeMembers, setCommitteeMembers] = useState<any[]>([]);
 
   useEffect(() => {
+    // Test backend connection
+    razorpayService.testConnection();
+    
     // Check if user is logged in
     const token = localStorage.getItem('token');
     if (!token) {
@@ -87,6 +104,12 @@ export default function SeminarRegistration() {
         description: cat.description,
         fees: cat.fees || {}
       }));
+      
+      console.log('=== FEE STRUCTURE DEBUG ===');
+      console.log('Raw seminar data:', response.seminar);
+      console.log('Transformed categories:', categories);
+      console.log('Categories with fees:', categories.map(c => ({ id: c.id, name: c.name, fees: c.fees })));
+      
       setFeeCategories(categories);
       
       // Transform slabs
@@ -95,6 +118,9 @@ export default function SeminarRegistration() {
         label: slab.label,
         dateRange: slab.date_range
       }));
+      
+      console.log('Transformed slabs:', slabs);
+      
       setFeeSlabs(slabs);
 
       // Set delegate categories from API
@@ -103,7 +129,11 @@ export default function SeminarRegistration() {
         label: cat.label,
         requiresMembership: cat.requires_membership
       }));
+      
       setDelegateCategories(delegateCats);
+      
+      // Load committee members
+      await loadCommitteeMembers();
     } catch (error) {
       console.error('Failed to load seminar:', error);
       toast({
@@ -113,6 +143,22 @@ export default function SeminarRegistration() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadCommitteeMembers = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/committee-members');
+      const data = await response.json();
+      if (data.success) {
+        // Remove duplicates based on member name
+        const uniqueMembers = data.members.filter((member: any, index: number, self: any[]) => 
+          index === self.findIndex((m: any) => m.name === member.name)
+        );
+        setCommitteeMembers(uniqueMembers);
+      }
+    } catch (error) {
+      console.error('Failed to load committee members:', error);
     }
   };
 
@@ -132,7 +178,7 @@ export default function SeminarRegistration() {
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
           <div className="text-center">
             <p className="text-muted-foreground">Seminar not found</p>
-            <Button onClick={() => navigate('/seminars')} className="mt-4">
+            <Button onClick={() => navigate('/seminars')} className="mt-4 h-12 text-base px-6 md:h-11 md:text-sm md:px-5">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Seminars
             </Button>
@@ -146,9 +192,9 @@ export default function SeminarRegistration() {
   
   // Use dynamic delegate categories from API, fallback to default if empty
   const displayDelegateCategories = delegateCategories.length > 0 ? delegateCategories : [
-    { value: 'BOA Member', label: 'BOA MEMBER', requiresMembership: true },
-    { value: 'Non BOA Member', label: 'NON BOA MEMBER', requiresMembership: false },
-    { value: 'Accompanying Person', label: 'ACCOMPANYING PERSON', requiresMembership: false },
+    { value: 'boa-member', label: 'BOA MEMBER', requiresMembership: true },
+    { value: 'non-boa-member', label: 'NON BOA MEMBER', requiresMembership: false },
+    { value: 'accompanying-person', label: 'ACCOMPANYING PERSON', requiresMembership: false },
   ];
 
   const steps: { id: Step; label: string; icon: React.ComponentType<any> }[] = [
@@ -162,9 +208,25 @@ export default function SeminarRegistration() {
 
   const currentIndex = steps.findIndex(s => s.id === currentStep);
   const selectedFee = feeCategories.find(f => f.id.toString() === selectedCategory);
-  const selectedAmount = selectedFee && selectedSlab ? selectedFee.fees[selectedSlab] || 0 : 0;
+  const rawAmount = selectedFee && selectedSlab ? selectedFee.fees[selectedSlab] : 0;
+  const selectedAmount = typeof rawAmount === 'number' && !isNaN(rawAmount) ? rawAmount : 0;
+  
+  // Debug amount calculation
+  if (selectedCategory && selectedSlab) {
+    console.log('=== AMOUNT CALCULATION DEBUG ===');
+    console.log('selectedCategory:', selectedCategory);
+    console.log('selectedSlab:', selectedSlab);
+    console.log('selectedFee:', selectedFee);
+    console.log('selectedFee.fees:', selectedFee?.fees);
+    console.log('rawAmount:', rawAmount);
+    console.log('selectedAmount:', selectedAmount);
+  }
+  
   const selectedSlabLabel = feeSlabs.find(s => s.id.toString() === selectedSlab)?.label || '';
-  const additionalAmount = additionalPersons.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const additionalAmount = additionalPersons.reduce((sum, p) => {
+    const amount = typeof p.amount === 'number' && !isNaN(p.amount) ? p.amount : 0;
+    return sum + amount;
+  }, 0);
   const totalAmount = selectedAmount + additionalAmount;
 
   const handleNext = () => {
@@ -261,91 +323,229 @@ export default function SeminarRegistration() {
     }
   };
 
+  const generateOfflineRegistrationForm = async () => {
+    try {
+      if (!seminar?.id) {
+        toast({
+          title: 'Error',
+          description: 'Seminar information not available',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Call backend API to generate PDF from HTML template
+      const response = await fetch(`http://localhost:5000/api/generate-seminar-pdf/${seminar.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Get PDF blob
+      const pdfBlob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Success!',
+        description: 'Offline registration form downloaded as PDF',
+      });
+    } catch (error) {
+      console.error('Failed to download form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download form. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const generatePaymentReceipt = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
-    const contentWidth = pageWidth - (margin * 2);
 
-    // Header
-    doc.setFillColor(0, 128, 128);
-    doc.rect(0, 0, pageWidth, 35, 'F');
+    // Header with BOA branding
+    doc.setFillColor(11, 60, 93); // BOA Blue
+    doc.rect(0, 0, pageWidth, 30, 'F');
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Payment Receipt', pageWidth / 2, 15, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(activeSeminar.name, pageWidth / 2, 23, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.text(`${activeSeminar.venue} | ${activeSeminar.location}`, pageWidth / 2, 30, { align: 'center' });
+    doc.text('BIHAR OPHTHALMIC ASSOCIATION', pageWidth / 2, 20, { align: 'center' });
 
-    let yPos = 50;
+    // Receipt title
     doc.setTextColor(0, 0, 0);
-
-    // Receipt details
-    doc.setFillColor(240, 240, 240);
-    doc.rect(margin, yPos, contentWidth, 8, 'F');
-    doc.setFontSize(11);
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 128, 128);
-    doc.text('REGISTRATION DETAILS', margin + 3, yPos + 5.5);
-    yPos += 14;
+    doc.text('REGISTRATION RECEIPT', pageWidth / 2, 45, { align: 'center' });
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
+    let yPos = 60;
+
+    // Seminar details
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SEMINAR DETAILS', margin, yPos);
+    yPos += 10;
+
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Event: ${seminar?.name || 'N/A'}`, margin, yPos);
+    yPos += 6;
+    doc.text(`Date: ${seminar?.start_date ? new Date(seminar.start_date).toLocaleDateString() : 'N/A'}`, margin, yPos);
+    yPos += 6;
+    doc.text(`Venue: ${seminar?.venue || 'N/A'}`, margin, yPos);
+    yPos += 15;
 
-    const details = [
-      { label: 'Name', value: `${fullName} ${surname}` },
+    // Personal details
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PERSONAL DETAILS', margin, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const personalDetails = [
+      { label: 'Name', value: `${formatTitle(title)} ${fullName} ${surname}` },
       { label: 'Email', value: email },
       { label: 'Mobile', value: mobile },
-      { label: 'City', value: city },
-      { label: 'State', value: state },
-      { label: 'Delegate Category', value: delegateCategories.find(d => d.value === delegateType)?.label || '' },
-      { label: 'Registration Category', value: selectedFee?.name || '' },
-      { label: 'Fee Slab', value: selectedSlabLabel },
-      { label: 'Amount Paid', value: `Rs ${selectedAmount.toLocaleString()}` },
-      { label: 'Transaction ID', value: `TXN${Date.now()}` },
-      { label: 'Payment Date', value: new Date().toLocaleDateString() },
+      { label: 'Date of Birth', value: dob },
+      { label: 'Gender', value: gender },
     ];
 
-    if (delegateType === 'boa-member' && membershipNo) {
-      details.splice(6, 0, { label: 'BOA Membership No.', value: membershipNo });
-    }
-
-    details.forEach(item => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(item.label + ':', margin, yPos);
-      doc.setFont('helvetica', 'normal');
-      doc.text(item.value, margin + 50, yPos);
-      yPos += 8;
+    personalDetails.forEach(detail => {
+      doc.text(`${detail.label}: ${detail.value}`, margin, yPos);
+      yPos += 6;
     });
 
     yPos += 10;
 
+    // Registration details
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REGISTRATION DETAILS', margin, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const selectedFee = feeCategories.find(f => f.id.toString() === selectedCategory);
+    const selectedSlabLabel = feeSlabs.find(s => s.id.toString() === selectedSlab)?.label || '';
+
+    const registrationDetails = [
+      { label: 'Registration Category', value: selectedFee?.name || 'Not selected' },
+      { label: 'Fee Slab', value: selectedSlabLabel || 'Not selected' },
+      { label: 'Main Registration Fee', value: `₹${selectedAmount.toLocaleString()}` },
+    ];
+
+    registrationDetails.forEach(detail => {
+      doc.text(`${detail.label}: ${detail.value}`, margin, yPos);
+      yPos += 6;
+    });
+
+    // Additional persons
+    if (additionalPersons.length > 0) {
+      yPos += 10;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ADDITIONAL PERSONS', margin, yPos);
+      yPos += 10;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      additionalPersons.forEach((person, index) => {
+        const categoryName = feeCategories.find(c => c.id.toString() === person.category_id)?.name;
+        const slabName = feeSlabs.find(s => s.id.toString() === person.slab_id)?.label;
+        
+        doc.text(`${index + 1}. ${person.name}`, margin, yPos);
+        yPos += 6;
+        doc.text(`   Category: ${categoryName} - ${slabName}`, margin, yPos);
+        yPos += 6;
+        doc.text(`   Fee: ₹${person.amount.toLocaleString()}`, margin, yPos);
+        yPos += 8;
+      });
+    }
+
+    // Payment summary
+    yPos += 10;
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, yPos - 5, pageWidth - (margin * 2), 25, 'F');
+
+    const paymentDetails = [
+      { label: 'Main Registration', value: `₹${selectedAmount.toLocaleString()}` },
+    ];
+
+    if (additionalPersons.length > 0) {
+      paymentDetails.push({
+        label: `Additional Persons (${additionalPersons.length})`,
+        value: `₹${additionalPersons.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()}`
+      });
+    }
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    paymentDetails.forEach((detail, index) => {
+      doc.text(detail.label, margin + 3, yPos + (index * 6) + 3);
+      doc.text(detail.value, pageWidth - margin - 3, yPos + (index * 6) + 3, { align: 'right' });
+    });
+
+    // Total amount
+    yPos += 15;
+    doc.setFillColor(11, 60, 93);
+    doc.rect(margin, yPos, pageWidth - (margin * 2), 12, 'F');
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL AMOUNT PAID:', margin + 3, yPos + 4);
+    doc.text(`₹${totalAmount.toLocaleString()}`, pageWidth - margin - 3, yPos + 4, { align: 'right' });
+
     // Footer
-    doc.setFillColor(0, 128, 128);
+    doc.setFillColor(11, 60, 93);
     doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
-    doc.text('Bihar Ophthalmic Association | www.boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+    doc.text('Bihar Ophthalmic Association | www.boabihar.org | Email: info@boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
 
-    doc.save('Registration_Receipt.pdf');
+    doc.save(`BOA_Registration_Receipt_${Date.now()}.pdf`);
   };
+
 
   const handlePayment = async () => {
     try {
+      // Get user ID from token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: 'Authentication Error',
+          description: 'Please login to continue',
+          variant: 'destructive',
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Decode user ID from token (simple decode, in production use proper JWT decode)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.id;
+
       // Prepare registration data
       const registrationData = {
-        seminar_id: activeSeminar.id,
-        category_id: selectedCategory,
-        slab_id: selectedSlab,
+        user_id: userId,
+        seminar_id: seminar.id,
+        category_id: parseInt(selectedCategory),
+        slab_id: parseInt(selectedSlab),
         delegate_type: delegateType,
-        amount: totalAmount,
+        amount: selectedAmount,
         additional_persons: additionalPersons.map(p => ({
           name: p.name,
           category_id: parseInt(p.category_id),
@@ -354,30 +554,66 @@ export default function SeminarRegistration() {
         }))
       };
 
-      // Submit registration
-      const response = await registrationAPI.create(registrationData);
-      
-      if (response.success) {
+      // User details for Razorpay prefill
+      const userDetails = {
+        name: `${formatTitle(title)} ${fullName} ${surname}`,
+        email: email,
+        mobile: mobile
+      };
+
+      console.log('=== PAYMENT DEBUG ===');
+      console.log('selectedCategory:', selectedCategory);
+      console.log('selectedSlab:', selectedSlab);
+      console.log('selectedFee:', selectedFee);
+      console.log('rawAmount:', selectedFee && selectedSlab ? selectedFee.fees[selectedSlab] : 'N/A');
+      console.log('selectedAmount:', selectedAmount);
+      console.log('additionalAmount:', additionalAmount);
+      console.log('totalAmount:', totalAmount);
+      console.log('registrationData:', registrationData);
+
+      // Validate total amount before payment
+      if (!totalAmount || typeof totalAmount !== 'number' || isNaN(totalAmount) || totalAmount <= 0) {
+        throw new Error(`Invalid payment amount: ${totalAmount}. Please check your fee selection.`);
+      }
+
+      // Process payment through Razorpay
+      const paymentResult = await razorpayService.processSeminarPayment(
+        totalAmount,
+        registrationData,
+        userDetails
+      );
+
+      if (paymentResult.success) {
         setPaymentComplete(true);
         toast({
-          title: 'Success!',
-          description: 'Registration completed successfully',
+          title: 'Payment Successful!',
+          description: 'Your registration has been confirmed',
         });
       }
+
     } catch (error: any) {
-      console.error('Registration error:', error);
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Registration failed',
-        variant: 'destructive',
-      });
+      console.error('Payment error:', error);
+      
+      if (error.message === 'Payment cancelled by user') {
+        toast({
+          title: 'Payment Cancelled',
+          description: 'You can try again when ready',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Payment Failed',
+          description: error.message || 'Please try again or contact support',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
   return (
     <Layout>
       <div className="min-h-[calc(100vh-4rem)] py-8 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <Badge className="gradient-gold text-secondary-foreground border-0 mb-4">
@@ -391,7 +627,7 @@ export default function SeminarRegistration() {
             
             {/* Title/Tagline if exists */}
             {activeSeminar.title && (
-              <p className="text-lg md:text-xl text-primary font-semibold mb-4">
+              <p className="text-lg md:text-xl text-black font-semibold mb-4">
                 {activeSeminar.title}
               </p>
             )}
@@ -411,23 +647,27 @@ export default function SeminarRegistration() {
             </div>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-2">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                  index === currentIndex 
-                    ? 'gradient-primary text-primary-foreground shadow-glow' 
-                    : index < currentIndex 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                  {index < currentIndex ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <step.icon className="h-4 w-4" />
-                  )}
-                  <span className="text-sm font-medium hidden sm:inline">{step.label}</span>
+          {/* Main Content - Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Registration Form */}
+            <div className="lg:col-span-2">
+              {/* Progress Steps */}
+              <div className="flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-2">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                      index === currentIndex 
+                        ? 'gradient-primary text-primary-foreground shadow-glow' 
+                        : index < currentIndex 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {index < currentIndex ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <step.icon className="h-4 w-4" />
+                      )}
+                      <span className="text-sm font-medium hidden sm:inline">{step.label}</span>
                 </div>
                 {index < steps.length - 1 && (
                   <div className={`w-6 h-0.5 ${
@@ -689,7 +929,7 @@ export default function SeminarRegistration() {
                                     : 'bg-muted hover:bg-accent text-foreground'
                                 }`}
                               >
-                                Rs {category.fees[slab.id].toLocaleString()}
+                                Rs {(typeof category.fees[slab.id] === 'number' && !isNaN(category.fees[slab.id]) ? category.fees[slab.id] : 0).toLocaleString()}
                               </button>
                             </td>
                           ))}
@@ -728,7 +968,7 @@ export default function SeminarRegistration() {
                         }]);
                       }}
                       variant="outline"
-                      size="sm"
+                      className="h-11 text-sm px-5"
                     >
                       + Add Person
                     </Button>
@@ -777,7 +1017,8 @@ export default function SeminarRegistration() {
                                   updated[index].category_id = value;
                                   const category = feeCategories.find(c => c.id.toString() === value);
                                   if (category && selectedSlab) {
-                                    updated[index].amount = category.fees[selectedSlab] || 0;
+                                    const rawAmount = category.fees[selectedSlab];
+                                    updated[index].amount = typeof rawAmount === 'number' && !isNaN(rawAmount) ? rawAmount : 0;
                                     updated[index].slab_id = selectedSlab;
                                   }
                                   setAdditionalPersons(updated);
@@ -939,8 +1180,7 @@ export default function SeminarRegistration() {
                     </div>
                     <Button 
                       onClick={handlePayment} 
-                      className="w-full gradient-primary text-primary-foreground"
-                      size="lg"
+                      className="w-full gradient-primary text-primary-foreground h-12 text-base px-6"
                       disabled={!agreedToTerms || !selectedCategory || !selectedSlab}
                     >
                       Pay Rs {totalAmount.toLocaleString()}
@@ -948,16 +1188,149 @@ export default function SeminarRegistration() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="p-6 border border-primary rounded-xl bg-primary/5 text-center space-y-4">
-                    <div className="h-16 w-16 mx-auto rounded-full gradient-primary flex items-center justify-center">
-                      <Check className="h-8 w-8 text-primary-foreground" />
+                  <div className="space-y-6">
+                    {/* Success Message */}
+                    <div className="p-6 border border-primary rounded-xl bg-primary/5 text-center space-y-4">
+                      <div className="h-16 w-16 mx-auto rounded-full gradient-primary flex items-center justify-center">
+                        <Check className="h-8 w-8 text-primary-foreground" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">Registration Complete!</h3>
+                      <p className="text-muted-foreground">Your payment has been processed successfully.</p>
                     </div>
-                    <h3 className="text-xl font-semibold text-foreground">Registration Complete!</h3>
-                    <p className="text-muted-foreground">Your payment has been processed successfully.</p>
+
+                    {/* Detailed Registration Summary */}
+                    <div className="bg-card rounded-lg border p-6 space-y-6">
+                      <h4 className="text-lg font-semibold text-foreground border-b pb-2">Registration Summary</h4>
+                      
+                      {/* Personal Information */}
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-foreground">Personal Details</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Name:</span>
+                            <span className="font-medium">{formatTitle(title)} {fullName} {surname}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Email:</span>
+                            <span className="font-medium">{email}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Mobile:</span>
+                            <span className="font-medium">{mobile}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Gender:</span>
+                            <span className="font-medium">{gender}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Address Information */}
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-foreground">Address</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">City:</span>
+                            <span className="font-medium">{city}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">State:</span>
+                            <span className="font-medium">{state}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Registration Details */}
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-foreground">Registration Details</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Delegate Category:</span>
+                            <span className="font-medium">{delegateCategories.find(d => d.value === delegateType)?.label || delegateType}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Registration Category:</span>
+                            <span className="font-medium">{selectedFee?.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Fee Slab:</span>
+                            <span className="font-medium">{selectedSlabLabel}</span>
+                          </div>
+                          {delegateType === 'boa-member' && membershipNo && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">BOA Membership:</span>
+                              <span className="font-medium">{membershipNo}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Additional Persons */}
+                      {additionalPersons.length > 0 && (
+                        <div className="space-y-3">
+                          <h5 className="font-medium text-foreground">Additional Delegates ({additionalPersons.length})</h5>
+                          <div className="space-y-2">
+                            {additionalPersons.map((person, index) => {
+                              const categoryName = feeCategories.find(c => c.id.toString() === person.category_id)?.name;
+                              const slabName = feeSlabs.find(s => s.id.toString() === person.slab_id)?.label;
+                              return (
+                                <div key={index} className="p-3 bg-muted/30 rounded-lg">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                                    <div className="flex justify-between md:block">
+                                      <span className="text-muted-foreground md:hidden">Name:</span>
+                                      <span className="font-medium">{person.name || `Person ${index + 1}`}</span>
+                                    </div>
+                                    <div className="flex justify-between md:block">
+                                      <span className="text-muted-foreground md:hidden">Category:</span>
+                                      <span className="font-medium">{categoryName}</span>
+                                    </div>
+                                    <div className="flex justify-between md:block">
+                                      <span className="text-muted-foreground md:hidden">Amount:</span>
+                                      <span className="font-medium">₹{(person.amount || 0).toLocaleString()}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Payment Summary */}
+                      <div className="space-y-3 border-t pt-4">
+                        <h5 className="font-medium text-foreground">Payment Summary</h5>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Main Registration:</span>
+                            <span className="font-medium">₹{selectedAmount.toLocaleString()}</span>
+                          </div>
+                          {additionalPersons.length > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Additional Delegates:</span>
+                              <span className="font-medium">₹{additionalAmount.toLocaleString()}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between border-t pt-2 text-base font-semibold">
+                            <span className="text-foreground">Total Amount Paid:</span>
+                            <span className="text-primary">₹{totalAmount.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Transaction ID:</span>
+                            <span>TXN{Date.now()}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Payment Date:</span>
+                            <span>{new Date().toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
                     <div className="flex gap-3 justify-center">
                       <Button 
                         onClick={generatePaymentReceipt} 
-                        className="gradient-primary text-primary-foreground"
+                        className="gradient-primary text-primary-foreground h-11 text-sm px-5"
                       >
                         <Download className="mr-2 h-4 w-4" />
                         Download Receipt
@@ -965,6 +1338,7 @@ export default function SeminarRegistration() {
                       <Button 
                         onClick={() => navigate('/dashboard')} 
                         variant="outline"
+                        className="h-11 text-sm px-5"
                       >
                         Go to Dashboard
                       </Button>
@@ -981,6 +1355,7 @@ export default function SeminarRegistration() {
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentIndex === 0}
+                className="h-11 text-sm px-5"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
@@ -990,7 +1365,7 @@ export default function SeminarRegistration() {
                 <Button 
                   type="button" 
                   onClick={handleNext} 
-                  className="gradient-primary text-primary-foreground"
+                  className="gradient-primary text-primary-foreground h-11 text-sm px-5"
                   disabled={currentStep === 'fee' && (!selectedCategory || !selectedSlab)}
                 >
                   Continue
@@ -999,6 +1374,168 @@ export default function SeminarRegistration() {
               )}
             </div>
           </div>
+            </div>
+
+            {/* Right Column - Fee Structure Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-6 space-y-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
+                {/* Fee Structure Card */}
+                <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+                  <div className="px-6 py-4" style={{background: '#0B3C5D'}}>
+                    <h3 className="text-lg font-semibold text-white">Registration Fees</h3>
+                  </div>
+                  <div className="p-6">
+                    {feeCategories.length > 0 && feeSlabs.length > 0 ? (
+                      <div className="space-y-4">
+                        {feeCategories.map((category) => (
+                          <div key={category.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                            <h4 className="font-semibold mb-3" style={{color: '#1F2933'}}>
+                              {category.name}
+                            </h4>
+                            <div className="space-y-2">
+                              {feeSlabs.map((slab) => {
+                                const rawAmount = category.fees[slab.id];
+                                const amount = typeof rawAmount === 'number' && !isNaN(rawAmount) ? rawAmount : 0;
+                                return (
+                                  <div key={slab.id} className="flex justify-between items-center text-sm">
+                                    <span style={{color: '#616E7C'}}>{slab.label}</span>
+                                    <span className="font-semibold text-black">
+                                      ₹{amount.toLocaleString()}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">Fee structure loading...</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected Fee Display */}
+                {selectedCategory && selectedSlab && (
+                  <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
+                    <h4 className="font-semibold mb-2" style={{color: '#1F2933'}}>Your Selection</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Category:</span>
+                        <span className="font-medium">{feeCategories.find(c => c.id === selectedCategory)?.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Slab:</span>
+                        <span className="font-medium">{feeSlabs.find(s => s.id === selectedSlab)?.label}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold pt-2 border-t border-yellow-300">
+                        <span>Total:</span>
+                        <span className="text-black">₹{totalAmount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Benefits Card */}
+                <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+                  <div className="px-6 py-4" style={{background: '#C9A227'}}>
+                    <h3 className="text-lg font-semibold text-white">Registration Benefits</h3>
+                  </div>
+                  <div className="p-6">
+                    <ul className="space-y-3 text-sm">
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{color: '#C9A227'}} />
+                        <span>CME Credits</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{color: '#C9A227'}} />
+                        <span>Expert Speaker Sessions</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{color: '#C9A227'}} />
+                        <span>Networking Opportunities</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{color: '#C9A227'}} />
+                        <span>Conference Materials</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{color: '#C9A227'}} />
+                        <span>Lunch & Refreshments</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{color: '#C9A227'}} />
+                        <span>Certificate of Participation</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Offline Form Download */}
+                <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+                  <div className="px-6 py-4" style={{background: '#0B3C5D'}}>
+                    <h3 className="text-lg font-semibold text-white">Offline Registration</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Prefer to register offline? Download the printable registration form.
+                    </p>
+                    <Button 
+                      onClick={generateOfflineRegistrationForm}
+                      variant="outline" 
+                      className="w-full border-2"
+                      style={{borderColor: '#0B3C5D', color: '#0B3C5D'}}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Offline Form (PDF)
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Fill the form manually and submit at the registration desk.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Committee Members Section */}
+          {committeeMembers.length > 0 && (
+            <section className="py-12 md:py-16" style={{background: '#F9FAFB'}}>
+              <div className="container max-w-6xl px-4">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl md:text-3xl font-semibold mb-4" style={{color: '#1F2933'}}>
+                    Organizing Committee
+                  </h2>
+                  <div className="w-24 h-1 mx-auto mb-4" style={{background: '#C9A227'}}></div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                  {committeeMembers.map((member) => (
+                    <div key={member.id} className="text-center">
+                      <div className="relative mb-4">
+                        <img
+                          src={member.image_url || '/api/placeholder/120/120'}
+                          alt={member.name}
+                          className="w-24 h-24 rounded-full mx-auto object-cover border-4"
+                          style={{borderColor: '#C9A227'}}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/api/placeholder/120/120';
+                          }}
+                        />
+                      </div>
+                      <h3 className="font-semibold text-sm mb-1" style={{color: '#1F2933'}}>
+                        {member.name}
+                      </h3>
+                      <p className="text-xs" style={{color: '#616E7C'}}>
+                        {member.designation}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </Layout>

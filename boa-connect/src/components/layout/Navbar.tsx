@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Eye, LogOut, LayoutDashboard, Settings, ChevronDown } from 'lucide-react';
+import { Menu, Eye, LogOut, LayoutDashboard, Settings, ChevronDown, Globe, Type, Contrast, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,25 +23,31 @@ import { useSiteConfig } from '@/hooks/useSiteConfig';
 export function Navbar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [contactInfo, setContactInfo] = useState<any>(null);
   const navigate = useNavigate();
   const { config } = useSiteConfig();
-
-  // Theme Colors Configuration
-  const theme = {
-    primary: '#0F4C75',    // Deep Royal Blue (Trust)
-    secondary: '#3282B8',  // Teal Blue (Vision/Medical)
-    accent: '#E94560',     // Alert Red (Notices)
-    textLight: '#BBE1FA',  // Light Blue Text
-  };
 
   useEffect(() => {
     loadNotifications();
     loadUser();
+    loadContactInfo();
     
     // Poll for new notifications every 30 seconds
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const loadContactInfo = async () => {
+    try {
+      const response = await fetch('/api/contact-info');
+      const data = await response.json();
+      if (data.success && data.contactInfo) {
+        setContactInfo(data.contactInfo);
+      }
+    } catch (error) {
+      console.error('Failed to load contact info:', error);
+    }
+  };
 
   const loadNotifications = async () => {
     try {
@@ -52,11 +58,38 @@ export function Navbar() {
     }
   };
 
-  const loadUser = () => {
+  const loadUser = async () => {
     const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    if (token) {
+      try {
+        // Try to get fresh user data from API
+        const response = await fetch('/api/users/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData.user);
+          // Update localStorage with fresh data
+          localStorage.setItem('user', JSON.stringify(userData.user));
+        } else {
+          // Fallback to localStorage if API fails
+          const userData = localStorage.getItem('user');
+          if (userData) {
+            setUser(JSON.parse(userData));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+        // Fallback to localStorage
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          setUser(JSON.parse(userData));
+        }
+      }
     }
   };
 
@@ -94,176 +127,207 @@ export function Navbar() {
     return `${displayTitle} ${user.first_name || user.name || ''} ${user.last_name || user.surname || ''}`.trim();
   };
 
+  // Simple navigation menu items
+  const navigationItems = [
+    { path: '/', label: 'Home' },
+    { path: '/about', label: 'About Us' },
+    { path: '/seminars', label: 'Events' },
+    { path: '/membership', label: 'Membership' },
+    { path: '/notifications', label: 'Notifications' },
+    { path: '/gallery', label: 'Gallery' },
+    { path: '/contact', label: 'Contact Us' }
+  ];
+
   return (
-    <header 
-      className="sticky top-0 z-50 w-full shadow-lg transition-all duration-300" 
-      style={{
-        background: `linear-gradient(to right, ${theme.primary}, #1B262C)`,
-        borderBottom: `3px solid ${theme.secondary}`
-      }}
-    >
-      <div className="container flex h-20 items-center justify-between">
-        {/* Logo Section */}
-        <Link to="/" className="flex items-center gap-3 group">
-          {config.logo_url ? (
-            <img 
-              src={config.logo_url} 
-              alt="BOA Logo" 
-              className="h-14 w-auto object-contain drop-shadow-md"
-            />
-          ) : (
-            <>
-              <div 
-                className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20 transition-transform group-hover:scale-105"
-              >
-                <Eye className="h-7 w-7 text-white" />
+    <>
+      {/* Top Contact Bar */}
+      <div className="bg-gray-800 text-gray-300 py-2 hidden md:block gov-fade-in">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center text-sm">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                <a 
+                  href={`mailto:${contactInfo?.email || 'info@boa.org.in'}`}
+                  className="gov-transition-colors hover:text-white"
+                >
+                  {contactInfo?.email || 'info@boa.org.in'}
+                </a>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-white tracking-wide leading-tight">BOA</span>
-                <span className="text-xs font-medium tracking-wider" style={{ color: theme.secondary }}>
-                  Bihar Ophthalmic Association
-                </span>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                <a 
+                  href={`tel:${contactInfo?.mobile || '+916121234567'}`}
+                  className="gov-transition-colors hover:text-white"
+                >
+                  {contactInfo?.mobile || '+91 612 123 4567'}
+                </a>
               </div>
-            </>
-          )}
-        </Link>
+            </div>
+            <div className="text-xs text-gray-300">
+              Government Recognized Medical Association | Est. 1975
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {[
-            { path: '/', label: 'Home' },
-            { path: '/about', label: 'About' }
-          ].map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                isActive(link.path)
-                  ? 'text-white shadow-md transform -translate-y-0.5'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
-              }`}
-              style={isActive(link.path) ? { backgroundColor: theme.secondary } : {}}
-            >
-              {link.label}
-            </Link>
-          ))}
+      {/* Main Navbar */}
+      <header className="sticky top-0 z-50 w-full bg-blue-900 border-b border-blue-800 shadow-sm navbar-sticky">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
           
-          {/* Events Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                  isActive('/seminars') || isActive('/cme-programs')
-                    ? 'text-white shadow-md'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
-                style={isActive('/seminars') || isActive('/cme-programs') ? { backgroundColor: theme.secondary } : {}}
-              >
-                Events
-                <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-white border-t-2" style={{ borderTopColor: theme.secondary }}>
-              <DropdownMenuItem asChild className="focus:bg-slate-100">
-                <Link to="/seminars" className="cursor-pointer font-medium text-slate-700">
-                  Seminars & Conferences
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {[
-            { path: '/membership', label: 'Membership' },
-            { path: '/resources', label: 'Resources' },
-            { path: '/gallery', label: 'Gallery' },
-            { path: '/contact', label: 'Contact' }
-          ].map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                isActive(link.path)
-                  ? 'text-white shadow-md transform -translate-y-0.5'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
-              }`}
-              style={isActive(link.path) ? { backgroundColor: theme.secondary } : {}}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-3">
-          {/* Notifications - Show on mobile too */}
-          <Link to="/notifications" className="lg:block">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="relative text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <span className="hidden sm:inline text-sm font-medium mr-2">Notice</span>
-              <span className="sm:hidden text-sm font-medium">Notice</span>
-              {unreadNotifications > 0 && (
-                <>
-                  <Badge 
-                    className="ml-1 h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-white border-0" 
-                    style={{ backgroundColor: theme.accent }}
-                  >
-                    {unreadNotifications}
-                  </Badge>
-                  {/* Pulsing dot indicator */}
-                  <span className="absolute top-1 right-1 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: theme.accent }}></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: theme.accent }}></span>
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3">
+            {config.logo_url ? (
+              <div className="flex items-center gap-3">
+                <img 
+                  src={config.logo_url} 
+                  alt="BOA Logo" 
+                  className="h-10 w-auto object-contain"
+                />
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-lg font-semibold text-white leading-tight">
+                    Bihar Ophthalmic Association
                   </span>
-                </>
-              )}
-            </Button>
+                  <span className="text-xs text-blue-200">
+                    Government Recognized Medical Association
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-800 border-2 border-blue-700">
+                  <Eye className="h-6 w-6 text-white" />
+                </div>
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-lg font-semibold text-white leading-tight">
+                    Bihar Ophthalmic Association
+                  </span>
+                  <span className="text-xs text-blue-200">
+                    Government Recognized Medical Association
+                  </span>
+                </div>
+              </div>
+            )}
           </Link>
 
-          {/* User Menu - Desktop */}
-          <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-white/10">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center">
+            {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`navbar-link px-4 py-2 text-sm font-medium border-b-2 border-transparent gov-transition-colors ${
+                  isActive(item.path)
+                    ? 'text-white border-blue-300 active'
+                    : 'text-blue-100 hover:text-blue-200'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right Side */}
+          <div className="flex items-center gap-4">
+            
+            {/* Notifications - Separate with Indicator */}
+            <Link to="/notifications" className="relative">
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-md gov-transition-colors ${
+                isActive('/notifications')
+                  ? 'bg-blue-800 text-white'
+                  : 'text-blue-100 hover:bg-blue-800 hover:text-white'
+              }`}>
+                <div className="relative">
+                  <svg 
+                    className="h-5 w-5" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+                    />
+                  </svg>
+                  
+                  {/* Notification Badge - Fixed positioning */}
+                  {unreadNotifications > 0 && (
+                    <span className="notification-badge absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-blue-900">
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden sm:block text-sm font-medium">
+                  Notifications
+                </span>
+                
+                {/* Pulsing indicator for new announcements - Separate from badge */}
+                {unreadNotifications > 0 && (
+                  <div className="absolute top-1 right-1">
+                    <span className="notification-pulse flex h-3 w-3">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Link>
+
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10 p-1">
-                    <Avatar className="h-9 w-9 border-2" style={{ borderColor: theme.secondary }}>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-800 transition-colors">
+                    <Avatar className="h-8 w-8 border border-orange-300">
                       <AvatarImage src={user.avatar} alt={getUserName()} />
-                      <AvatarFallback className="text-white font-semibold" style={{ backgroundColor: theme.secondary }}>
+                      <AvatarFallback className="text-xs font-semibold bg-orange-500 text-white">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
-                  </Button>
+                    <span className="hidden sm:block text-sm font-medium text-white">
+                      {getUserName().split(' ')[0]}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-blue-200" />
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60 p-2" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1 bg-slate-50 p-2 rounded-md">
-                      <p className="text-sm font-semibold text-slate-800">{getUserName()}</p>
-                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                      {user.membership_no && (
-                        <div className="mt-1">
-                           <Badge variant="outline" className="text-[10px] border-blue-200 bg-blue-50 text-blue-700">
-                             ID: {user.membership_no}
-                           </Badge>
-                        </div>
-                      )}
+                <DropdownMenuContent className="w-60" align="end">
+                  <DropdownMenuLabel>
+                    <div className="p-2 bg-gray-50 rounded">
+                      <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer focus:bg-slate-100">
-                    <LayoutDashboard className="mr-2 h-4 w-4 text-slate-600" />
+                  
+                  {user.membership_no && (
+                    <>
+                      <DropdownMenuItem className="cursor-default">
+                        <div className="flex items-center justify-center w-full">
+                          <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
+                            Membership: {user.membership_no}
+                          </Badge>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
+                  
                   {user.role === 'admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer focus:bg-slate-100">
-                      <Settings className="mr-2 h-4 w-4 text-slate-600" />
+                    <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
                       <span>Admin Panel</span>
                     </DropdownMenuItem>
                   )}
+                  
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer focus:bg-red-50">
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logout</span>
                   </DropdownMenuItem>
@@ -272,164 +336,161 @@ export function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link to="/login">
-                  <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-white/10">
+                  <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
                     Login
                   </Button>
                 </Link>
-                <Link to="/register">
-                  <Button 
-                    size="sm" 
-                    className="text-white font-medium shadow-lg hover:shadow-xl transition-all" 
-                    style={{ backgroundColor: theme.secondary }}
-                  >
-                    Register
+                <span className="text-blue-400">|</span>
+                <Link to="/admin/login">
+                  <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
+                    Admin
                   </Button>
                 </Link>
               </div>
             )}
-          </div>
 
-          {/* Mobile Menu Toggle */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] border-l-4" style={{ borderLeftColor: theme.primary }}>
-              <div className="flex flex-col gap-1 mt-6">
-                {user && (
-                  <div className="mb-6">
-                    <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-xl border border-slate-100">
-                      <Avatar className="h-12 w-12 border-2" style={{ borderColor: theme.primary }}>
-                        <AvatarImage src={user.avatar} alt={getUserName()} />
-                        <AvatarFallback className="text-white" style={{ backgroundColor: theme.primary }}>
-                          {getUserInitials()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col overflow-hidden">
-                        <p className="text-sm font-bold text-slate-800 truncate">{getUserName()}</p>
-                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+            {/* Mobile Menu */}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild className="lg:hidden ml-2">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-blue-800">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px]">
+                <div className="flex flex-col gap-1 mt-6">
+                  
+                  {/* Mobile User Info */}
+                  {user && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3 px-4 py-4 bg-gray-50 rounded-lg border">
+                        <Avatar className="h-12 w-12 border-2 border-orange-400">
+                          <AvatarImage src={user.avatar} alt={getUserName()} />
+                          <AvatarFallback className="bg-orange-500 text-white font-semibold">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col overflow-hidden">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                <div className="space-y-1">
-                  <Link
-                    to="/"
-                    onClick={() => setMobileOpen(false)}
-                    className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center ${
-                      isActive('/') ? 'bg-blue-50' : 'hover:bg-slate-50'
-                    }`}
-                    style={isActive('/') ? { color: theme.primary } : { color: '#64748b' }}
-                  >
-                    Home
-                  </Link>
+                  )}
 
-                  <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2">
-                    Events & Updates
-                  </div>
-                  
-                  <Link
-                    to="/seminars"
-                    onClick={() => setMobileOpen(false)}
-                    className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center ${
-                      isActive('/seminars') ? 'bg-blue-50' : 'hover:bg-slate-50'
-                    }`}
-                    style={isActive('/seminars') ? { color: theme.primary } : { color: '#64748b' }}
-                  >
-                    Seminars
-                  </Link>
-
+                  {/* Mobile Notifications - Separate */}
                   <Link
                     to="/notifications"
                     onClick={() => setMobileOpen(false)}
-                    className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${
-                      isActive('/notifications') ? 'bg-blue-50' : 'hover:bg-slate-50'
+                    className={`flex items-center justify-between px-4 py-3 mb-4 text-sm font-medium rounded-lg border-2 transition-colors ${
+                      isActive('/notifications')
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'text-gray-700 hover:bg-gray-50 border-gray-200'
                     }`}
-                    style={isActive('/notifications') ? { color: theme.primary } : { color: '#64748b' }}
                   >
-                    <span>Notice</span>
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <svg 
+                          className="h-5 w-5" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+                          />
+                        </svg>
+                        {/* Pulsing indicator for mobile */}
+                        {unreadNotifications > 0 && (
+                          <div className="absolute -top-1 -right-1">
+                            <span className="flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <span>Notifications</span>
+                    </div>
                     {unreadNotifications > 0 && (
-                      <Badge 
-                        className="h-5 px-2 flex items-center justify-center text-xs text-white border-0" 
-                        style={{ backgroundColor: theme.accent }}
-                      >
-                        {unreadNotifications}
+                      <Badge className="h-6 px-2 text-xs bg-red-600 text-white font-bold border-2 border-white">
+                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
                       </Badge>
                     )}
                   </Link>
-
-                   <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2">
-                    Association
+                  
+                  {/* Mobile Navigation */}
+                  <div className="space-y-1">
+                    {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                          isActive(item.path)
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
                   </div>
 
-                  <Link
-                    to="/membership"
-                    onClick={() => setMobileOpen(false)}
-                    className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center ${
-                      isActive('/membership') ? 'bg-blue-50' : 'hover:bg-slate-50'
-                    }`}
-                    style={isActive('/membership') ? { color: theme.primary } : { color: '#64748b' }}
-                  >
-                    Membership
-                  </Link>
-
-                   <Link
-                    to="/about"
-                    onClick={() => setMobileOpen(false)}
-                    className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center ${
-                      isActive('/about') ? 'bg-blue-50' : 'hover:bg-slate-50'
-                    }`}
-                    style={isActive('/about') ? { color: theme.primary } : { color: '#64748b' }}
-                  >
-                    About Us
-                  </Link>
+                  {/* Mobile User Actions */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    {user ? (
+                      <div className="space-y-2">
+                        {user.membership_no && (
+                          <div className="flex items-center justify-center mb-3">
+                            <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
+                              Membership: {user.membership_no}
+                            </Badge>
+                          </div>
+                        )}
+                        <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                          <Button variant="outline" className="w-full justify-start">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            Dashboard
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="destructive" 
+                          className="w-full justify-start bg-red-50 text-red-600 hover:bg-red-100 border-0"
+                          onClick={() => {
+                            handleLogout();
+                            setMobileOpen(false);
+                          }}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Link to="/login" onClick={() => setMobileOpen(false)}>
+                          <Button variant="outline" className="w-full">
+                            Login
+                          </Button>
+                        </Link>
+                        <Link to="/admin/login" onClick={() => setMobileOpen(false)}>
+                          <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                            Admin Login
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                <div className="mt-auto pt-6 border-t border-slate-100">
-                  {user ? (
-                    <div className="space-y-2">
-                      <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                        <Button variant="outline" className="w-full justify-start border-slate-200 text-slate-700">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Dashboard
-                        </Button>
-                      </Link>
-                      <Button 
-                        variant="destructive" 
-                        className="w-full justify-start bg-red-50 text-red-600 hover:bg-red-100 border-0"
-                        onClick={() => {
-                          handleLogout();
-                          setMobileOpen(false);
-                        }}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <Link to="/login" onClick={() => setMobileOpen(false)}>
-                        <Button variant="outline" className="w-full border-slate-200">
-                          Login
-                        </Button>
-                      </Link>
-                      <Link to="/register" onClick={() => setMobileOpen(false)}>
-                        <Button className="w-full text-white" style={{ backgroundColor: theme.secondary }}>
-                          Register
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          </div>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
 

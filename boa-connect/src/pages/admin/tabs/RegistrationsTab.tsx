@@ -10,6 +10,28 @@ import { Trash2, Eye, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+// Helper function to convert delegate_type to readable format
+const formatDelegateType = (delegateType: string) => {
+  const typeMap: { [key: string]: string } = {
+    'boa-member': 'BOA Member',
+    'non-boa-member': 'Non BOA Member',
+    'accompanying-person': 'Accompanying Person'
+  };
+  return typeMap[delegateType] || delegateType;
+};
+
+// Helper function to format title consistently
+const formatTitle = (title: string) => {
+  const titleMap: { [key: string]: string } = {
+    'dr': 'Dr.',
+    'mr': 'Mr.',
+    'mrs': 'Mrs.',
+    'ms': 'Ms.',
+    'prof': 'Prof.'
+  };
+  return titleMap[title?.toLowerCase()] || title || '';
+};
+
 export default function RegistrationsTab() {
   const { toast } = useToast();
   const [registrations, setRegistrations] = useState<any[]>([]);
@@ -126,12 +148,12 @@ export default function RegistrationsTab() {
     y += 8;
     doc.setFontSize(10);
     const participantInfo = [
-      ['Name:', `${reg.title} ${reg.first_name} ${reg.surname}`],
+      ['Name:', `${formatTitle(reg.title)} ${reg.first_name} ${reg.surname}`],
       ['Email:', reg.email],
       ['Mobile:', reg.mobile],
       ['Gender:', reg.gender],
       ['Membership No:', reg.membership_no || 'N/A'],
-      ['Delegate Type:', reg.delegate_type || 'Self']
+      ['Delegate Type:', formatDelegateType(reg.delegate_type) || 'Self']
     ];
     
     participantInfo.forEach(([label, value]) => {
@@ -255,27 +277,42 @@ export default function RegistrationsTab() {
             {registrations.map((reg) => (
               <TableRow key={reg.id}>
                 <TableCell className="font-medium">{reg.registration_no}</TableCell>
-                <TableCell>{reg.title} {reg.first_name} {reg.surname}</TableCell>
+                <TableCell>{formatTitle(reg.title)} {reg.first_name} {reg.surname}</TableCell>
                 <TableCell className="text-sm">{reg.seminar_name}</TableCell>
                 <TableCell className="text-sm">{reg.category_name}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className="capitalize">
-                    {reg.delegate_type || 'Self'}
+                    {formatDelegateType(reg.delegate_type) || 'Self'}
                   </Badge>
                 </TableCell>
                 <TableCell>Rs {parseFloat(reg.amount).toLocaleString()}</TableCell>
                 <TableCell>
-                  <Select value={reg.status} onValueChange={(value) => handleStatusChange(reg.id, value)}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {reg.status === 'completed' && reg.payment_method === 'razorpay' ? (
+                    // If payment is completed via Razorpay, show read-only badge
+                    <Badge 
+                      className={`capitalize ${
+                        reg.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                        reg.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                        reg.status === 'failed' ? 'bg-red-100 text-red-800 border-red-200' :
+                        'bg-gray-100 text-gray-800 border-gray-200'
+                      }`}
+                    >
+                      {reg.status} ✓
+                    </Badge>
+                  ) : (
+                    // For other statuses, allow editing
+                    <Select value={reg.status} onValueChange={(value) => handleStatusChange(reg.id, value)}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm">{new Date(reg.created_at).toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
@@ -331,12 +368,12 @@ export default function RegistrationsTab() {
               <div className="bg-accent/30 rounded-lg p-4">
                 <h3 className="font-semibold text-lg mb-3">Participant Details</h3>
                 <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div><span className="font-semibold">Name:</span> {selectedRegistration.title} {selectedRegistration.first_name} {selectedRegistration.surname}</div>
+                  <div><span className="font-semibold">Name:</span> {formatTitle(selectedRegistration.title)} {selectedRegistration.first_name} {selectedRegistration.surname}</div>
                   <div><span className="font-semibold">Email:</span> {selectedRegistration.email}</div>
                   <div><span className="font-semibold">Mobile:</span> {selectedRegistration.mobile}</div>
                   <div><span className="font-semibold">Gender:</span> {selectedRegistration.gender}</div>
                   <div><span className="font-semibold">Membership No:</span> {selectedRegistration.membership_no || 'N/A'}</div>
-                  <div><span className="font-semibold">Delegate Type:</span> {selectedRegistration.delegate_type || 'Self'}</div>
+                  <div><span className="font-semibold">Delegate Type:</span> {formatDelegateType(selectedRegistration.delegate_type) || 'Self'}</div>
                 </div>
               </div>
 

@@ -97,6 +97,12 @@ router.post('/membership-categories', adminAuth, adminController.createMembershi
 router.put('/membership-categories/:id', adminAuth, adminController.updateMembershipCategory);
 router.delete('/membership-categories/:id', adminAuth, adminController.deleteMembershipCategory);
 
+// Membership Management
+router.get('/members', adminAuth, adminController.getAllMembers);
+router.put('/members/:id', adminAuth, adminController.updateMembershipDetails);
+router.get('/check-membership-availability', adminAuth, adminController.checkMembershipAvailability);
+router.get('/export-members', adminAuth, adminController.exportMembers);
+
 // Resources Management
 router.get('/resources', adminAuth, adminController.getResources);
 router.post('/resources', adminAuth, adminController.createResource);

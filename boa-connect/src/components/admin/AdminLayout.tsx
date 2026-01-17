@@ -182,6 +182,7 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
       items: [
         { id: 'users', label: 'Online Users', icon: Users },
         { id: 'offline-users', label: 'Offline Users', icon: UserPlus },
+        { id: 'membership-management', label: 'Membership Management', icon: Award },
       ]
     },
     {
@@ -193,6 +194,7 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
     {
       title: 'Content Management',
       items: [
+        { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'upcoming', label: 'Upcoming Events', icon: Image },
         { id: 'gallery', label: 'Gallery', icon: Image },
         { id: 'committee', label: 'Committee', icon: User },

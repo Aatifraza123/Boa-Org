@@ -18,6 +18,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Helper function to convert delegate_type to readable format
+const formatDelegateType = (delegateType: string) => {
+  const typeMap: { [key: string]: string } = {
+    'boa-member': 'BOA Member',
+    'non-boa-member': 'Non BOA Member',
+    'accompanying-person': 'Accompanying Person'
+  };
+  return typeMap[delegateType] || delegateType;
+};
+
 interface Payment {
   id: string;
   user_id: number;
@@ -446,7 +456,7 @@ export default function AllPaymentsTab() {
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground">Delegate Category</label>
-                        <p className="font-medium">{selectedPayment.details.delegate_category}</p>
+                        <p className="font-medium">{formatDelegateType(selectedPayment.details.delegate_category)}</p>
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground">Registration Number</label>
