@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { X, Calendar, MapPin, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { X, Calendar, MapPin, ArrowRight, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { seminarAPI } from '@/lib/api';
 
@@ -9,10 +9,54 @@ const POPUP_DISMISSED_KEY = 'boa_seminar_popup_dismissed';
 export function SeminarPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSeminar, setActiveSeminar] = useState<any>(null);
+  const [showReloadPopup, setShowReloadPopup] = useState(false);
+  const [upcomingEvent, setUpcomingEvent] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadActiveSeminar();
+    checkReloadPopup();
   }, []);
+
+  const checkReloadPopup = async () => {
+    const wasReloaded = sessionStorage.getItem('pageReloaded');
+    
+    if (wasReloaded) {
+      sessionStorage.removeItem('pageReloaded');
+      
+      // Load upcoming events
+      try {
+        const response = await fetch('/api/upcoming-events');
+        const data = await response.json();
+        
+        if (data.success && data.events && data.events.length > 0) {
+          const upcoming = data.events.find((e: any) => {
+            const now = new Date();
+            const start = new Date(e.start_date);
+            return now < start;
+          });
+          
+          if (upcoming) {
+            setUpcomingEvent(upcoming);
+            setShowReloadPopup(true);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load events for popup:', error);
+      }
+    }
+
+    // Set flag for next reload
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('pageReloaded', 'true');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  };
 
   const loadActiveSeminar = async () => {
     try {
@@ -42,91 +86,197 @@ export function SeminarPopup() {
     localStorage.setItem(POPUP_DISMISSED_KEY, 'true');
   };
 
-  if (!isOpen || !activeSeminar) return null;
+  const handleCloseReloadPopup = () => {
+    setShowReloadPopup(false);
+  };
+
+  const handleViewNotifications = () => {
+    setShowReloadPopup(false);
+    navigate('/notifications');
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-      
-      {/* Popup */}
-      <div className="relative w-full max-w-lg bg-card rounded-2xl shadow-elevated animate-scale-in overflow-hidden">
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        {/* Header Banner */}
-        <div className="gradient-primary px-6 py-8 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/20 text-primary-foreground text-sm font-medium mb-4">
-            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-            Registration Open
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground">
-            {activeSeminar.name}
-          </h2>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
-                <Calendar className="h-5 w-5 text-primary" />
+    <>
+      {/* Reload Event Popup */}
+      {showReloadPopup && upcomingEvent && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 overflow-y-auto">
+          {/* Backdrop with reduced opacity */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleCloseReloadPopup}
+          />
+          
+          {/* Popup */}
+          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full animate-in slide-in-from-top duration-300">
+            {/* Header */}
+            <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                <h3 className="font-bold text-lg">Upcoming Event</h3>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Date</p>
-                <p className="font-medium text-foreground">
-                  {new Date(activeSeminar.start_date).toLocaleDateString('en-GB', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                  {activeSeminar.start_date !== activeSeminar.end_date && (
-                    <> - {new Date(activeSeminar.end_date).toLocaleDateString('en-GB', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}</>
-                  )}
-                </p>
+              <button
+                onClick={handleCloseReloadPopup}
+                className="hover:bg-blue-700 rounded-full p-1 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Event Image */}
+              {upcomingEvent.image_url && (
+                <div className="mb-4 rounded-lg overflow-hidden">
+                  <img
+                    src={upcomingEvent.image_url}
+                    alt={upcomingEvent.title}
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/api/placeholder/400/200';
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Event Title */}
+              <h4 className="text-xl font-bold text-gray-900 mb-3">
+                {upcomingEvent.title}
+              </h4>
+
+              {/* Event Details */}
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium">Date:</span>
+                  <span>{formatDate(upcomingEvent.start_date)}</span>
+                </div>
+
+                {upcomingEvent.location && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium">Location:</span>
+                    <span>{upcomingEvent.location}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleViewNotifications}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  View Notifications
+                </button>
+                <button
+                  onClick={handleCloseReloadPopup}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
-                <MapPin className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+      )}
+
+      {/* Original Seminar Popup */}
+      {isOpen && activeSeminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleClose}
+          />
+          
+          {/* Popup */}
+          <div className="relative w-full max-w-lg bg-card rounded-2xl shadow-elevated animate-scale-in overflow-hidden">
+            {/* Close Button */}
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header Banner */}
+            <div className="gradient-primary px-6 py-8 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/20 text-primary-foreground text-sm font-medium mb-4">
+                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                Registration Open
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Venue</p>
-                <p className="font-medium text-foreground">{activeSeminar.venue}, {activeSeminar.location}</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground">
+                {activeSeminar.name}
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="font-medium text-foreground">
+                      {new Date(activeSeminar.start_date).toLocaleDateString('en-GB', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                      {activeSeminar.start_date !== activeSeminar.end_date && (
+                        <> - {new Date(activeSeminar.end_date).toLocaleDateString('en-GB', { 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Venue</p>
+                    <p className="font-medium text-foreground">{activeSeminar.venue}, {activeSeminar.location}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                {activeSeminar.description || 'Join leading ophthalmologists from across India for the most prestigious eye care conference. Early bird registration now available!'}
+              </p>
+
+              <div className="flex gap-3">
+                <Link to={`/seminar/${activeSeminar.id}/register`} className="flex-1">
+                  <Button className="w-full gradient-primary text-primary-foreground" size="lg">
+                    Register Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Button variant="outline" size="lg" onClick={handleClose}>
+                  Maybe Later
+                </Button>
               </div>
             </div>
           </div>
-
-          <p className="text-sm text-muted-foreground">
-            {activeSeminar.description || 'Join leading ophthalmologists from across India for the most prestigious eye care conference. Early bird registration now available!'}
-          </p>
-
-          <div className="flex gap-3">
-            <Link to={`/seminar/${activeSeminar.id}/register`} className="flex-1">
-              <Button className="w-full gradient-primary text-primary-foreground" size="lg">
-                Register Now
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Button variant="outline" size="lg" onClick={handleClose}>
-              Maybe Later
-            </Button>
-          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
