@@ -22,3 +22,12 @@ router.post('/logout', adminAuth, adminAuthController.adminLogout);
 console.log('Admin auth routes configured');
 
 module.exports = router;
+
+
+// Image upload (protected)
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
+router.post('/certification/upload-image', adminAuth, upload.single('image'), adminAuthController.uploadImage);
+
+console.log('Image upload route added');

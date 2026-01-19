@@ -54,9 +54,9 @@ export default function About() {
 
         {/* BOA Details Section */}
         <section className="py-16 bg-white">
-          <div className="container mx-auto px-4 max-w-4xl">
+          <div className="container mx-auto px-4 max-w-5xl">
             <div className="section-enter">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+              <h2 className="p-2 bg-[#0B3C5D] text-white text-3xl font-bold text-gray-900 mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
                 About BOA
               </h2>
               <div className="prose prose-lg max-w-none">
@@ -84,16 +84,16 @@ export default function About() {
 
         {/* Certification Section */}
         <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="text-center mb-12 ">
+              <h2 className="p-2 bg-[#0B3C5D] text-white text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
                 Certification & Registration
               </h2>
               <div className="h-1 w-24 bg-blue-600 mx-auto rounded-full"></div>
             </div>
 
             {certification ? (
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl shadow-lg  border border-gray-200 overflow-hidden">
                 {/* Certification Image */}
                 {certification.certificate_image_url && (
                   <div className="p-6 border-b border-gray-200 bg-gray-50">
@@ -191,7 +191,7 @@ export default function About() {
           <div className="container mx-auto px-4 max-w-6xl">
             <div className="section-enter">
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+                <h2 className="p-2 bg-[#0B3C5D] text-white text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
                   Executive Committee Members
                 </h2>
                 <div className="h-1 w-24 bg-blue-600 mx-auto rounded-full"></div>

@@ -177,7 +177,7 @@ export function UpcomingEventsCarousel() {
         <div className="mb-8 ">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-12 bg-blue-600"></div>
-            <h2 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+            <h2 className="text-2xl font-bold text-gray-900 p-2 bg-[#0B3C5D] text-white" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
               Upcoming Events {isLoading ? '(Loading...)' : `(${events.length} events)`}
             </h2>
           </div>

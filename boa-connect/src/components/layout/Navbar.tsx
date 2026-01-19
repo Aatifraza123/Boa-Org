@@ -35,7 +35,7 @@ export function Navbar() {
     loadNotifications();
     loadUser();
     loadContactInfo();
-    
+
     // Poll for new notifications every 30 seconds
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
@@ -73,7 +73,7 @@ export function Navbar() {
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (response.ok) {
           const userData = await response.json();
           setUser(userData.user);
@@ -136,7 +136,7 @@ export function Navbar() {
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About Us' },
     { path: '/seminars', label: 'Events' },
-    { path: '/membership', label: 'Membership' },
+    { path: '/membership', label: 'Member Zone' },
     { path: '/notifications', label: 'Notifications' },
     { path: '/gallery', label: 'Gallery' },
     { path: '/contact', label: 'Contact Us' }
@@ -145,13 +145,13 @@ export function Navbar() {
   return (
     <>
       {/* Top Contact Bar */}
-      <div className="bg-gray-800 text-gray-300 py-2 gov-fade-in" style={{opacity: 1, visibility: 'visible'}}>
+      <div className="bg-gray-800 text-gray-300 py-2 gov-fade-in" style={{ opacity: 1, visibility: 'visible' }}>
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <a 
+                <a
                   href={`mailto:${contactInfo?.email || 'info@boa.org.in'}`}
                   className="gov-transition-colors hover:text-white"
                 >
@@ -160,7 +160,7 @@ export function Navbar() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <a 
+                <a
                   href={`tel:${contactInfo?.mobile || '+916121234567'}`}
                   className="gov-transition-colors hover:text-white"
                 >
@@ -179,305 +179,301 @@ export function Navbar() {
       <header className="sticky top-0 z-50 w-full bg-blue-900 border-b border-blue-800 shadow-sm navbar-sticky">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
-          
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            {config.logo_url ? (
-              <div className="flex items-center gap-3">
-                <img 
-                  src={config.logo_url} 
-                  alt="BOA Logo" 
-                  className="h-10 w-auto object-contain"
-                />
-                <div className="hidden sm:flex flex-col">
-                  <span className="text-lg font-semibold text-white leading-tight">
-                    Bihar Ophthalmic Association
-                  </span>
-                  <span className="text-xs text-blue-200">
-                    Government Recognized Medical Association
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-800 border-2 border-blue-700">
-                  <Eye className="h-6 w-6 text-white" />
-                </div>
-                <div className="hidden sm:flex flex-col">
-                  <span className="text-lg font-semibold text-white leading-tight">
-                    Bihar Ophthalmic Association
-                  </span>
-                  <span className="text-xs text-blue-200">
-                    Government Recognized Medical Association
-                  </span>
-                </div>
-              </div>
-            )}
-          </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center">
-            {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`navbar-link px-4 py-2 text-sm font-medium border-b-2 border-transparent gov-transition-colors ${
-                  isActive(item.path)
-                    ? 'text-white border-blue-300 active'
-                    : 'text-blue-100 hover:text-blue-200'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Right Side */}
-          <div className="flex items-center gap-4">
-            
-            {/* Notifications - Separate with Indicator */}
-            <Link to="/notifications" className="relative">
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-md gov-transition-colors ${
-                isActive('/notifications')
-                  ? 'bg-blue-800 text-white'
-                  : 'text-blue-100 hover:bg-blue-800 hover:text-white'
-              }`}>
-                <div className="relative">
-                  <svg 
-                    className="h-5 w-5" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
-                    />
-                  </svg>
-                  
-                  {/* Notification Badge - Only number */}
-                  {unreadNotifications > 0 && (
-                    <span className="notification-badge absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-blue-900">
-                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3">
+              {config.logo_url ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={config.logo_url}
+                    alt="BOA Logo"
+                    className="h-10 w-auto object-contain"
+                  />
+                  <div className="hidden sm:flex flex-col">
+                    <span className="text-lg font-semibold text-white leading-tight">
+                      Bihar Ophthalmic Association
                     </span>
-                  )}
+                    <span className="text-xs text-blue-200">
+                      Government Recognized Medical Association
+                    </span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-800 border-2 border-blue-700">
+                    <Eye className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="hidden sm:flex flex-col">
+                    <span className="text-lg font-semibold text-white leading-tight">
+                      Bihar Ophthalmic Association
+                    </span>
+                    <span className="text-xs text-blue-200">
+                      Government Recognized Medical Association
+                    </span>
+                  </div>
+                </div>
+              )}
             </Link>
 
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-800 transition-colors">
-                    <Avatar className="h-8 w-8 border border-orange-300">
-                      <AvatarImage src={user.avatar} alt={getUserName()} />
-                      <AvatarFallback className="text-xs font-semibold bg-orange-500 text-white">
-                        {getUserInitials()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden sm:block text-sm font-medium text-white">
-                      {getUserName().split(' ')[0]}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-blue-200" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60" align="end">
-                  <DropdownMenuLabel>
-                    <div className="p-2 bg-gray-50 rounded">
-                      <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
-                  {user.membership_no && (
-                    <>
-                      <DropdownMenuItem className="cursor-default">
-                        <div className="flex items-center justify-center w-full">
-                          <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
-                            Membership: {user.membership_no}
-                          </Badge>
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
-                  
-                  {user.role === 'admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Admin Panel</span>
-                    </DropdownMenuItem>
-                  )}
-                  
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
-                    Login
-                  </Button>
-                </Link>
-                <span className="text-blue-400">|</span>
-                <Link to="/admin/login">
-                  <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
-                    Admin
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            {/* Mobile Menu */}
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild className="lg:hidden ml-2">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-blue-800">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px]">
-                <div className="flex flex-col gap-1 mt-6">
-                  
-                  {/* Mobile User Info */}
-                  {user && (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-3 px-4 py-4 bg-gray-50 rounded-lg border">
-                        <Avatar className="h-12 w-12 border-2 border-orange-400">
-                          <AvatarImage src={user.avatar} alt={getUserName()} />
-                          <AvatarFallback className="bg-orange-500 text-white font-semibold">
-                            {getUserInitials()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col overflow-hidden">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Mobile Notifications - Separate */}
-                  <Link
-                    to="/notifications"
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center justify-between px-4 py-3 mb-4 text-sm font-medium rounded-lg border-2 transition-colors ${
-                      isActive('/notifications')
-                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                        : 'text-gray-700 hover:bg-gray-50 border-gray-200'
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center">
+              {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`navbar-link px-4 py-2 text-sm font-medium border-b-2 border-transparent gov-transition-colors ${isActive(item.path)
+                      ? 'text-white border-blue-300 active'
+                      : 'text-blue-100 hover:text-blue-200'
                     }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <svg 
-                          className="h-5 w-5" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
-                          />
-                        </svg>
-                        {/* Pulsing indicator for mobile */}
-                        {unreadNotifications > 0 && (
-                          <div className="absolute -top-1 -right-1">
-                            <span className="flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <span>Notifications</span>
-                    </div>
-                    {unreadNotifications > 0 && (
-                      <Badge className="h-6 px-2 text-xs bg-red-600 text-white font-bold border-2 border-white">
-                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                      </Badge>
-                    )}
-                  </Link>
-                  
-                  {/* Mobile Navigation */}
-                  <div className="space-y-1">
-                    {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                          isActive(item.path)
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                      </Link>
-                    ))}
-                  </div>
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
 
-                  {/* Mobile User Actions */}
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    {user ? (
-                      <div className="space-y-2">
-                        {user.membership_no && (
-                          <div className="flex items-center justify-center mb-3">
+            {/* Right Side */}
+            <div className="flex items-center gap-4">
+
+              {/* Notifications - Separate with Indicator */}
+              <Link to="/notifications" className="relative">
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-md gov-transition-colors ${isActive('/notifications')
+                    ? 'bg-blue-800 text-white'
+                    : 'text-blue-100 hover:bg-blue-800 hover:text-white'
+                  }`}>
+                  <div className="relative">
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+
+                    {/* Notification Badge - Only number */}
+                    {unreadNotifications > 0 && (
+                      <span className="notification-badge absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-blue-900">
+                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-800 transition-colors">
+                      <Avatar className="h-8 w-8 border border-orange-300">
+                        <AvatarImage src={user.avatar} alt={getUserName()} />
+                        <AvatarFallback className="text-xs font-semibold bg-orange-500 text-white">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden sm:block text-sm font-medium text-white">
+                        {getUserName().split(' ')[0]}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-blue-200" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-60" align="end">
+                    <DropdownMenuLabel>
+                      <div className="p-2 bg-gray-50 rounded">
+                        <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+
+                    {user.membership_no && (
+                      <>
+                        <DropdownMenuItem className="cursor-default">
+                          <div className="flex items-center justify-center w-full">
                             <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
                               Membership: {user.membership_no}
                             </Badge>
                           </div>
-                        )}
-                        <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                          <Button variant="outline" className="w-full justify-start">
-                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                            Dashboard
-                          </Button>
-                        </Link>
-                        <Button 
-                          variant="destructive" 
-                          className="w-full justify-start bg-red-50 text-red-600 hover:bg-red-100 border-0"
-                          onClick={() => {
-                            handleLogout();
-                            setMobileOpen(false);
-                          }}
-                        >
-                          <LogOut className="mr-2 h-4 w-4" />
-                          Logout
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Link to="/login" onClick={() => setMobileOpen(false)}>
-                          <Button variant="outline" className="w-full">
-                            Login
-                          </Button>
-                        </Link>
-                        <Link to="/admin/login" onClick={() => setMobileOpen(false)}>
-                          <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                            Admin Login
-                          </Button>
-                        </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+
+                    {user.role === 'admin' && (
+                      <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link to="/login">
+                    <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
+                      Login
+                    </Button>
+                  </Link>
+                  <span className="text-blue-400">|</span>
+                  <Link to="/admin/login">
+                    <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
+                      Admin
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {/* Mobile Menu */}
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild className="lg:hidden ml-2">
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-blue-800">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px]">
+                  <div className="flex flex-col gap-1 mt-6">
+
+                    {/* Mobile User Info */}
+                    {user && (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3 px-4 py-4 bg-gray-50 rounded-lg border">
+                          <Avatar className="h-12 w-12 border-2 border-orange-400">
+                            <AvatarImage src={user.avatar} alt={getUserName()} />
+                            <AvatarFallback className="bg-orange-500 text-white font-semibold">
+                              {getUserInitials()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col overflow-hidden">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
+                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                          </div>
+                        </div>
                       </div>
                     )}
+
+                    {/* Mobile Notifications - Separate */}
+                    <Link
+                      to="/notifications"
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center justify-between px-4 py-3 mb-4 text-sm font-medium rounded-lg border-2 transition-colors ${isActive('/notifications')
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'text-gray-700 hover:bg-gray-50 border-gray-200'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                            />
+                          </svg>
+                          {/* Pulsing indicator for mobile */}
+                          {unreadNotifications > 0 && (
+                            <div className="absolute -top-1 -right-1">
+                              <span className="flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <span>Notifications</span>
+                      </div>
+                      {unreadNotifications > 0 && (
+                        <Badge className="h-6 px-2 text-xs bg-red-600 text-white font-bold border-2 border-white">
+                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                        </Badge>
+                      )}
+                    </Link>
+
+                    {/* Mobile Navigation */}
+                    <div className="space-y-1">
+                      {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setMobileOpen(false)}
+                          className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive(item.path)
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
+                          <span>{item.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Mobile User Actions */}
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      {user ? (
+                        <div className="space-y-2">
+                          {user.membership_no && (
+                            <div className="flex items-center justify-center mb-3">
+                              <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
+                                Membership: {user.membership_no}
+                              </Badge>
+                            </div>
+                          )}
+                          <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                            <Button variant="outline" className="w-full justify-start">
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                              Dashboard
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="destructive"
+                            className="w-full justify-start bg-red-50 text-red-600 hover:bg-red-100 border-0"
+                            onClick={() => {
+                              handleLogout();
+                              setMobileOpen(false);
+                            }}
+                          >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Logout
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Link to="/login" onClick={() => setMobileOpen(false)}>
+                            <Button variant="outline" className="w-full">
+                              Login
+                            </Button>
+                          </Link>
+                          <Link to="/admin/login" onClick={() => setMobileOpen(false)}>
+                            <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                              Admin Login
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </header>

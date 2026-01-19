@@ -22,6 +22,7 @@ const Index = () => {
         <div className="section-enter animate-delay-200">
           <CommitteeSection />
         </div>
+        <hr/>
         <div className="section-enter animate-delay-300">
           <UpcomingEventsCarousel />
         </div>

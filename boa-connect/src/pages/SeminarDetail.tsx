@@ -84,7 +84,13 @@ export default function SeminarDetail() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             
             {/* Status Badge */}
-            {seminar.is_active && (
+            {seminar.status === 'previous' ? (
+              <div className="absolute top-6 right-6">
+                <Badge className="bg-gray-100 text-gray-700 border-gray-200 text-lg px-4 py-2">
+                  Completed
+                </Badge>
+              </div>
+            ) : seminar.is_active && (
               <div className="absolute top-6 right-6">
                 <Badge className="gradient-gold text-secondary-foreground border-0 text-lg px-4 py-2">
                   <span className="w-2 h-2 rounded-full bg-secondary-foreground mr-2 animate-pulse" />
@@ -140,8 +146,8 @@ export default function SeminarDetail() {
                 </div>
               </div>
 
-              {/* Fee Categories */}
-              {seminar.categories && seminar.categories.length > 0 && (
+              {/* Fee Categories - Only show for active/upcoming events */}
+              {seminar.status !== 'previous' && seminar.categories && seminar.categories.length > 0 && (
                 <div className="bg-card rounded-2xl border border-border p-6">
                   <h2 className="text-2xl font-bold mb-4">Registration Categories & Fees</h2>
                   
@@ -245,7 +251,7 @@ export default function SeminarDetail() {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Registration Card */}
-              <div className="bg-card rounded-2xl border border-border p-6 sticky top-6">
+              <div className="bg-card rounded-2xl border border-border p-6">
                 <h3 className="text-xl font-bold mb-4">Registration Details</h3>
                 
                 <div className="space-y-4 mb-6">
@@ -282,13 +288,17 @@ export default function SeminarDetail() {
                   </div>
                 </div>
 
-                {seminar.is_active ? (
+                {seminar.status !== 'previous' && seminar.is_active ? (
                   <Link to={`/seminar/${seminar.id}/register`}>
                     <Button className="w-full gradient-primary text-primary-foreground" size="lg">
                       Register Now
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
+                ) : seminar.status === 'previous' ? (
+                  <Button disabled className="w-full" size="lg">
+                    Event Completed
+                  </Button>
                 ) : (
                   <Button disabled className="w-full" size="lg">
                     Registration Closed
@@ -296,7 +306,9 @@ export default function SeminarDetail() {
                 )}
 
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Secure your spot today. Limited seats available!
+                  {seminar.status === 'previous' 
+                    ? 'This event has been completed' 
+                    : 'Secure your spot today. Limited seats available!'}
                 </p>
               </div>
 

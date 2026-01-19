@@ -93,6 +93,11 @@ export default function SeminarRegistration() {
     setSelectedCategory('');
     setSelectedSlab('');
 
+    // If BOA member, set delegate type automatically
+    if (isBOAMember && delegateType !== 'boa-member') {
+      setDelegateType('boa-member');
+    }
+
     // Auto-select fee category based on delegate type
     if (delegateType || isBOAMember) {
       const categoryName = isBOAMember ? 'boa-member' : delegateType;

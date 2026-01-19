@@ -796,3 +796,32 @@ input[type="radio"],
 .lg\:col-span-2 {
   transform: translate3d(0, 0, 0) !important;
 }
+
+/* FORCE REMOVE ALL CHECKMARKS FROM SWITCH */
+button[role="switch"] *,
+button[role="switch"] *::before,
+button[role="switch"] *::after,
+[data-radix-switch-thumb],
+[data-radix-switch-thumb] *,
+[data-radix-switch-thumb]::before,
+[data-radix-switch-thumb]::after {
+  content: '' !important;
+  background-image: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
+}
+
+/* Hide any SVG icons */
+button[role="switch"] svg,
+button[role="switch"] path,
+[data-radix-switch-thumb] svg,
+[data-radix-switch-thumb] path {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Force solid white background on thumb */
+[data-radix-switch-thumb] {
+  background: white !important;
+  background-color: white !important;
+}

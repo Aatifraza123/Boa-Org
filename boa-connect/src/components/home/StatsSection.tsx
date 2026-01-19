@@ -71,7 +71,7 @@ export function StatsSection() {
     <section className="gov-section-gray">
       <div className="container">
         <div className="text-center mb-12">
-          <h2 className="gov-section-title">Our Impact</h2>
+          <h2 className="gov-section-title p-2 bg-[#0B3C5D] text-white">Our Impact</h2>
           <p className="gov-section-subtitle">
             Serving the ophthalmology community across Bihar with dedication and excellence
           </p>

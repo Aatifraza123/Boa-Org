@@ -219,3 +219,44 @@ exports.adminLogout = async (req, res) => {
     });
   }
 };
+
+
+// Upload Image (for seminars, gallery, etc.)
+exports.uploadImage = async (req, res) => {
+  try {
+    console.log('=== UPLOAD IMAGE DEBUG ===');
+    console.log('File:', req.file);
+    console.log('Body:', req.body);
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    const cloudinary = require('../config/cloudinary');
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'seminars',
+      resource_type: 'image'
+    });
+
+    console.log('Upload successful:', result.secure_url);
+
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      image_url: result.secure_url
+    });
+
+  } catch (error) {
+    console.error('Upload image error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload image',
+      error: error.message
+    });
+  }
+};

@@ -30,7 +30,8 @@ export default function SeminarsTab() {
     description: '',
     offline_form_html: '',
     image_url: '',
-    is_active: true
+    is_active: true,
+    status: 'active' // 'active' or 'previous'
   });
 
   useEffect(() => {
@@ -84,7 +85,8 @@ export default function SeminarsTab() {
       description: seminar.description || '',
       offline_form_html: seminar.offline_form_html || '',
       image_url: seminar.image_url || '',
-      is_active: seminar.is_active
+      is_active: seminar.is_active,
+      status: seminar.status || 'active'
     });
     setIsDialogOpen(true);
   };
@@ -106,10 +108,16 @@ export default function SeminarsTab() {
     setIsUploading(true);
     try {
       const uploadFormData = new FormData();
-      uploadFormData.append('image', file);
+      uploadFormData.append('image', file, file.name);
+
+      console.log('Uploading file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
 
       const response = await adminAuthAPI.uploadCertificateImage(uploadFormData);
-      
+
       if (response.success) {
         setFormData(prev => ({ ...prev, image_url: response.image_url }));
         toast({ title: 'Success', description: 'Image uploaded successfully!' });
@@ -141,6 +149,27 @@ export default function SeminarsTab() {
     }
   };
 
+  const handleToggleActive = async (seminar: any) => {
+    try {
+      const newActiveState = !seminar.is_active;
+      await adminAPI.updateSeminar(seminar.id, {
+        ...seminar,
+        is_active: newActiveState
+      });
+      toast({
+        title: 'Success',
+        description: `Seminar ${newActiveState ? 'activated' : 'deactivated'} successfully`
+      });
+      loadSeminars();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Update failed',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const resetForm = () => {
     setEditingSeminar(null);
     setFormData({
@@ -155,7 +184,8 @@ export default function SeminarsTab() {
       description: '',
       offline_form_html: '',
       image_url: '',
-      is_active: true
+      is_active: true,
+      status: 'active'
     });
   };
 
@@ -182,47 +212,47 @@ export default function SeminarsTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Seminar Name *</Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required placeholder="e.g., Annual Ophthalmology Conference 2026" />
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required placeholder="e.g., Annual Ophthalmology Conference 2026" />
                 </div>
                 <div className="col-span-2">
                   <Label>Title/Tagline</Label>
-                  <Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="e.g., Advancing Eye Care Excellence" />
+                  <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g., Advancing Eye Care Excellence" />
                   <p className="text-xs text-muted-foreground mt-1">Optional subtitle shown on registration form</p>
                 </div>
                 <div>
                   <Label>Location *</Label>
-                  <Input value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} required />
+                  <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required />
                 </div>
                 <div>
                   <Label>Venue *</Label>
-                  <Input value={formData.venue} onChange={(e) => setFormData({...formData, venue: e.target.value})} required />
+                  <Input value={formData.venue} onChange={(e) => setFormData({ ...formData, venue: e.target.value })} required />
                 </div>
                 <div>
                   <Label>Start Date *</Label>
-                  <Input type="date" value={formData.start_date} onChange={(e) => setFormData({...formData, start_date: e.target.value})} required />
+                  <Input type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} required />
                 </div>
                 <div>
                   <Label>End Date *</Label>
-                  <Input type="date" value={formData.end_date} onChange={(e) => setFormData({...formData, end_date: e.target.value})} required />
+                  <Input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} required />
                 </div>
                 <div>
                   <Label>Registration Start *</Label>
-                  <Input type="date" value={formData.registration_start} onChange={(e) => setFormData({...formData, registration_start: e.target.value})} required />
+                  <Input type="date" value={formData.registration_start} onChange={(e) => setFormData({ ...formData, registration_start: e.target.value })} required />
                 </div>
                 <div>
                   <Label>Registration End *</Label>
-                  <Input type="date" value={formData.registration_end} onChange={(e) => setFormData({...formData, registration_end: e.target.value})} required />
+                  <Input type="date" value={formData.registration_end} onChange={(e) => setFormData({ ...formData, registration_end: e.target.value })} required />
                 </div>
                 <div className="col-span-2">
                   <Label>Description</Label>
-                  <Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows={3} />
+                  <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} />
                 </div>
-                
+
                 <div className="col-span-2 space-y-2">
                   <Label>Offline Registration Form (HTML)</Label>
-                  <Textarea 
-                    value={formData.offline_form_html} 
-                    onChange={(e) => setFormData({...formData, offline_form_html: e.target.value})} 
+                  <Textarea
+                    value={formData.offline_form_html}
+                    onChange={(e) => setFormData({ ...formData, offline_form_html: e.target.value })}
                     rows={8}
                     className="font-mono text-sm"
                     placeholder="Paste HTML code here for offline registration form..."
@@ -231,7 +261,7 @@ export default function SeminarsTab() {
                     Paste formatted HTML code. Users can download this form from notifications page.
                   </p>
                 </div>
-                
+
                 <div className="col-span-2 space-y-2">
                   <Label>Seminar Image</Label>
                   {formData.image_url && (
@@ -272,10 +302,54 @@ export default function SeminarsTab() {
                   </div>
                   <p className="text-xs text-muted-foreground">Upload seminar banner image (Max 5MB, JPG/PNG)</p>
                 </div>
-                
-                <div className="col-span-2 flex items-center gap-2">
-                  <Switch checked={formData.is_active} onCheckedChange={(checked) => setFormData({...formData, is_active: checked})} />
-                  <Label>Active</Label>
+
+                <div className="col-span-2 flex items-center justify-between p-4 border rounded-lg">
+
+                  <div>
+                    <Label className="text-base font-semibold">
+                      Active Status
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable or disable account
+                    </p>
+                  </div>
+
+                  <Switch
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, is_active: checked })
+                    }
+                    className="
+      data-[state=checked]:bg-green-600
+      data-[state=unchecked]:bg-gray-400
+    "
+                  />
+
+                </div>
+
+
+                <div className="col-span-2">
+                  <Label>Event Status *</Label>
+                  <select
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    value={formData.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value;
+                      setFormData({
+                        ...formData,
+                        status: newStatus,
+                        // Automatically deactivate if status is 'previous'
+                        is_active: newStatus === 'previous' ? false : formData.is_active
+                      });
+                    }}
+                    required
+                  >
+                    <option value="active">Active (Upcoming Event)</option>
+                    <option value="previous">Previous (Completed Event)</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Previous events will automatically be deactivated and shown in "Previous Events" section without fee structure
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
@@ -296,7 +370,8 @@ export default function SeminarsTab() {
               <TableHead>Name</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Dates</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Event Status</TableHead>
+              <TableHead>Active</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -309,7 +384,12 @@ export default function SeminarsTab() {
                   {new Date(seminar.start_date).toLocaleDateString()} - {new Date(seminar.end_date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <Badge className={seminar.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                  <Badge className={seminar.status === 'previous' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'}>
+                    {seminar.status === 'previous' ? 'Previous' : 'Upcoming'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge className={seminar.is_active ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'}>
                     {seminar.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>

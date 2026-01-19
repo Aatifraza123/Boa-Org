@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { seminarAPI } from '@/lib/api';
 
 const POPUP_DISMISSED_KEY = 'boa_seminar_popup_dismissed';
+const RELOAD_POPUP_SHOWN_KEY = 'boa_reload_popup_shown';
 
 export function SeminarPopup() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,22 +21,23 @@ export function SeminarPopup() {
 
   const checkReloadPopup = async () => {
     const wasReloaded = sessionStorage.getItem('pageReloaded');
-    
+
     if (wasReloaded) {
+      // Clear flag immediately
       sessionStorage.removeItem('pageReloaded');
-      
+
       // Load upcoming events
       try {
         const response = await fetch('/api/upcoming-events');
         const data = await response.json();
-        
+
         if (data.success && data.events && data.events.length > 0) {
           const upcoming = data.events.find((e: any) => {
             const now = new Date();
             const start = new Date(e.start_date);
             return now < start;
           });
-          
+
           if (upcoming) {
             setUpcomingEvent(upcoming);
             setShowReloadPopup(true);
@@ -45,7 +47,9 @@ export function SeminarPopup() {
         console.error('Failed to load events for popup:', error);
       }
     }
+  };
 
+  useEffect(() => {
     // Set flag for next reload
     const handleBeforeUnload = () => {
       sessionStorage.setItem('pageReloaded', 'true');
@@ -56,7 +60,7 @@ export function SeminarPopup() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  };
+  }, []);
 
   const loadActiveSeminar = async () => {
     try {
@@ -68,7 +72,7 @@ export function SeminarPopup() {
 
       const response = await seminarAPI.getActive();
       console.log('Active seminar response:', response);
-      
+
       if (response.success && response.seminar && response.seminar.is_active) {
         setActiveSeminar(response.seminar);
         setIsOpen(true);
@@ -110,19 +114,16 @@ export function SeminarPopup() {
       {/* Reload Event Popup */}
       {showReloadPopup && upcomingEvent && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 overflow-y-auto">
-          {/* Backdrop with reduced opacity */}
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={handleCloseReloadPopup}
-          />
-          
+          {/* Backdrop - no onClick, only X button closes */}
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+
           {/* Popup */}
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full animate-in slide-in-from-top duration-300">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                <h3 className="font-bold text-lg">Upcoming Event</h3>
+                <h3 className="font-bold text-white text-lg">Upcoming Event</h3>
               </div>
               <button
                 onClick={handleCloseReloadPopup}
@@ -195,11 +196,11 @@ export function SeminarPopup() {
       {isOpen && activeSeminar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={handleClose}
           />
-          
+
           {/* Popup */}
           <div className="relative w-full max-w-lg bg-card rounded-2xl shadow-elevated animate-scale-in overflow-hidden">
             {/* Close Button */}
@@ -231,16 +232,16 @@ export function SeminarPopup() {
                   <div>
                     <p className="text-sm text-muted-foreground">Date</p>
                     <p className="font-medium text-foreground">
-                      {new Date(activeSeminar.start_date).toLocaleDateString('en-GB', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric' 
+                      {new Date(activeSeminar.start_date).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
                       })}
                       {activeSeminar.start_date !== activeSeminar.end_date && (
-                        <> - {new Date(activeSeminar.end_date).toLocaleDateString('en-GB', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          year: 'numeric' 
+                        <> - {new Date(activeSeminar.end_date).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
                         })}</>
                       )}
                     </p>

@@ -137,7 +137,7 @@ export const adminAuthAPI = {
   },
 
   uploadCertificateImage: async (formData: FormData) => {
-    const response = await adminApi.post('/admin/certification/upload-image', formData, {
+    const response = await adminApi.post('/admin-auth/certification/upload-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

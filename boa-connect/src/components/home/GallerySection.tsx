@@ -44,7 +44,7 @@ export function GallerySection() {
     <section className="gov-section">
       <div className="container">
         <div className="text-center mb-12">
-          <h2 className="gov-section-title">Gallery</h2>
+          <h2 className="gov-section-title p-2 bg-[#0B3C5D] text-white">Gallery</h2>
           <p className="gov-section-subtitle">
             Moments from our seminars, conferences, and community outreach programs
           </p>

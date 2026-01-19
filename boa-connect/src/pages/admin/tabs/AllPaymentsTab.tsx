@@ -447,7 +447,7 @@ export default function AllPaymentsTab() {
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground">Delegate Category</label>
-                        <p className="font-medium">{formatDelegateType(selectedPayment.details.delegate_category)}</p>
+                        <p className="font-medium">{selectedPayment.details.delegate_category ? formatDelegateType(selectedPayment.details.delegate_category) : 'N/A'}</p>
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground">Registration Number</label>

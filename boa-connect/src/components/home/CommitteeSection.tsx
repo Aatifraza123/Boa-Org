@@ -43,7 +43,7 @@ export function CommitteeSection() {
     <section className="gov-section-gray">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="gov-section-title">
+          <h2 className="gov-section-title p-2 bg-[#0B3C5D] text-white">
             Our Committee
           </h2>
           <p className="gov-section-subtitle">

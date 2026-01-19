@@ -45,17 +45,17 @@ exports.createSeminar = async (req, res) => {
   try {
     const {
       name, title, location, venue, start_date, end_date,
-      registration_start, registration_end, description, offline_form_html, image_url, is_active
+      registration_start, registration_end, description, offline_form_html, image_url, is_active, status
     } = req.body;
 
     await connection.beginTransaction();
 
     const [result] = await connection.query(
       `INSERT INTO seminars (name, title, location, venue, start_date, end_date, 
-       registration_start, registration_end, description, offline_form_html, image_url, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       registration_start, registration_end, description, offline_form_html, image_url, is_active, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [name, title, location, venue, start_date, end_date, registration_start, 
-       registration_end, description, offline_form_html || '', image_url, is_active || true]
+       registration_end, description, offline_form_html || '', image_url, is_active || true, status || 'active']
     );
 
     const seminarId = result.insertId;
@@ -136,15 +136,15 @@ exports.updateSeminar = async (req, res) => {
     const { id } = req.params;
     const {
       name, title, location, venue, start_date, end_date,
-      registration_start, registration_end, description, offline_form_html, image_url, is_active
+      registration_start, registration_end, description, offline_form_html, image_url, is_active, status
     } = req.body;
 
     await promisePool.query(
       `UPDATE seminars SET name = ?, title = ?, location = ?, venue = ?, start_date = ?, 
        end_date = ?, registration_start = ?, registration_end = ?, 
-       description = ?, offline_form_html = ?, image_url = ?, is_active = ? WHERE id = ?`,
+       description = ?, offline_form_html = ?, image_url = ?, is_active = ?, status = ? WHERE id = ?`,
       [name, title, location, venue, start_date, end_date, registration_start, 
-       registration_end, description, offline_form_html || '', image_url, is_active, id]
+       registration_end, description, offline_form_html || '', image_url, is_active, status || 'active', id]
     );
 
     // Check if notification exists for this seminar
@@ -2871,12 +2871,10 @@ exports.getPaymentDetails = async (req, res) => {
     if (type === 'sem') {
       const [payments] = await promisePool.query(
         `SELECT r.*, u.title, u.first_name, u.surname, u.email, u.mobile,
-                s.name as seminar_name, s.start_date, s.end_date, s.location,
-                dc.name as delegate_category
+                s.name as seminar_name, s.start_date, s.end_date, s.location
          FROM registrations r
          LEFT JOIN users u ON r.user_id = u.id
          LEFT JOIN seminars s ON r.seminar_id = s.id
-         LEFT JOIN delegate_categories dc ON r.category_id = dc.id
          WHERE r.id = ?`,
         [paymentId]
       );
@@ -2899,7 +2897,7 @@ exports.getPaymentDetails = async (req, res) => {
             seminar_location: p.location,
             start_date: p.start_date,
             end_date: p.end_date,
-            delegate_category: p.delegate_category
+            delegate_category: p.delegate_type
           }
         };
       }
@@ -2962,13 +2960,12 @@ exports.getAllPayments = async (req, res) => {
     const [seminarPayments] = await promisePool.query(
       `SELECT r.id, r.registration_no, r.user_id, r.amount, r.status, 
               r.payment_method, r.transaction_id, r.payment_date, r.created_at,
+              r.delegate_type,
               u.title, u.first_name, u.surname, u.email, u.mobile,
-              s.name as seminar_name, s.start_date, s.end_date,
-              dc.name as delegate_category
+              s.name as seminar_name, s.start_date, s.end_date
        FROM registrations r
        LEFT JOIN users u ON r.user_id = u.id
        LEFT JOIN seminars s ON r.seminar_id = s.id
-       LEFT JOIN delegate_categories dc ON r.category_id = dc.id
        ORDER BY r.created_at DESC`
     );
 
@@ -2994,7 +2991,7 @@ exports.getAllPayments = async (req, res) => {
             start_date: payment.start_date,
             end_date: payment.end_date
           },
-          delegate_category: payment.delegate_category
+          delegate_category: payment.delegate_type
         }
       });
     });
@@ -3077,12 +3074,10 @@ exports.downloadPaymentPDF = async (req, res) => {
       // Get seminar payment
       const [payments] = await promisePool.query(
         `SELECT r.*, u.title, u.first_name, u.surname, u.email, u.mobile, u.address,
-                s.name as seminar_name, s.start_date, s.end_date, s.location,
-                dc.name as delegate_category
+                s.name as seminar_name, s.start_date, s.end_date, s.location
          FROM registrations r
          LEFT JOIN users u ON r.user_id = u.id
          LEFT JOIN seminars s ON r.seminar_id = s.id
-         LEFT JOIN delegate_categories dc ON r.category_id = dc.id
          WHERE r.id = ?`,
         [paymentId]
       );
@@ -3106,7 +3101,7 @@ exports.downloadPaymentPDF = async (req, res) => {
             seminar_location: p.location,
             start_date: p.start_date,
             end_date: p.end_date,
-            delegate_category: p.delegate_category
+            delegate_category: p.delegate_type
           }
         };
       }
@@ -3202,7 +3197,14 @@ exports.downloadPaymentPDF = async (req, res) => {
         doc.text(`Location: ${paymentData.details.seminar_location || 'N/A'}`);
         doc.text(`Start Date: ${new Date(paymentData.details.start_date).toLocaleDateString('en-GB')}`);
         doc.text(`End Date: ${new Date(paymentData.details.end_date).toLocaleDateString('en-GB')}`);
-        doc.text(`Delegate Category: ${paymentData.details.delegate_category}`);
+        
+        // Format delegate category for display
+        const delegateCategory = paymentData.details.delegate_category || 'N/A';
+        const formattedCategory = delegateCategory === 'boa-member' ? 'BOA Member' :
+                                   delegateCategory === 'non-boa-member' ? 'Non BOA Member' :
+                                   delegateCategory === 'accompanying-person' ? 'Accompanying Person' :
+                                   delegateCategory;
+        doc.text(`Delegate Category: ${formattedCategory}`);
       } else if (paymentData.type === 'Membership Registration') {
         doc.text(`Membership Type: ${paymentData.details.membership_type}`);
         doc.text(`Category: ${paymentData.details.category}`);
@@ -3236,13 +3238,12 @@ exports.exportAllPayments = async (req, res) => {
     // Get seminar payments
     const [seminarPayments] = await promisePool.query(
       `SELECT r.registration_no, r.amount, r.status, r.payment_method, 
-              r.transaction_id, r.payment_date, r.created_at,
+              r.transaction_id, r.payment_date, r.created_at, r.delegate_type,
               u.title, u.first_name, u.surname, u.email, u.mobile,
-              s.name as seminar_name, dc.name as delegate_category
+              s.name as seminar_name
        FROM registrations r
        LEFT JOIN users u ON r.user_id = u.id
        LEFT JOIN seminars s ON r.seminar_id = s.id
-       LEFT JOIN delegate_categories dc ON r.category_id = dc.id
        ORDER BY r.created_at DESC`
     );
 
@@ -3276,19 +3277,28 @@ exports.exportAllPayments = async (req, res) => {
         { header: 'Date', key: 'date', width: 20 }
       ];
       
-      seminarSheet.addRows(seminarPayments.map(p => ({
-        reg_no: p.registration_no,
-        name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
-        email: p.email,
-        mobile: p.mobile,
-        seminar: p.seminar_name,
-        category: p.delegate_category,
-        amount: p.amount,
-        transaction_id: p.transaction_id || 'N/A',
-        method: p.payment_method || 'N/A',
-        status: p.status,
-        date: p.payment_date || p.created_at
-      })));
+      seminarSheet.addRows(seminarPayments.map(p => {
+        // Format delegate category for display
+        const delegateCategory = p.delegate_type || 'N/A';
+        const formattedCategory = delegateCategory === 'boa-member' ? 'BOA Member' :
+                                   delegateCategory === 'non-boa-member' ? 'Non BOA Member' :
+                                   delegateCategory === 'accompanying-person' ? 'Accompanying Person' :
+                                   delegateCategory;
+        
+        return {
+          reg_no: p.registration_no,
+          name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
+          email: p.email,
+          mobile: p.mobile,
+          seminar: p.seminar_name,
+          category: formattedCategory,
+          amount: p.amount,
+          transaction_id: p.transaction_id || 'N/A',
+          method: p.payment_method || 'N/A',
+          status: p.status,
+          date: p.payment_date || p.created_at
+        };
+      }));
     }
 
     // Membership Payments Sheet

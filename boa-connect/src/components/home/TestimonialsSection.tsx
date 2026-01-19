@@ -27,7 +27,7 @@ export function TestimonialsSection() {
     <section className="gov-section-gray">
       <div className="container">
         <div className="text-center mb-12">
-          <h2 className="gov-section-title">What Our Members Say</h2>
+          <h2 className="gov-section-title p-2 bg-[#0B3C5D] text-white">What Our Members Say</h2>
           <p className="gov-section-subtitle">
             Hear from ophthalmologists who are part of our growing community
           </p>

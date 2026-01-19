@@ -239,7 +239,9 @@ router.post('/verify-payment', async (req, res) => {
     console.error('Verify payment error:', error);
     res.status(500).json({
       success: false,
-      message: 'Payment verification failed'
+      message: 'Payment verification failed',
+      error: error.message,
+      details: error.toString()
     });
   }
 });
@@ -266,12 +268,23 @@ async function processSeminarRegistration(registrationData, paymentInfo) {
 
     // Transform delegate_type to match database enum values
     let normalizedDelegateType = delegate_type;
-    if (delegate_type === 'Non BOA Member' || delegate_type === 'NON BOA MEMBER') {
-      normalizedDelegateType = 'non-boa-member';
-    } else if (delegate_type === 'BOA Member' || delegate_type === 'BOA MEMBER') {
-      normalizedDelegateType = 'boa-member';
-    } else if (delegate_type === 'Accompanying Person' || delegate_type === 'ACCOMPANYING PERSON') {
-      normalizedDelegateType = 'accompanying-person';
+    
+    // Normalize delegate_type to lowercase with hyphens
+    if (delegate_type) {
+      const lowerType = delegate_type.toLowerCase().trim().replace(/\s+/g, '-');
+      
+      logToFile(`Lowercase type: ${lowerType}`);
+      
+      if (lowerType === 'non-boa-member' || lowerType.includes('non') && lowerType.includes('boa')) {
+        normalizedDelegateType = 'non-boa-member';
+      } else if (lowerType === 'boa-member' || (lowerType.includes('boa') && !lowerType.includes('non'))) {
+        normalizedDelegateType = 'boa-member';
+      } else if (lowerType === 'accompanying-person' || lowerType.includes('accompanying')) {
+        normalizedDelegateType = 'accompanying-person';
+      } else {
+        // If already in correct format, use as is
+        normalizedDelegateType = lowerType;
+      }
     }
 
     logToFile(`Original delegate_type: ${delegate_type}, Normalized: ${normalizedDelegateType}`);
