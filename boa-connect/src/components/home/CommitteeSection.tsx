@@ -53,19 +53,19 @@ export function CommitteeSection() {
 
         <div className="flex flex-wrap justify-center items-center gap-10 max-w-7xl mx-auto">
           {committeeMembers.map((member) => (
-            <div key={member.id} className="text-center gov-card p-6 w-full max-w-[200px]">
+            <div key={member.id} className="text-center gov-card p-6 w-full max-w-[200px] transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
               {member.image_url ? (
                 <img 
                   src={member.image_url} 
                   alt={member.name}
-                  className="h-32 w-32 rounded-full mx-auto mb-4 object-cover border-2" style={{borderColor: '#E3F2FD'}}
+                  className="h-32 w-32 rounded-full mx-auto mb-4 object-cover object-center border-4 border-[#0B3C5D] transition-transform duration-300 ease-in-out hover:scale-105"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
                 />
               ) : null}
-              <div className={`h-32 w-32 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-semibold text-white ${member.image_url ? 'hidden' : ''}`} style={{background: '#0B3C5D'}}>
+              <div className={`h-32 w-32 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-semibold text-white border-4 border-[#0B3C5D] transition-transform duration-300 ease-in-out hover:scale-105 ${member.image_url ? 'hidden' : ''}`} style={{background: '#0B3C5D'}}>
                 {member.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
               </div>
               <h3 className="font-semibold text-base leading-tight mb-2" style={{color: '#1F2933'}}>{member.name}</h3>
