@@ -32,11 +32,6 @@ exports.getUserCertificates = async (req, res) => {
 // Add certificate to user (admin only)
 exports.addCertificate = async (req, res) => {
   try {
-    console.log('=== ADD CERTIFICATE DEBUG ===');
-    console.log('Body:', req.body);
-    console.log('File:', req.file);
-    console.log('Admin:', req.admin);
-    
     const { user_id, seminar_id, certificate_name, issued_date, description } = req.body;
     const adminId = req.admin?.id || null;
 
@@ -55,14 +50,11 @@ exports.addCertificate = async (req, res) => {
       });
     }
 
-    console.log('Uploading to Cloudinary...');
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'certificates',
       resource_type: 'auto'
     });
-    console.log('Cloudinary upload successful:', result.secure_url);
-
     // Insert certificate record
     const [insertResult] = await promisePool.query(
       `INSERT INTO user_certificates 
@@ -70,8 +62,6 @@ exports.addCertificate = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [user_id, seminar_id || null, certificate_name, result.secure_url, issued_date || null, description || null, adminId]
     );
-
-    console.log('Certificate saved to database');
 
     res.json({
       success: true,

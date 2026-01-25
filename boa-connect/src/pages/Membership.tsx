@@ -3,14 +3,14 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
-import { 
-  Award, 
-  Users, 
-  BookOpen, 
-  Calendar, 
-  Network, 
-  FileText, 
-  CheckCircle, 
+import {
+  Award,
+  Users,
+  BookOpen,
+  Calendar,
+  Network,
+  FileText,
+  CheckCircle,
   ArrowRight,
   Download,
   CreditCard,
@@ -67,14 +67,14 @@ export default function Membership() {
     try {
       // Call backend API to generate PDF from HTML template
       const response = await fetch('http://localhost:5000/api/generate-membership-pdf');
-      
+
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
       }
 
       // Get PDF blob
       const pdfBlob = await response.blob();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -206,8 +206,8 @@ export default function Membership() {
             Join Bihar's premier ophthalmology association and advance your career while serving the community
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="gradient-primary text-primary-foreground"
               onClick={() => {
                 navigate('/membership-form');
@@ -262,7 +262,7 @@ export default function Membership() {
       <section className="py-16 bg-muted/20">
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Membership Categories</h2>
+            <h2 className="text-3xl font-bold mb-4">Membership Details</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Choose the membership plan that best fits your needs
             </p>
@@ -273,56 +273,49 @@ export default function Membership() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {categories.map((category, index) => {
-                const Icon = getIcon(category.icon);
-                return (
-                  <Card 
-                    key={index} 
-                    className={`relative ${category.is_recommended ? 'border-2 border-primary shadow-xl' : 'border shadow-lg'}`}
-                  >
-                    {category.is_recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
-                          Recommended
-                        </span>
-                      </div>
-                    )}
-                    <CardContent className="p-8">
-                      <div className="text-center mb-6">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gradient-primary mb-4">
-                          <Icon className="h-8 w-8 text-primary-foreground" />
-                        </div>
-                        <h3 className="text-2xl font-bold mb-2">{category.title}</h3>
-                        <div className="text-3xl font-bold text-primary mb-1">₹{category.price.toLocaleString()}</div>
-                        <p className="text-sm text-muted-foreground">{category.duration}</p>
-                      </div>
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-300">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="px-6 py-4 text-left text-gray-800 font-bold border-r-2 border-gray-300">Type</th>
+                      <th className="px-6 py-4 text-left text-gray-800 font-bold border-r-2 border-gray-300">Passout Fee</th>
+                      <th className="px-6 py-4 text-left text-gray-800 font-bold">Student Fee</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.map((category, index) => (
+                      <tr
+                        key={index}
+                        className="border-t-2 border-gray-300 hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 font-semibold text-gray-900 border-r-2 border-gray-300">
+                          {category.title}
+                        </td>
+                        <td className="px-6 py-4 text-gray-900 border-r-2 border-gray-300">
+                          <span className="font-bold">₹{category.price.toLocaleString()}</span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-900">
+                          <span className="font-bold">
+                            {category.student_price ? `₹${category.student_price.toLocaleString()}` : '₹0'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                      <ul className="space-y-3 mb-6">
-                        {category.features.map((feature: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-muted-foreground">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      <Link to="/membership-form">
-                        <Button 
-                          className={`w-full ${category.is_recommended ? 'gradient-primary text-primary-foreground' : ''}`}
-                          variant={category.is_recommended ? 'default' : 'outline'}
-                        >
-                          Choose Plan
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-600 italic">
+                  * Offer: Pay membership fees with conference registration or before the conference
+                </p>
+              </div>
             </div>
           )}
         </div>
       </section>
+
 
       {/* How to Apply */}
       <section className="py-16 bg-background">

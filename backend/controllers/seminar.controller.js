@@ -113,7 +113,10 @@ exports.getSeminarById = async (req, res) => {
 exports.getActiveSeminar = async (req, res) => {
   try {
     const [seminars] = await promisePool.query(
-      'SELECT * FROM seminars WHERE is_active = TRUE ORDER BY start_date DESC LIMIT 1'
+      `SELECT * FROM seminars 
+       WHERE is_active = TRUE 
+       ORDER BY online_registration_enabled DESC, start_date DESC 
+       LIMIT 1`
     );
 
     if (seminars.length === 0) {

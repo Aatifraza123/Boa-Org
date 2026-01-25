@@ -6,9 +6,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Contact() {
   const [contactInfo, setContactInfo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  });
+  const { toast } = useToast();
 
   useEffect(() => {
     loadContactInfo();
@@ -25,10 +36,124 @@ export default function Contact() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock submit
-    alert('Message sent! We will get back to you soon.');
+    
+    // Client-side validation
+    if (!formData.firstName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your first name',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.lastName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your last name',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.subject.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a subject',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.message.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your message',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/contact/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim()
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: 'Success',
+          description: data.message,
+        });
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: data.message || 'Failed to send message',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send message. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,27 +175,63 @@ export default function Contact() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="John" required />
+                    <Input 
+                      id="firstName" 
+                      placeholder="John" 
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required 
+                      disabled={isLoading}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Doe" required />
+                    <Input 
+                      id="lastName" 
+                      placeholder="Doe" 
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required 
+                      disabled={isLoading}
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="john@example.com" required />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="john@example.com" 
+                    value={formData.email}
+                    onChange={handleChange}
+                    required 
+                    disabled={isLoading}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone (Optional)</Label>
-                  <Input id="phone" type="tel" placeholder="+91 XXXXX XXXXX" />
+                  <Input 
+                    id="phone" 
+                    type="tel" 
+                    placeholder="+91 XXXXX XXXXX" 
+                    value={formData.phone}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
-                  <Input id="subject" placeholder="How can we help?" required />
+                  <Input 
+                    id="subject" 
+                    placeholder="How can we help?" 
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required 
+                    disabled={isLoading}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -79,13 +240,30 @@ export default function Contact() {
                     id="message" 
                     placeholder="Your message..." 
                     rows={5}
+                    value={formData.message}
+                    onChange={handleChange}
                     required 
+                    disabled={isLoading}
                   />
                 </div>
 
-                <Button type="submit" className="w-full gradient-primary text-primary-foreground" size="lg">
-                  Send Message
-                  <Send className="ml-2 h-5 w-5" />
+                <Button 
+                  type="submit" 
+                  className="w-full gradient-primary text-primary-foreground" 
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <Send className="ml-2 h-5 w-5" />
+                    </>
+                  )}
                 </Button>
               </form>
             </div>

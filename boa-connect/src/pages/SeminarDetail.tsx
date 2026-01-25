@@ -146,8 +146,8 @@ export default function SeminarDetail() {
                 </div>
               </div>
 
-              {/* Fee Categories - Only show for active/upcoming events */}
-              {seminar.status !== 'previous' && seminar.categories && seminar.categories.length > 0 && (
+              {/* Fee Categories - Only show for active/upcoming events with online registration enabled */}
+              {seminar.status !== 'previous' && seminar.online_registration_enabled === 1 && seminar.categories && seminar.categories.length > 0 && (
                 <div className="bg-card rounded-2xl border border-border p-6">
                   <h2 className="text-2xl font-bold mb-4">Registration Categories & Fees</h2>
                   
@@ -174,21 +174,29 @@ export default function SeminarDetail() {
                                   <div>
                                     <div className="font-semibold text-sm flex items-center gap-2">
                                       {category.name}
-                                      {category.is_popular && (
+                                      {category.is_popular === 1 && (
                                         <Badge className="gradient-gold text-secondary-foreground border-0 text-xs px-1.5 py-0">Popular</Badge>
                                       )}
                                     </div>
-                                    <div className="text-xs text-muted-foreground mt-0.5">{category.description}</div>
+                                    {category.description && (
+                                      <div className="text-xs text-muted-foreground mt-0.5">{category.description}</div>
+                                    )}
                                   </div>
                                 </td>
                                 {seminar.slabs.map((slab: any) => {
                                   const amount = category.fees?.[slab.id];
                                   return (
                                     <td key={slab.id} className="text-center py-3 px-2 border-r">
-                                      <div className="font-bold text-primary text-sm">
-                                        {amount ? `Rs ${Number(amount).toLocaleString('en-IN')}` : '-'}
-                                      </div>
-                                      {amount && <div className="text-xs text-muted-foreground">(Incl. GST)</div>}
+                                      {amount ? (
+                                        <>
+                                          <div className="font-bold text-primary text-sm">
+                                            Rs {Number(amount).toLocaleString('en-IN')}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">(Incl. GST)</div>
+                                        </>
+                                      ) : (
+                                        <div className="text-muted-foreground">-</div>
+                                      )}
                                     </td>
                                   );
                                 })}
@@ -288,7 +296,7 @@ export default function SeminarDetail() {
                   </div>
                 </div>
 
-                {seminar.status !== 'previous' && seminar.is_active ? (
+                {seminar.status !== 'previous' && seminar.is_active && seminar.online_registration_enabled === 1 ? (
                   <Link to={`/seminar/${seminar.id}/register`}>
                     <Button className="w-full gradient-primary text-primary-foreground" size="lg">
                       Register Now
@@ -298,6 +306,10 @@ export default function SeminarDetail() {
                 ) : seminar.status === 'previous' ? (
                   <Button disabled className="w-full" size="lg">
                     Event Completed
+                  </Button>
+                ) : seminar.online_registration_enabled === 0 ? (
+                  <Button disabled className="w-full" size="lg">
+                    Online Registration Disabled
                   </Button>
                 ) : (
                   <Button disabled className="w-full" size="lg">

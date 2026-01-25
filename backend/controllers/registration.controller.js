@@ -36,17 +36,9 @@ exports.createRegistration = async (req, res) => {
   let connection;
   
   try {
-    console.log('=== CREATE REGISTRATION CALLED ===');
-    console.log('User ID:', req.user?.id);
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-    console.log('==================================');
-    
+    );
     connection = await promisePool.getConnection();
-    console.log('Database connection acquired');
-    
     await connection.beginTransaction();
-    console.log('Transaction started');
-
     const userId = req.user.id;
     const {
       seminar_id,
@@ -58,18 +50,6 @@ exports.createRegistration = async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id
     } = req.body;
-
-    console.log('Extracted data:', {
-      userId,
-      seminar_id,
-      category_id,
-      slab_id,
-      delegate_type,
-      amount,
-      additional_persons,
-      razorpay_order_id,
-      razorpay_payment_id
-    });
 
     // Convert delegate_type to proper format for ENUM
     // "BOA Member" -> "boa-member", "Non BOA Member" -> "non-boa-member", "Accompanying Person" -> "accompanying-person"
@@ -83,25 +63,16 @@ exports.createRegistration = async (req, res) => {
       .replace('b-o-a', 'boa')
       .replace('non-boa', 'non-boa');
 
-    console.log('Original delegate_type:', delegate_type);
-    console.log('Normalized delegate_type:', normalizedDelegateType);
-
     // Generate registration number
     const registration_no = generateRegistrationNo();
-    console.log('Generated registration_no:', registration_no);
-
     // Calculate total amount
     const additionalAmount = additional_persons.reduce((sum, person) => sum + parseFloat(person.amount), 0);
     const totalAmount = parseFloat(amount) + additionalAmount;
-    console.log('Total amount:', totalAmount);
-
     // Check if user already has membership number
     const [userCheck] = await connection.query(
       'SELECT membership_no FROM users WHERE id = ?',
       [userId]
     );
-
-    console.log('User check result:', userCheck);
 
     let membershipNo = userCheck[0].membership_no;
 
@@ -109,18 +80,14 @@ exports.createRegistration = async (req, res) => {
     if (!membershipNo) {
       membershipNo = await generateMembershipNo(connection);
       
-      console.log('Generated membership number:', membershipNo);
-      
       // Update user with membership number
       await connection.query(
         'UPDATE users SET membership_no = ?, is_boa_member = TRUE WHERE id = ?',
         [membershipNo, userId]
       );
       
-      console.log('Updated user with membership number');
-    } else {
-      console.log('User already has membership number:', membershipNo);
-    }
+      } else {
+      }
 
     // Determine payment status based on Razorpay data
     const paymentStatus = razorpay_payment_id ? 'confirmed' : 'pending';

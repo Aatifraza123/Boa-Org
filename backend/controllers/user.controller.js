@@ -51,9 +51,6 @@ exports.updateProfile = async (req, res) => {
       house, street, landmark, city, state, country, pin_code
     } = req.body;
 
-    console.log('Updating profile for user:', userId);
-    console.log('Update data:', req.body);
-
     // Update user
     await connection.query(
       `UPDATE users SET 
@@ -98,8 +95,6 @@ exports.updateProfile = async (req, res) => {
     }
 
     await connection.commit();
-
-    console.log('Profile updated successfully for user:', userId);
 
     res.json({
       success: true,

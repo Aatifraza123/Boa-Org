@@ -125,11 +125,11 @@ export default function Dashboard() {
       };
 
       await userAPI.updateProfile(updateData);
-      
+
       // Reload user data
       const profileResponse = await userAPI.getProfile();
       setUser(profileResponse.user);
-      
+
       // Update localStorage
       localStorage.setItem('user', JSON.stringify(profileResponse.user));
 
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (passwordFormData.new_password !== passwordFormData.confirm_password) {
       toast({
         title: 'Error',
@@ -211,16 +211,16 @@ export default function Dashboard() {
     // Header
     doc.setFillColor(0, 128, 128);
     doc.rect(0, 0, pageWidth, 35, 'F');
-    
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('Registration Receipt', pageWidth / 2, 15, { align: 'center' });
-    
+
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text(reg.seminar_name, pageWidth / 2, 23, { align: 'center' });
-    
+
     doc.setFontSize(10);
     doc.text(reg.location || '', pageWidth / 2, 30, { align: 'center' });
 
@@ -378,11 +378,10 @@ export default function Dashboard() {
                   {membershipData?.payment_status && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Payment Status</span>
-                      <Badge className={`${
-                        membershipData.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                      <Badge className={`${membershipData.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
                         membershipData.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                        'bg-gray-100 text-gray-800 border-gray-200'
-                      }`}>
+                          'bg-gray-100 text-gray-800 border-gray-200'
+                        }`}>
                         {membershipData.payment_status}
                       </Badge>
                     </div>
@@ -404,8 +403,8 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-2 mt-6">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full mb-2"
                     onClick={() => navigate('/membership-details')}
                   >
@@ -418,196 +417,196 @@ export default function Dashboard() {
                         Edit Profile
                       </Button>
                     </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Edit Profile</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateProfile} className="space-y-4" noValidate>
-                      {/* Read-only Information Section */}
-                      <div className="bg-accent/30 rounded-lg p-4 mb-4">
-                        <h3 className="font-semibold mb-2 text-foreground">Account Information (Read-Only)</h3>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          These details are managed by BOA administrators and cannot be changed by users.
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <Label className="text-muted-foreground">Email Address</Label>
-                            <div className="mt-1 p-2 bg-muted rounded border text-foreground">
-                              {user.email}
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Edit Profile</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleUpdateProfile} className="space-y-4" noValidate>
+                        {/* Read-only Information Section */}
+                        <div className="bg-accent/30 rounded-lg p-4 mb-4">
+                          <h3 className="font-semibold mb-2 text-foreground">Account Information (Read-Only)</h3>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            These details are managed by BOA administrators and cannot be changed by users.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <Label className="text-muted-foreground">Email Address</Label>
+                              <div className="mt-1 p-2 bg-muted rounded border text-foreground">
+                                {user.email}
+                              </div>
                             </div>
+                            {membershipData?.membership_type && (
+                              <div>
+                                <Label className="text-muted-foreground">Membership Type</Label>
+                                <div className="mt-1 p-2 bg-muted rounded border">
+                                  <Badge variant="outline" className="capitalize">
+                                    {membershipData.membership_type}
+                                  </Badge>
+                                </div>
+                              </div>
+                            )}
+                            {user.membership_no && (
+                              <div>
+                                <Label className="text-muted-foreground">Membership Number</Label>
+                                <div className="mt-1 p-2 bg-muted rounded border">
+                                  <Badge className="bg-yellow-400 text-black border-0">
+                                    {user.membership_no}
+                                  </Badge>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {membershipData?.membership_type && (
-                            <div>
-                              <Label className="text-muted-foreground">Membership Type</Label>
-                              <div className="mt-1 p-2 bg-muted rounded border">
-                                <Badge variant="outline" className="capitalize">
-                                  {membershipData.membership_type}
-                                </Badge>
-                              </div>
-                            </div>
-                          )}
-                          {user.membership_no && (
-                            <div>
-                              <Label className="text-muted-foreground">Membership Number</Label>
-                              <div className="mt-1 p-2 bg-muted rounded border">
-                                <Badge className="bg-yellow-400 text-black border-0">
-                                  {user.membership_no}
-                                </Badge>
-                              </div>
-                            </div>
-                          )}
                         </div>
-                      </div>
 
-                      {/* Editable Information Section */}
-                      <div>
-                        <h3 className="font-semibold mb-3 text-foreground">Personal Information (Editable)</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
+                        {/* Editable Information Section */}
+                        <div>
+                          <h3 className="font-semibold mb-3 text-foreground">Personal Information (Editable)</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Title</Label>
+                            <Select value={editFormData.title} onValueChange={(v) => setEditFormData({ ...editFormData, title: v })}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {titleOptions.map(opt => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Gender</Label>
+                            <Select value={editFormData.gender} onValueChange={(v) => setEditFormData({ ...editFormData, gender: v })}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {genderOptions.map(opt => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>First Name</Label>
+                            <Input value={editFormData.first_name} onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })} required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Surname</Label>
+                            <Input value={editFormData.surname} onChange={(e) => setEditFormData({ ...editFormData, surname: e.target.value })} required />
+                          </div>
+                        </div>
+
                         <div className="space-y-2">
-                          <Label>Title</Label>
-                          <Select value={editFormData.title} onValueChange={(v) => setEditFormData({...editFormData, title: v})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {titleOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Label>Mobile</Label>
+                          <Input value={editFormData.mobile} onChange={(e) => setEditFormData({ ...editFormData, mobile: e.target.value })} required />
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>City</Label>
+                            <Input value={editFormData.city} onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>State</Label>
+                            <Select value={editFormData.state} onValueChange={(v) => setEditFormData({ ...editFormData, state: v })}>
+                              <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                              <SelectContent>
+                                {indianStates.map(state => (
+                                  <SelectItem key={state} value={state}>{state}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 justify-end">
+                          <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit" className="gradient-primary text-primary-foreground" disabled={isUpdating}>
+                            {isUpdating ? 'Updating...' : 'Update Profile'}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        Change Password
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
                         <div className="space-y-2">
-                          <Label>Gender</Label>
-                          <Select value={editFormData.gender} onValueChange={(v) => setEditFormData({...editFormData, gender: v})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {genderOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Label>Current Password</Label>
+                          <Input
+                            type="password"
+                            value={passwordFormData.current_password}
+                            onChange={(e) => setPasswordFormData({ ...passwordFormData, current_password: e.target.value })}
+                            required
+                            placeholder="Enter current password"
+                          />
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>First Name</Label>
-                          <Input value={editFormData.first_name} onChange={(e) => setEditFormData({...editFormData, first_name: e.target.value})} required />
+                          <Label>New Password</Label>
+                          <Input
+                            type="password"
+                            value={passwordFormData.new_password}
+                            onChange={(e) => setPasswordFormData({ ...passwordFormData, new_password: e.target.value })}
+                            required
+                            placeholder="Enter new password (min 6 characters)"
+                            minLength={6}
+                          />
                         </div>
+
                         <div className="space-y-2">
-                          <Label>Surname</Label>
-                          <Input value={editFormData.surname} onChange={(e) => setEditFormData({...editFormData, surname: e.target.value})} required />
+                          <Label>Confirm New Password</Label>
+                          <Input
+                            type="password"
+                            value={passwordFormData.confirm_password}
+                            onChange={(e) => setPasswordFormData({ ...passwordFormData, confirm_password: e.target.value })}
+                            required
+                            placeholder="Re-enter new password"
+                            minLength={6}
+                          />
                         </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <Label>Mobile</Label>
-                        <Input value={editFormData.mobile} onChange={(e) => setEditFormData({...editFormData, mobile: e.target.value})} required />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>City</Label>
-                          <Input value={editFormData.city} onChange={(e) => setEditFormData({...editFormData, city: e.target.value})} />
+                        <div className="flex gap-2 justify-end pt-4">
+                          <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit" className="gradient-primary text-primary-foreground" disabled={isUpdating}>
+                            {isUpdating ? 'Changing...' : 'Change Password'}
+                          </Button>
                         </div>
-                        <div className="space-y-2">
-                          <Label>State</Label>
-                          <Select value={editFormData.state} onValueChange={(v) => setEditFormData({...editFormData, state: v})}>
-                            <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                            <SelectContent>
-                              {indianStates.map(state => (
-                                <SelectItem key={state} value={state}>{state}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 justify-end">
-                        <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" className="gradient-primary text-primary-foreground" disabled={isUpdating}>
-                          {isUpdating ? 'Updating...' : 'Update Profile'}
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-
-                <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      Change Password
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Change Password</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
-                      <div className="space-y-2">
-                        <Label>Current Password</Label>
-                        <Input 
-                          type="password" 
-                          value={passwordFormData.current_password} 
-                          onChange={(e) => setPasswordFormData({...passwordFormData, current_password: e.target.value})} 
-                          required 
-                          placeholder="Enter current password"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>New Password</Label>
-                        <Input 
-                          type="password" 
-                          value={passwordFormData.new_password} 
-                          onChange={(e) => setPasswordFormData({...passwordFormData, new_password: e.target.value})} 
-                          required 
-                          placeholder="Enter new password (min 6 characters)"
-                          minLength={6}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Confirm New Password</Label>
-                        <Input 
-                          type="password" 
-                          value={passwordFormData.confirm_password} 
-                          onChange={(e) => setPasswordFormData({...passwordFormData, confirm_password: e.target.value})} 
-                          required 
-                          placeholder="Re-enter new password"
-                          minLength={6}
-                        />
-                      </div>
-
-                      <div className="flex gap-2 justify-end pt-4">
-                        <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" className="gradient-primary text-primary-foreground" disabled={isUpdating}>
-                          {isUpdating ? 'Changing...' : 'Change Password'}
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               {/* Quick Actions */}
               <div className="bg-card rounded-2xl border border-border p-6 shadow-card">
                 <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
                 <div className="space-y-2">
-                  {activeSeminar && (
+                  {activeSeminar && activeSeminar.online_registration_enabled === 1 && (
                     <Link to={`/seminar/${activeSeminar.id}/register`}>
-                      <Button className="w-full justify-start gradient-primary text-primary-foreground">
+                      <Button className="w-full mb-2 justify-start gradient-primary text-primary-foreground">
                         <Calendar className="mr-2 h-4 w-4" />
                         Register for {activeSeminar.name}
                       </Button>
                     </Link>
                   )}
                   <Link to="/certificates">
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full mb-2 justify-start">
                       <Award className="mr-2 h-4 w-4" />
                       My Certificates
                     </Button>
@@ -668,7 +667,7 @@ export default function Dashboard() {
                 <div className="p-6 border-b border-border">
                   <h3 className="text-lg font-semibold text-foreground">Your Registrations</h3>
                 </div>
-                
+
                 {registrations.length > 0 ? (
                   <div className="divide-y divide-border">
                     {registrations.map((reg) => (
@@ -677,12 +676,12 @@ export default function Dashboard() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold text-foreground">{reg.seminar_name}</h4>
-                              <Badge 
-                                className={reg.status === 'completed' 
-                                  ? 'bg-green-100 text-green-700 border-0' 
+                              <Badge
+                                className={reg.status === 'completed'
+                                  ? 'bg-green-100 text-green-700 border-0'
                                   : reg.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-700 border-0'
-                                  : 'bg-red-100 text-red-700 border-0'
+                                    ? 'bg-yellow-100 text-yellow-700 border-0'
+                                    : 'bg-red-100 text-red-700 border-0'
                                 }
                               >
                                 {reg.status}
@@ -712,7 +711,7 @@ export default function Dashboard() {
                   <div className="p-12 text-center">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-4">No registrations yet</p>
-                    {activeSeminar ? (
+                    {activeSeminar && activeSeminar.online_registration_enabled === 1 ? (
                       <Link to={`/seminar/${activeSeminar.id}/register`}>
                         <Button className="gradient-primary text-primary-foreground">
                           Register for {activeSeminar.name}

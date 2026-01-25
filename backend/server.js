@@ -45,6 +45,10 @@ try {
   app.use('/api/auth', authRoutes);
   console.log('✓ Auth routes loaded');
 
+  const forgotPasswordRoutes = require('./routes/forgot-password.routes');
+  app.use('/api/auth/forgot-password', forgotPasswordRoutes);
+  console.log('✓ Forgot password routes loaded');
+
   const adminAuthRoutes = require('./routes/admin-auth.routes');
   app.use('/api/admin-auth', adminAuthRoutes);
   console.log('✓ Admin auth routes loaded at /api/admin-auth');
@@ -78,6 +82,11 @@ try {
   const certificateRoutes = require('./routes/certificate.routes');
   app.use('/api/certificates', certificateRoutes);
   console.log('✓ Certificate routes loaded');
+
+  // Contact routes
+  const contactRoutes = require('./routes/contact.routes');
+  app.use('/api/contact', contactRoutes);
+  console.log('✓ Contact routes loaded');
 
   // Public committee members route
   app.get('/api/committee-members', async (req, res) => {

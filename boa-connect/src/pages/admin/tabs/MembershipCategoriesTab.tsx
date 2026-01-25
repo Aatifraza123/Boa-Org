@@ -39,18 +39,9 @@ export default function MembershipCategoriesTab() {
   const [editingCategory, setEditingCategory] = useState<MembershipCategory | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    icon: 'Award',
-    category: 'passout_fee',
     price: '',
-    duration: '',
-    features: [''],
-    is_recommended: false,
-    is_active: true,
+    student_price: '',
   });
-
-  const iconOptions = [
-    'Award', 'Briefcase', 'CreditCard', 'GraduationCap', 'Users', 'Star'
-  ];
 
   useEffect(() => {
     loadCategories();
@@ -89,25 +80,15 @@ export default function MembershipCategoriesTab() {
       setEditingCategory(category);
       setFormData({
         title: category.title,
-        icon: category.icon,
-        category: category.category,
         price: category.price,
-        duration: category.duration,
-        features: category.features,
-        is_recommended: category.is_recommended,
-        is_active: category.is_active,
+        student_price: (category as any).student_price || '',
       });
     } else {
       setEditingCategory(null);
       setFormData({
         title: '',
-        icon: 'Award',
-        category: 'passout_fee',
         price: '',
-        duration: '',
-        features: [''],
-        is_recommended: false,
-        is_active: true,
+        student_price: '',
       });
     }
     setIsDialogOpen(true);
@@ -118,44 +99,13 @@ export default function MembershipCategoriesTab() {
     setEditingCategory(null);
   };
 
-  const handleAddFeature = () => {
-    setFormData(prev => ({
-      ...prev,
-      features: [...prev.features, '']
-    }));
-  };
-
-  const handleRemoveFeature = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleFeatureChange = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.map((f, i) => i === index ? value : f)
-    }));
-  };
-
   const handleSubmit = async () => {
     try {
       // Validate
-      if (!formData.title || !formData.price || !formData.duration) {
+      if (!formData.title || !formData.price) {
         toast({
           title: 'Validation Error',
           description: 'Please fill all required fields',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const filteredFeatures = formData.features.filter(f => f.trim() !== '');
-      if (filteredFeatures.length === 0) {
-        toast({
-          title: 'Validation Error',
-          description: 'Please add at least one feature',
           variant: 'destructive',
         });
         return;
@@ -171,10 +121,7 @@ export default function MembershipCategoriesTab() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         },
-        body: JSON.stringify({
-          ...formData,
-          features: filteredFeatures
-        })
+        body: JSON.stringify(formData)
       });
 
       const data = await response.json();
@@ -370,10 +317,10 @@ export default function MembershipCategoriesTab() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? 'Edit Category' : 'Add New Category'}
+              {editingCategory ? 'Edit Membership Plan' : 'Add Membership Plan'}
             </DialogTitle>
           </DialogHeader>
 
@@ -383,108 +330,28 @@ export default function MembershipCategoriesTab() {
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g., Life Membership"
+                placeholder="e.g., Yearly, 5-Yearly, Lifetime"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium">Category *</label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="passout_fee">Passout Fee</SelectItem>
-                  <SelectItem value="student_fee">Student Fee</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Price (₹) *</label>
-                <Input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="10000"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Duration *</label>
-                <Input
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  placeholder="e.g., One-time payment"
-                />
-              </div>
+              <label className="text-sm font-medium">Passout Fee (₹) *</label>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="1200"
+              />
             </div>
 
             <div>
-              <label className="text-sm font-medium">Icon</label>
-              <Select value={formData.icon} onValueChange={(value) => setFormData({ ...formData, icon: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {iconOptions.map(icon => (
-                    <SelectItem key={icon} value={icon}>{icon}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Features *</label>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddFeature}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Feature
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {formData.features.map((feature, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={feature}
-                      onChange={(e) => handleFeatureChange(index, e.target.value)}
-                      placeholder="Enter feature"
-                    />
-                    {formData.features.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveFeature(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.is_recommended}
-                  onChange={(e) => setFormData({ ...formData, is_recommended: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm font-medium">Mark as Recommended</span>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm font-medium">Active</span>
-              </label>
+              <label className="text-sm font-medium">Student Fee (₹)</label>
+              <Input
+                type="number"
+                value={formData.student_price}
+                onChange={(e) => setFormData({ ...formData, student_price: e.target.value })}
+                placeholder="600"
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">

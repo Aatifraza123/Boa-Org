@@ -16,7 +16,6 @@ function logToFile(message) {
 // Simple connectivity test endpoint
 router.get('/test-connection', (req, res) => {
   logToFile('Frontend connectivity test called');
-  console.log('Frontend connectivity test called');
   res.json({
     success: true,
     message: 'Backend is reachable',
@@ -36,11 +35,6 @@ router.options('/create-order', (req, res) => {
 // Test endpoint for debugging
 router.post('/test', async (req, res) => {
   try {
-    console.log('=== TEST ENDPOINT ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    console.log('Raw body type:', typeof req.body);
-    
     res.json({
       success: true,
       message: 'Test endpoint working',
@@ -63,16 +57,9 @@ router.post('/create-order', async (req, res) => {
     logToFile(`Body: ${JSON.stringify(req.body)}`);
     logToFile(`Raw body type: ${typeof req.body}`);
     
-    console.log('=== CREATE ORDER REQUEST ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    console.log('Raw body type:', typeof req.body);
-    
     const { amount, currency = 'INR', receipt, metadata = {} } = req.body;
 
     logToFile(`Parsed values: ${JSON.stringify({ amount, currency, receipt, metadata })}`);
-    console.log('Parsed values:', { amount, currency, receipt, metadata });
-
     // Validate amount
     if (!amount) {
       logToFile(`Missing amount in request`);
@@ -140,10 +127,6 @@ router.post('/verify-payment', async (req, res) => {
     logToFile(`Headers: ${JSON.stringify(req.headers)}`);
     logToFile(`Body: ${JSON.stringify(req.body)}`);
     
-    console.log('=== VERIFY PAYMENT REQUEST ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -431,8 +414,7 @@ router.post('/webhook', async (req, res) => {
         await handlePaymentFailed(paymentEntity);
         break;
       default:
-        console.log('Unhandled webhook event:', event);
-    }
+        }
 
     res.json({ success: true });
 
@@ -452,8 +434,7 @@ async function handlePaymentCaptured(payment) {
       [payment.id]
     );
 
-    console.log('Payment captured:', payment.id);
-  } catch (error) {
+    } catch (error) {
     console.error('Handle payment captured error:', error);
   }
 }
@@ -468,8 +449,7 @@ async function handlePaymentFailed(payment) {
       [payment.id]
     );
 
-    console.log('Payment failed:', payment.id);
-  } catch (error) {
+    } catch (error) {
     console.error('Handle payment failed error:', error);
   }
 }
@@ -590,8 +570,7 @@ router.post('/webhook/payment-success', async (req, res) => {
       payment.verified_at = new Date();
       pendingPayments.set(transaction_id, payment);
 
-      console.log(`✅ Payment verified: ${transaction_id}`);
-    }
+      }
 
     res.json({ success: true });
   } catch (error) {

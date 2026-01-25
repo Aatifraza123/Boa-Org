@@ -660,11 +660,6 @@ exports.getAllRegistrations = async (req, res) => {
 // Update registration status
 exports.updateRegistrationStatus = async (req, res) => {
   try {
-    console.log('=== UPDATE REGISTRATION STATUS ===');
-    console.log('Registration ID:', req.params.id);
-    console.log('New Status:', req.body.status);
-    console.log('==================================');
-    
     const { id } = req.params;
     const { status } = req.body;
 
@@ -692,8 +687,6 @@ exports.updateRegistrationStatus = async (req, res) => {
       'UPDATE registrations SET status = ? WHERE id = ?',
       [status, id]
     );
-
-    console.log('Update result:', result);
 
     res.json({
       success: true,
@@ -869,10 +862,6 @@ exports.updateMembershipDetails = async (req, res) => {
     const { id } = req.params;
     const { membership_no, membership_type, status, valid_from, valid_until, notes } = req.body;
 
-    console.log('=== UPDATE MEMBERSHIP DEBUG ===');
-    console.log('User ID:', id);
-    console.log('Data:', { membership_no, membership_type, status, valid_from, valid_until, notes });
-
     // Check if membership number already exists (excluding current user)
     if (membership_no) {
       const [existing] = await promisePool.query(
@@ -895,8 +884,6 @@ exports.updateMembershipDetails = async (req, res) => {
       [membership_no || null, id]
     );
 
-    console.log('✓ Updated user membership_no');
-
     // Get user's email for membership_registrations update
     const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
     
@@ -916,8 +903,7 @@ exports.updateMembershipDetails = async (req, res) => {
           SET membership_type = ?, status = ?, valid_from = ?, valid_until = ?, notes = ?
           WHERE email = ?
         `, [membership_type, status, valid_from || null, valid_until || null, notes, userEmail]);
-        console.log('✓ Updated membership_registrations');
-      } else if (membership_type) {
+        } else if (membership_type) {
         // Create new membership registration record only if membership_type is provided
         await promisePool.query(`
           INSERT INTO membership_registrations 
@@ -925,8 +911,7 @@ exports.updateMembershipDetails = async (req, res) => {
           SELECT email, CONCAT(title, ' ', first_name, ' ', surname), ?, ?, ?, ?, ?, NOW()
           FROM users WHERE id = ?
         `, [membership_type, status, valid_from || null, valid_until || null, notes, id]);
-        console.log('✓ Created membership_registrations');
-      }
+        }
     }
 
     res.json({
@@ -2533,14 +2518,23 @@ exports.getMembershipCategories = async (req, res) => {
 // Create membership category
 exports.createMembershipCategory = async (req, res) => {
   try {
-    const { title, icon, category, price, duration, features, is_recommended, display_order, is_active } = req.body;
-
-    const featuresJson = JSON.stringify(features);
+    const { title, price, student_price } = req.body;
 
     const [result] = await promisePool.query(
-      `INSERT INTO membership_categories (title, icon, category, price, duration, features, is_recommended, display_order, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, icon || 'Briefcase', category || 'passout_fee', price, duration, featuresJson, is_recommended !== false, display_order || 0, is_active !== false]
+      `INSERT INTO membership_categories (title, price, student_price, icon, category, duration, features, is_recommended, display_order, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        title, 
+        price, 
+        student_price || 0,
+        'Briefcase', 
+        'passout_fee', 
+        'One-time', 
+        JSON.stringify([]), 
+        false, 
+        0, 
+        true
+      ]
     );
 
     res.json({
@@ -2562,53 +2556,11 @@ exports.createMembershipCategory = async (req, res) => {
 exports.updateMembershipCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, icon, category, price, duration, features, is_recommended, display_order, is_active } = req.body;
-
-    const updates = [];
-    const values = [];
-
-    if (title !== undefined) {
-      updates.push('title = ?');
-      values.push(title);
-    }
-    if (icon !== undefined) {
-      updates.push('icon = ?');
-      values.push(icon);
-    }
-    if (category !== undefined) {
-      updates.push('category = ?');
-      values.push(category);
-    }
-    if (price !== undefined) {
-      updates.push('price = ?');
-      values.push(price);
-    }
-    if (duration !== undefined) {
-      updates.push('duration = ?');
-      values.push(duration);
-    }
-    if (features !== undefined) {
-      updates.push('features = ?');
-      values.push(JSON.stringify(features));
-    }
-    if (is_recommended !== undefined) {
-      updates.push('is_recommended = ?');
-      values.push(is_recommended ? 1 : 0);
-    }
-    if (display_order !== undefined) {
-      updates.push('display_order = ?');
-      values.push(display_order);
-    }
-    if (is_active !== undefined) {
-      updates.push('is_active = ?');
-      values.push(is_active ? 1 : 0);
-    }
-
-    values.push(id);
+    const { title, price, student_price } = req.body;
 
     await promisePool.query(
-      `UPDATE membership_categories SET ${updates.join(', ')} WHERE id = ?`,
-      values
+      `UPDATE membership_categories SET title = ?, price = ?, student_price = ? WHERE id = ?`,
+      [title, price, student_price || 0, id]
     );
 
     res.json({

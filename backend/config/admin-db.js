@@ -17,8 +17,7 @@ const adminPromisePool = adminPool.promise();
 // Test connection
 adminPromisePool.query('SELECT 1')
   .then(() => {
-    console.log('✓ Admin database connected successfully');
-  })
+    })
   .catch((err) => {
     console.error('✗ Admin database connection failed:', err.message);
   });

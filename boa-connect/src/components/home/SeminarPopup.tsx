@@ -96,7 +96,7 @@ export function SeminarPopup() {
 
   const handleViewNotifications = () => {
     setShowReloadPopup(false);
-    navigate('/notifications');
+    navigate('/seminars');
   };
 
   const formatDate = (dateString: string) => {
@@ -180,7 +180,7 @@ export function SeminarPopup() {
                   className="flex-1 text-white font-medium py-2 px-4 rounded-lg transition-opacity hover:opacity-90"
                   style={{ backgroundColor: upcomingEvent.color || '#2563eb' }}
                 >
-                  View Notifications
+                  View Details
                 </button>
                 <button
                   onClick={handleCloseReloadPopup}

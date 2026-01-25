@@ -7,7 +7,7 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children }: PageTransitionProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const location = useLocation();
 
   // Initialize scroll animations
@@ -17,6 +17,8 @@ export function PageTransition({ children }: PageTransitionProps) {
   const isAuthPage = location.pathname === '/login' || 
                      location.pathname === '/admin-login' || 
                      location.pathname === '/register' ||
+                     location.pathname === '/forgot-password' ||
+                     location.pathname === '/reset-password' ||
                      location.pathname.includes('/seminar-registration');
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function PageTransition({ children }: PageTransitionProps) {
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [children, isAuthPage]);
+  }, [location.pathname, isAuthPage]);
 
   // No animation wrapper for auth pages
   if (isAuthPage) {
@@ -42,8 +44,8 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div 
-      className={`transition-all duration-500 ease-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      className={`transition-all duration-300 ease-out ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       }`}
     >
       {children}

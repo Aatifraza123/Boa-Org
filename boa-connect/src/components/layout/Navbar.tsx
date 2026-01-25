@@ -25,6 +25,7 @@ export function Navbar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [contactInfo, setContactInfo] = useState<any>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
   const { config } = useSiteConfig();
 
@@ -62,38 +63,43 @@ export function Navbar() {
     }
   };
 
-  const loadUser = async () => {
+  const loadUser = () => {
     const token = localStorage.getItem('token');
-    if (token) {
+    const cachedUserData = localStorage.getItem('user');
+    
+    // Immediately load from localStorage and stop loading state
+    if (token && cachedUserData) {
       try {
-        // Try to get fresh user data from API
-        const response = await fetch('/api/users/profile', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData.user);
-          // Update localStorage with fresh data
-          localStorage.setItem('user', JSON.stringify(userData.user));
-        } else {
-          // Fallback to localStorage if API fails
-          const userData = localStorage.getItem('user');
-          if (userData) {
-            setUser(JSON.parse(userData));
-          }
-        }
+        setUser(JSON.parse(cachedUserData));
       } catch (error) {
-        console.error('Failed to load user data:', error);
-        // Fallback to localStorage
-        const userData = localStorage.getItem('user');
-        if (userData) {
-          setUser(JSON.parse(userData));
-        }
+        console.error('Failed to parse cached user data:', error);
       }
+    }
+    
+    // Always set loading to false immediately after checking localStorage
+    setIsAuthLoading(false);
+    
+    // Then fetch fresh data in background if token exists
+    if (token) {
+      fetch('/api/users/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('Failed to fetch user profile');
+        })
+        .then(userData => {
+          setUser(userData.user);
+          localStorage.setItem('user', JSON.stringify(userData.user));
+        })
+        .catch(error => {
+          console.error('Failed to load user data:', error);
+        });
     }
   };
 
@@ -265,77 +271,79 @@ export function Navbar() {
                 </div>
               </Link>
 
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-800 transition-colors">
-                      <Avatar className="h-8 w-8 border border-orange-300">
-                        <AvatarImage src={user.avatar} alt={getUserName()} />
-                        <AvatarFallback className="text-xs font-semibold bg-orange-500 text-white">
-                          {getUserInitials()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden sm:block text-sm font-medium text-white">
-                        {getUserName().split(' ')[0]}
-                      </span>
-                      <ChevronDown className="h-4 w-4 text-blue-200" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-60" align="end">
-                    <DropdownMenuLabel>
-                      <div className="p-2 bg-gray-50 rounded">
-                        <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+              {!isAuthLoading && (
+                user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-800 transition-colors">
+                        <Avatar className="h-8 w-8 border border-orange-300">
+                          <AvatarImage src={user.avatar} alt={getUserName()} />
+                          <AvatarFallback className="text-xs font-semibold bg-orange-500 text-white">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="hidden sm:block text-sm font-medium text-white">
+                          {getUserName().split(' ')[0]}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-blue-200" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-60" align="end">
+                      <DropdownMenuLabel>
+                        <div className="p-2 bg-gray-50 rounded">
+                          <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
+                          <p className="text-xs text-gray-500">{user.email}</p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
 
-                    {user.membership_no && (
-                      <>
-                        <DropdownMenuItem className="cursor-default">
-                          <div className="flex items-center justify-center w-full">
-                            <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
-                              Membership: {user.membership_no}
-                            </Badge>
-                          </div>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
+                      {user.membership_no && (
+                        <>
+                          <DropdownMenuItem className="cursor-default">
+                            <div className="flex items-center justify-center w-full">
+                              <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
+                                Membership: {user.membership_no}
+                              </Badge>
+                            </div>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
 
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-
-                    {user.role === 'admin' && (
-                      <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Admin Panel</span>
+                      <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
                       </DropdownMenuItem>
-                    )}
 
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link to="/login">
-                    <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
-                      Login
-                    </Button>
-                  </Link>
-                  <span className="text-blue-400">|</span>
-                  <Link to="/admin/login">
-                    <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
-                      Admin
-                    </Button>
-                  </Link>
-                </div>
+                      {user.role === 'admin' && (
+                        <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Admin Panel</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Logout</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link to="/login">
+                      <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
+                        Login
+                      </Button>
+                    </Link>
+                    <span className="text-blue-400">|</span>
+                    <Link to="/admin/login">
+                      <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white">
+                        Admin
+                      </Button>
+                    </Link>
+                  </div>
+                )
               )}
 
               {/* Mobile Menu */}

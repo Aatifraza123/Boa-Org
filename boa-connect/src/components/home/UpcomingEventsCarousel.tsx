@@ -221,15 +221,17 @@ export function UpcomingEventsCarousel() {
                     {/* Left - Event Image */}
                     <div className="md:w-1/2 lg:w-2/3">
                       <div className="relative h-64 md:h-full min-h-[300px] bg-gray-100">
-                        <img
-                          src={event.image_url || '/api/placeholder/800/400'}
-                          alt={event.title || 'Event'}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/api/placeholder/800/400';
-                          }}
-                        />
+                        {event.image_url && (
+                          <img
+                            src={event.image_url}
+                            alt={event.title || 'Event'}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/api/placeholder/800/400';
+                            }}
+                          />
+                        )}
                         {/* Status Badge Overlay */}
                         <div className="absolute top-3 right-3">
                           {getStatusBadge(status)}
@@ -291,16 +293,18 @@ export function UpcomingEventsCarousel() {
                         {/* Event Details - Compact */}
                         <div className="space-y-2 text-xs">
                           {/* Date */}
-                          <div className="flex items-center gap-2 text-gray-700">
-                            <Calendar className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-                            <span className="font-medium">Date:</span>
-                            <span>
-                              {formatDate(event.start_date)}
-                              {event.end_date && event.end_date !== event.start_date &&
-                                ` to ${formatDate(event.end_date)}`
-                              }
-                            </span>
-                          </div>
+                          {event.start_date && (
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <Calendar className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                              <span className="font-medium">Date:</span>
+                              <span>
+                                {formatDate(event.start_date)}
+                                {event.end_date && event.end_date !== event.start_date &&
+                                  ` to ${formatDate(event.end_date)}`
+                                }
+                              </span>
+                            </div>
+                          )}
 
                           {/* Location */}
                           {event.location && (

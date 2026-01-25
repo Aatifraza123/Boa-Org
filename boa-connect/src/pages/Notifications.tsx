@@ -126,7 +126,7 @@ export default function Notifications() {
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            {notification.title}
+                            {notification.seminar_name || notification.title}
                           </h3>
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Clock className="h-4 w-4" />
@@ -163,7 +163,7 @@ export default function Notifications() {
                         <Button 
                           variant="outline"
                           className="w-full sm:w-auto h-12 text-base px-6 sm:h-11 sm:text-sm sm:px-5"
-                          onClick={() => handleDownloadForm(notification.seminar_id, notification.title)}
+                          onClick={() => handleDownloadForm(notification.seminar_id, notification.seminar_name || notification.title)}
                         >
                           <Download className="mr-2 h-4 w-4" />
                           Download Form

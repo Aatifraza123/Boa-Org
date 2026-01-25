@@ -161,7 +161,7 @@ export default function Seminars() {
                       </p>
 
                       <div className="pt-4 border-t border-border flex gap-2">
-                        {seminar.is_active && (
+                        {seminar.is_active && seminar.online_registration_enabled === 1 && (
                           <Link to={`/seminar/${seminar.id}/register`} className="flex-1">
                             <Button className="w-full gradient-primary text-primary-foreground">
                               Register Now
@@ -169,7 +169,7 @@ export default function Seminars() {
                             </Button>
                           </Link>
                         )}
-                        <Link to={`/seminar/${seminar.id}`} className={seminar.is_active ? 'flex-1' : 'w-full'}>
+                        <Link to={`/seminar/${seminar.id}`} className={(seminar.is_active && seminar.online_registration_enabled === 1) ? 'flex-1' : 'w-full'}>
                           <Button variant="outline" className="w-full">
                             View Details
                           </Button>

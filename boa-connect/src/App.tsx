@@ -4,9 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Navbar } from "@/components/layout/Navbar";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import RegisterSimple from "./pages/RegisterSimple";
 import Dashboard from "./pages/Dashboard";
 import Certificates from "./pages/Certificates";
@@ -43,41 +46,57 @@ function ScrollToTop() {
   return null;
 }
 
+// App content with conditional navbar
+function AppContent() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin') || 
+                       location.pathname === '/admin-login';
+  
+  return (
+    <>
+      {!isAdminRoute && <Navbar />}
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/register" element={<RegisterSimple />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/certificates" element={<Certificates />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/seminars" element={<Seminars />} />
+        <Route path="/seminar/:id" element={<SeminarDetail />} />
+        <Route path="/seminar/:id/register" element={<SeminarRegistration />} />
+        <Route path="/membership" element={<Membership />} />
+        <Route path="/membership-details" element={<MembershipDetails />} />
+        <Route path="/membership-form" element={<MembershipForm />} />
+        <Route path="/resources" element={<Resources />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/offline-form" element={<OfflineFormSettings />} />
+        <Route path="/admin/*" element={<AdminPanel />} />
+        <Route path="/test-config" element={<TestConfig />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <SonnerToaster />
       <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/register" element={<RegisterSimple />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/certificates" element={<Certificates />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/seminars" element={<Seminars />} />
-          <Route path="/seminar/:id" element={<SeminarDetail />} />
-          <Route path="/seminar/:id/register" element={<SeminarRegistration />} />
-          <Route path="/membership" element={<Membership />} />
-          <Route path="/membership-details" element={<MembershipDetails />} />
-          <Route path="/membership-form" element={<MembershipForm />} />
-          <Route path="/resources" element={<Resources />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/admin/profile" element={<AdminProfile />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/offline-form" element={<OfflineFormSettings />} />
-          <Route path="/admin/*" element={<AdminPanel />} />
-          <Route path="/test-config" element={<TestConfig />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppContent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

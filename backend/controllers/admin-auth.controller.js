@@ -4,13 +4,8 @@ const { adminPromisePool } = require('../config/admin-db');
 
 // Admin Login
 exports.adminLogin = async (req, res) => {
-  console.log('Admin login request received:', req.body);
-  
   try {
     const { username, password } = req.body;
-
-    console.log('Looking for admin:', username);
-    console.log('Password provided:', password ? 'YES' : 'NO');
 
     // Find admin by username or email
     const [admins] = await adminPromisePool.query(
@@ -18,10 +13,7 @@ exports.adminLogin = async (req, res) => {
       [username, username]
     );
 
-    console.log('Admin found:', admins.length > 0);
-
     if (admins.length === 0) {
-      console.log('Admin not found - returning 401');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -29,22 +21,14 @@ exports.adminLogin = async (req, res) => {
     }
 
     const admin = admins[0];
-    console.log('Admin data:', { id: admin.id, username: admin.username, email: admin.email });
-    console.log('Password hash from DB:', admin.password);
-
     // Verify password
     const isValidPassword = await bcrypt.compare(password, admin.password);
-    console.log('Password valid:', isValidPassword);
-    
     if (!isValidPassword) {
-      console.log('Invalid password - returning 401');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
-
-    console.log('Password verified successfully!');
 
     // Update last login
     await adminPromisePool.query(
@@ -72,8 +56,6 @@ exports.adminLogin = async (req, res) => {
 
     // Remove password from response
     delete admin.password;
-
-    console.log('Login successful - sending response');
 
     res.json({
       success: true,
@@ -224,10 +206,6 @@ exports.adminLogout = async (req, res) => {
 // Upload Image (for seminars, gallery, etc.)
 exports.uploadImage = async (req, res) => {
   try {
-    console.log('=== UPLOAD IMAGE DEBUG ===');
-    console.log('File:', req.file);
-    console.log('Body:', req.body);
-
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -242,8 +220,6 @@ exports.uploadImage = async (req, res) => {
       folder: 'seminars',
       resource_type: 'image'
     });
-
-    console.log('Upload successful:', result.secure_url);
 
     res.json({
       success: true,

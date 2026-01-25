@@ -90,7 +90,7 @@ export default function SeminarsTab() {
       is_active: seminar.is_active,
       status: seminar.status || 'active',
       color: seminar.color || '#0B3C5D',
-      online_registration_enabled: seminar.online_registration_enabled !== false
+      online_registration_enabled: seminar.online_registration_enabled === 1
     });
     setIsDialogOpen(true);
   };
