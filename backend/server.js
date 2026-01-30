@@ -79,7 +79,8 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     status: 'running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    server: 'Hostinger VPS Backend'
   });
 });
 
@@ -88,7 +89,19 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    server: 'Backend API Server'
+  });
+});
+
+// API identification route
+app.get('/api/server-info', (req, res) => {
+  res.json({
+    server: 'BOA Backend API',
+    type: 'Node.js Express Server',
+    location: 'Hostinger VPS',
+    status: 'running',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -364,11 +377,20 @@ try {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${seminar.name} - Registration Form</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .header { text-align: center; margin-bottom: 30px; }
-              .form-field { margin-bottom: 15px; }
-              .field-label { font-weight: bold; }
-              .field-line { border-bottom: 1px solid #333; min-height: 20px; display: inline-block; min-width: 200px; }
+              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0B3C5D; padding-bottom: 20px; }
+              .header h1 { color: #0B3C5D; margin-bottom: 10px; }
+              .header h2 { color: #C9A227; margin-bottom: 5px; }
+              .form-section { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; }
+              .section-title { font-weight: bold; color: #0B3C5D; margin-bottom: 15px; font-size: 16px; }
+              .form-field { margin-bottom: 15px; display: flex; align-items: center; }
+              .field-label { font-weight: bold; width: 150px; }
+              .field-line { border-bottom: 1px solid #333; flex: 1; min-height: 20px; margin-left: 10px; }
+              .declaration { background: #f9f9f9; padding: 15px; border-left: 4px solid #C9A227; margin: 20px 0; }
+              .signature-section { display: flex; justify-content: space-between; margin-top: 40px; }
+              .signature-box { text-align: center; width: 200px; }
+              .signature-line { border-bottom: 1px solid #333; margin-bottom: 5px; height: 40px; }
+              @media print { body { margin: 0; padding: 10px; } }
             </style>
           </head>
           <body>
@@ -379,54 +401,98 @@ try {
               <p><strong>Date:</strong> ${seminar.start_date ? new Date(seminar.start_date).toLocaleDateString('en-IN') : 'TBA'}</p>
             </div>
             
-            <h3>Registration Form</h3>
-            
-            <div class="form-field">
-              <div class="field-label">Name:</div>
-              <div class="field-line"></div>
-            </div>
-            
-            <div class="form-field">
-              <div class="field-label">Email:</div>
-              <div class="field-line"></div>
-            </div>
-            
-            <div class="form-field">
-              <div class="field-label">Phone:</div>
-              <div class="field-line"></div>
-            </div>
-            
-            <div class="form-field">
-              <div class="field-label">Institution:</div>
-              <div class="field-line"></div>
-            </div>
-            
-            <div class="form-field">
-              <div class="field-label">Designation:</div>
-              <div class="field-line"></div>
-            </div>
-            
-            <div style="margin-top: 50px;">
-              <p><strong>Declaration:</strong> I hereby register for the above seminar and agree to abide by the terms and conditions.</p>
-              <br><br>
-              <div style="display: flex; justify-content: space-between;">
-                <div>Date: _______________</div>
-                <div>Signature: _______________</div>
+            <div class="form-section">
+              <div class="section-title">Personal Information</div>
+              <div class="form-field">
+                <div class="field-label">Name:</div>
+                <div class="field-line"></div>
               </div>
+              <div class="form-field">
+                <div class="field-label">Email:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">Phone:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">Date of Birth:</div>
+                <div class="field-line"></div>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <div class="section-title">Professional Information</div>
+              <div class="form-field">
+                <div class="field-label">Institution:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">Designation:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">Qualification:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">Experience:</div>
+                <div class="field-line"></div>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <div class="section-title">Address Information</div>
+              <div class="form-field">
+                <div class="field-label">Address:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">City:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">State:</div>
+                <div class="field-line"></div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">PIN Code:</div>
+                <div class="field-line"></div>
+              </div>
+            </div>
+            
+            <div class="declaration">
+              <p><strong>Declaration:</strong> I hereby register for the ${seminar.name} and agree to abide by the terms and conditions set by the Bihar Ophthalmic Association. I understand that this registration is subject to approval and payment of applicable fees.</p>
+            </div>
+            
+            <div class="signature-section">
+              <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Date</div>
+              </div>
+              <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Signature</div>
+              </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+              <p>Bihar Ophthalmic Association | www.boabihar.org | info@boabihar.org</p>
             </div>
           </body>
           </html>
         `;
       }
 
-      console.log('Generating PDF from HTML template...');
+      console.log('Attempting PDF generation...');
       
+      // Try PDF generation with multiple fallback strategies
       try {
-        // Try to use the HTML to PDF service
+        // Strategy 1: Try Puppeteer PDF generation
         const htmlToPdfService = require('./services/htmlToPdf.service');
         const pdfBuffer = await htmlToPdfService.generateSeminarFormPdf(htmlTemplate, seminar);
         
-        console.log('PDF generated successfully, size:', pdfBuffer.length);
+        console.log('PDF generated successfully with Puppeteer, size:', pdfBuffer.length);
         
         // Set response headers for PDF download
         const fileName = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`;
@@ -434,31 +500,69 @@ try {
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.setHeader('Content-Length', pdfBuffer.length);
         
-        res.send(pdfBuffer);
-      } catch (pdfError) {
-        console.error('PDF generation failed:', pdfError);
-        console.error('PDF Error stack:', pdfError.stack);
+        return res.send(pdfBuffer);
         
-        // Check if it's a Puppeteer-specific error
-        if (pdfError.message.includes('puppeteer') || pdfError.message.includes('browser') || pdfError.message.includes('chrome')) {
-          console.log('Puppeteer error detected, providing HTML fallback');
+      } catch (puppeteerError) {
+        console.error('Puppeteer PDF generation failed:', puppeteerError.message);
+        
+        // Strategy 2: Try simple PDF generation with PDFKit
+        try {
+          const PDFDocument = require('pdfkit');
+          const doc = new PDFDocument();
           
-          // Fallback: Return the HTML content as a downloadable file
+          let buffers = [];
+          doc.on('data', buffers.push.bind(buffers));
+          doc.on('end', () => {
+            const pdfBuffer = Buffer.concat(buffers);
+            console.log('PDF generated successfully with PDFKit, size:', pdfBuffer.length);
+            
+            const fileName = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`;
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+            res.setHeader('Content-Length', pdfBuffer.length);
+            
+            res.send(pdfBuffer);
+          });
+          
+          // Generate simple PDF content
+          doc.fontSize(20).text('Bihar Ophthalmic Association', 50, 50);
+          doc.fontSize(16).text(seminar.name, 50, 80);
+          doc.fontSize(12).text(`Venue: ${seminar.venue || 'TBA'}`, 50, 110);
+          doc.fontSize(12).text(`Date: ${seminar.start_date ? new Date(seminar.start_date).toLocaleDateString('en-IN') : 'TBA'}`, 50, 130);
+          
+          doc.text('Registration Form', 50, 170);
+          doc.text('Name: ________________________', 50, 200);
+          doc.text('Email: ________________________', 50, 220);
+          doc.text('Phone: ________________________', 50, 240);
+          doc.text('Institution: ________________________', 50, 260);
+          doc.text('Designation: ________________________', 50, 280);
+          
+          doc.text('Declaration: I hereby register for this seminar and agree to the terms and conditions.', 50, 320);
+          doc.text('Date: ____________    Signature: ____________', 50, 360);
+          
+          doc.end();
+          return; // Exit here, response will be sent in the 'end' event
+          
+        } catch (pdfkitError) {
+          console.error('PDFKit generation also failed:', pdfkitError.message);
+          
+          // Strategy 3: Fallback to HTML download
+          console.log('Falling back to HTML download');
           const fileName = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.html`;
-          res.setHeader('Content-Type', 'text/html');
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
           res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-          res.send(htmlTemplate);
-        } else {
-          // For other errors, return JSON error response
-          throw pdfError;
+          return res.send(htmlTemplate);
         }
       }
+      
     } catch (error) {
       console.error('Failed to generate seminar PDF:', error);
+      console.error('Error stack:', error.stack);
       res.status(500).json({
         success: false,
         message: 'Failed to generate PDF',
-        error: error.message
+        error: error.message,
+        details: 'Please try again or contact support if the issue persists.'
       });
     }
   });
