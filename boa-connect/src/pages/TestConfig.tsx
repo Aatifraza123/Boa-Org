@@ -1,4 +1,5 @@
 import { useSiteConfig } from '@/hooks/useSiteConfig';
+import { ApiTest } from '@/components/ApiTest';
 
 export default function TestConfig() {
   const { config, isLoading } = useSiteConfig();
@@ -45,6 +46,8 @@ export default function TestConfig() {
           <h2 className="font-semibold mb-2">Site Description:</h2>
           <p className="text-sm">{config.site_description}</p>
         </div>
+        
+        <ApiTest />
       </div>
 
       <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded">

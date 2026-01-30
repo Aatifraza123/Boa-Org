@@ -12,15 +12,53 @@ export function CommitteeSection() {
   const loadCommitteeMembers = async () => {
     try {
       console.log('Loading committee members...');
+      console.log('API URL:', `${API_BASE_URL}/api/committee-members?page_type=home`);
+      
       const response = await fetch(`${API_BASE_URL}/api/committee-members?page_type=home`);
       console.log('Response status:', response.status);
+      console.log('Response content-type:', response.headers.get('content-type'));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText.substring(0, 500));
+        
+        // If we get HTML instead of JSON, the API server might be down
+        if (errorText.includes('<!doctype') || errorText.includes('<html')) {
+          console.error('API server returned HTML instead of JSON - server might be down or misconfigured');
+          setCommitteeMembers([]); // Set empty array as fallback
+          return;
+        }
+        
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Non-JSON response received:', responseText.substring(0, 200));
+        
+        // If we get HTML, set empty array as fallback
+        if (responseText.includes('<!doctype') || responseText.includes('<html')) {
+          console.error('API server returned HTML - using empty fallback');
+          setCommitteeMembers([]);
+          return;
+        }
+        
+        throw new Error('Server returned non-JSON response');
+      }
+      
       const data = await response.json();
       console.log('Committee data:', data);
       if (data.success) {
         setCommitteeMembers(data.members || []);
+      } else {
+        console.error('API returned success: false');
+        setCommitteeMembers([]);
       }
     } catch (error) {
       console.error('Failed to load committee members:', error);
+      // Set empty array as fallback to prevent UI crashes
+      setCommitteeMembers([]);
     } finally {
       setIsLoading(false);
     }

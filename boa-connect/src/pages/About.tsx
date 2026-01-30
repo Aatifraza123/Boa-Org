@@ -1,6 +1,7 @@
 import { Award, Scale, Building } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
+import { API_BASE_URL } from '@/lib/utils';
 
 export default function About() {
   const [certification, setCertification] = useState<any>(null);
@@ -13,7 +14,22 @@ export default function About() {
 
   const loadCertification = async () => {
     try {
-      const response = await fetch('/api/certification');
+      const response = await fetch(`${API_BASE_URL}/api/certification`);
+      
+      if (!response.ok) {
+        console.error('Certification API error:', response.status, response.statusText);
+        return;
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        if (responseText.includes('<!doctype') || responseText.includes('<html')) {
+          console.error('Certification API returned HTML instead of JSON');
+          return;
+        }
+      }
+      
       const data = await response.json();
       if (data.success && data.certification) {
         setCertification(data.certification);
@@ -25,7 +41,22 @@ export default function About() {
 
   const loadCommitteeMembers = async () => {
     try {
-      const response = await fetch('/api/committee-members?page_type=about');
+      const response = await fetch(`${API_BASE_URL}/api/committee-members?page_type=about`);
+      
+      if (!response.ok) {
+        console.error('Committee members API error:', response.status, response.statusText);
+        return;
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        if (responseText.includes('<!doctype') || responseText.includes('<html')) {
+          console.error('Committee members API returned HTML instead of JSON');
+          return;
+        }
+      }
+      
       const data = await response.json();
       if (data.success) {
         setCommitteeMembers(data.members || []);
