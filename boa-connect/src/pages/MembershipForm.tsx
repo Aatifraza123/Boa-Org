@@ -39,11 +39,7 @@ export default function MembershipForm() {
     try {
       const timestamp = new Date().getTime();
       const response = await fetch(`${API_BASE_URL}/api/membership-categories?t=${timestamp}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+        cache: 'no-cache'
       });
       const data = await response.json();
       if (data.success) {

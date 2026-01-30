@@ -328,12 +328,7 @@ export default function SeminarRegistration() {
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       const response = await fetch(`${API_BASE_URL}/api/generate-seminar-pdf/${seminar.id}?t=${timestamp}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+        cache: 'no-cache'
       });
 
       if (!response.ok) {

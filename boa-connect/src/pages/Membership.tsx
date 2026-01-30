@@ -35,11 +35,7 @@ export default function Membership() {
       // Add cache-busting parameter to force fresh data
       const timestamp = new Date().getTime();
       const response = await fetch(`${API_BASE_URL}/api/membership-categories?t=${timestamp}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+        cache: 'no-cache'
       });
       const data = await response.json();
       if (data.success) {
@@ -69,12 +65,7 @@ export default function Membership() {
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       const response = await fetch(`${API_BASE_URL}/api/generate-membership-pdf?t=${timestamp}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+        cache: 'no-cache'
       });
 
       if (!response.ok) {
