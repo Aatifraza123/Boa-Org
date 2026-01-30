@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { adminAuthAPI } from '@/lib/api';
 import { Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/utils';
 
 export function SiteConfigTab() {
   const { toast } = useToast();
@@ -28,7 +29,7 @@ export function SiteConfigTab() {
 
   const loadConfig = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/site-config', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/site-config`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       if (response.data.config) {
@@ -86,7 +87,7 @@ export function SiteConfigTab() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await axios.put('http://localhost:5000/api/admin/site-config', config, {
+      await axios.put(`${API_BASE_URL}/api/admin/site-config`, config, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       toast({ title: 'Success', description: 'Site configuration saved successfully!' });

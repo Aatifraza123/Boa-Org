@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Upload } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/utils';
 
 interface AddCertificateModalProps {
   isOpen: boolean;
@@ -53,7 +54,7 @@ export default function AddCertificateModal({ isOpen, onClose, userId, onSuccess
       uploadData.append('description', formData.description);
       uploadData.append('certificate', formData.certificate_file);
 
-      const response = await fetch('http://localhost:5000/api/certificates/add', {
+      const response = await fetch(`${API_BASE_URL}/api/certificates/add`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/utils';
 
 interface DelegateCategoriesManagerProps {
   seminarId: string;
@@ -33,7 +34,7 @@ export default function DelegateCategoriesManager({ seminarId }: DelegateCategor
   const loadCategories = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/delegate-categories/${seminarId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/delegate-categories/${seminarId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -75,8 +76,8 @@ export default function DelegateCategoriesManager({ seminarId }: DelegateCategor
     try {
       const token = localStorage.getItem('adminToken');
       const url = editingCategory
-        ? `http://localhost:5000/api/admin/delegate-categories/${editingCategory.id}`
-        : 'http://localhost:5000/api/admin/delegate-categories';
+        ? `${API_BASE_URL}/api/admin/delegate-categories/${editingCategory.id}`
+        : `${API_BASE_URL}/api/admin/delegate-categories`;
       
       const method = editingCategory ? 'PUT' : 'POST';
       
@@ -118,7 +119,7 @@ export default function DelegateCategoriesManager({ seminarId }: DelegateCategor
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/delegate-categories/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/delegate-categories/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

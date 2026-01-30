@@ -3,6 +3,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/utils';
 import {
   Award,
   Users,
@@ -33,7 +34,7 @@ export default function Membership() {
     try {
       // Add cache-busting parameter to force fresh data
       const timestamp = new Date().getTime();
-      const response = await fetch(`http://localhost:5000/api/membership-categories?t=${timestamp}`, {
+      const response = await fetch(`${API_BASE_URL}/api/membership-categories?t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache',
@@ -53,7 +54,7 @@ export default function Membership() {
 
   const loadOfflineForm = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/offline-forms-config');
+      const response = await fetch(`${API_BASE_URL}/api/offline-forms-config`);
       const data = await response.json();
       if (data.success && data.config) {
         setOfflineFormHtml(data.config.membership_form_html || '');
@@ -67,7 +68,7 @@ export default function Membership() {
     try {
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
-      const response = await fetch(`http://localhost:5000/api/generate-membership-pdf?t=${timestamp}`, {
+      const response = await fetch(`${API_BASE_URL}/api/generate-membership-pdf?t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',

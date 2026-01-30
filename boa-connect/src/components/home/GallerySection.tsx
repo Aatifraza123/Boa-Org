@@ -3,6 +3,7 @@ import { Image, Video, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '@/lib/utils';
 
 export function GallerySection() {
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
@@ -14,7 +15,7 @@ export function GallerySection() {
 
   const loadGalleryItems = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/gallery?limit=6');
+      const response = await fetch(`${API_BASE_URL}/api/gallery?limit=6`);
       const data = await response.json();
       if (data.success) {
         setGalleryItems(data.items || []);

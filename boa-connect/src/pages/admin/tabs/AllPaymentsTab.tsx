@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+import { API_BASE_URL } from '@/lib/utils';
   Select,
   SelectContent,
   SelectItem,
@@ -73,7 +74,7 @@ export default function AllPaymentsTab() {
   const loadPayments = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/api/admin/payments/all', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments/all`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -140,7 +141,7 @@ export default function AllPaymentsTab() {
 
   const handleDownloadPDF = async (paymentId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/payments/${paymentId}/pdf`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments/${paymentId}/pdf`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }

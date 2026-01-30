@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, MapPin, FileText, ExternalLink, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { API_BASE_URL } from '@/lib/utils';
 
 interface TimeLeft {
   days: number;
@@ -82,7 +83,7 @@ export function UpcomingEventsCarousel() {
 
   const loadEvents = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/upcoming-events');
+      const response = await fetch(`${API_BASE_URL}/api/upcoming-events`);
       const data = await response.json();
       if (data.success) {
         setEvents(data.events || []);

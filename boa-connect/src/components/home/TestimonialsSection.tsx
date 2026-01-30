@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Quote } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { API_BASE_URL } from '@/lib/utils';
 
 interface Testimonial {
   id: number;
@@ -22,7 +23,7 @@ export function TestimonialsSection() {
 
   const loadTestimonials = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/testimonials');
+      const response = await fetch(`${API_BASE_URL}/api/testimonials`);
       const data = await response.json();
       if (data.success) {
         setTestimonials(data.testimonials || []);

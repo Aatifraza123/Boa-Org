@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+import { API_BASE_URL } from '@/lib/utils';
   Select,
   SelectContent,
   SelectItem,
@@ -65,7 +66,7 @@ export default function ResourcesTab() {
   const loadResources = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5000/api/resources?category=${filterCategory}`);
+      const response = await fetch(`${API_BASE_URL}/api/resources?category=${filterCategory}`);
       const data = await response.json();
       if (data.success) {
         setResources(data.resources || []);
@@ -127,8 +128,8 @@ export default function ResourcesTab() {
       }
 
       const url = editingResource
-        ? `http://localhost:5000/api/admin/resources/${editingResource.id}`
-        : 'http://localhost:5000/api/admin/resources';
+        ? `${API_BASE_URL}/api/admin/resources/${editingResource.id}`
+        : `${API_BASE_URL}/api/admin/resources`;
 
       const response = await fetch(url, {
         method: editingResource ? 'PUT' : 'POST',
@@ -164,7 +165,7 @@ export default function ResourcesTab() {
     if (!confirm('Are you sure you want to delete this resource?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/resources/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/resources/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -193,7 +194,7 @@ export default function ResourcesTab() {
 
   const handleToggleActive = async (id: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/resources/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/resources/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

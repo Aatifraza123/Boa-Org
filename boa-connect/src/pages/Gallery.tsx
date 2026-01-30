@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Image as ImageIcon, Video, X } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
+import { API_BASE_URL } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ export default function Gallery() {
 
   const loadGalleryItems = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/gallery');
+      const response = await fetch(`${API_BASE_URL}/api/gallery`);
       const data = await response.json();
       if (data.success) {
         setGalleryItems(data.items || []);

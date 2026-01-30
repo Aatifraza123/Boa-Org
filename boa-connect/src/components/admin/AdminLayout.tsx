@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+import { API_BASE_URL } from '@/lib/utils';
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -62,7 +63,7 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
 
   const loadNotifications = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/notifications/admin/activity', {
+      const response = await fetch(`${API_BASE_URL}/api/notifications/admin/activity`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -120,7 +121,7 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
   const handleNotificationClick = async (notif: any) => {
     // Mark as read
     try {
-      await fetch(`http://localhost:5000/api/notifications/admin/${notif.id}/read`, {
+      await fetch(`${API_BASE_URL}/api/notifications/admin/${notif.id}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -147,7 +148,7 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
     e.stopPropagation();
     
     try {
-      await fetch(`http://localhost:5000/api/notifications/admin/${notifId}`, {
+      await fetch(`${API_BASE_URL}/api/notifications/admin/${notifId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`

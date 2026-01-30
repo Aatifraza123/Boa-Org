@@ -10,6 +10,7 @@ import { Download, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { razorpayService } from '@/lib/razorpay';
+import { API_BASE_URL } from '@/lib/utils';
 
 export default function MembershipForm() {
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export default function MembershipForm() {
   const loadCategories = async () => {
     try {
       const timestamp = new Date().getTime();
-      const response = await fetch(`http://localhost:5000/api/membership-categories?t=${timestamp}`, {
+      const response = await fetch(`${API_BASE_URL}/api/membership-categories?t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache',

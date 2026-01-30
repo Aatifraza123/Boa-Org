@@ -4,6 +4,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Calendar, Bell, Download, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE_URL } from '@/lib/utils';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -15,7 +16,7 @@ export default function Notifications() {
 
   const loadNotifications = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/notifications');
+      const response = await fetch(`${API_BASE_URL}/api/notifications`);
       const data = await response.json();
       if (data.success) {
         // Filter only active notifications
@@ -31,7 +32,7 @@ export default function Notifications() {
 
   const handleDownloadForm = async (seminarId: number, seminarName: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/generate-seminar-pdf/${seminarId}`);
+      const response = await fetch(`${API_BASE_URL}/api/generate-seminar-pdf/${seminarId}`);
       
       if (!response.ok) {
         throw new Error('Failed to generate PDF');

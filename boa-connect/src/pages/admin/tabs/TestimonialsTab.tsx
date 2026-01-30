@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+import { API_BASE_URL } from '@/lib/utils';
   Select,
   SelectContent,
   SelectItem,
@@ -55,7 +56,7 @@ export default function TestimonialsTab() {
   const loadTestimonials = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/api/admin/testimonials', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/testimonials`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -122,8 +123,8 @@ export default function TestimonialsTab() {
 
     try {
       const url = editingTestimonial
-        ? `http://localhost:5000/api/admin/testimonials/${editingTestimonial.id}`
-        : 'http://localhost:5000/api/admin/testimonials';
+        ? `${API_BASE_URL}/api/admin/testimonials/${editingTestimonial.id}`
+        : `${API_BASE_URL}/api/admin/testimonials`;
 
       const response = await fetch(url, {
         method: editingTestimonial ? 'PUT' : 'POST',
@@ -159,7 +160,7 @@ export default function TestimonialsTab() {
     if (!confirm('Are you sure you want to delete this testimonial?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/testimonials/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/testimonials/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -186,7 +187,7 @@ export default function TestimonialsTab() {
 
   const handleToggleActive = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/testimonials/${id}/toggle-active`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/testimonials/${id}/toggle-active`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`

@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Upload, Loader2 } from 'lucide-react';
 import { adminAuthAPI } from '@/lib/api';
+import { API_BASE_URL } from '@/lib/utils';
 import axios from 'axios';
 
 export default function CommitteeMembersTab() {
@@ -30,7 +31,7 @@ export default function CommitteeMembersTab() {
 
   const loadMembers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/committee-members', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/committee-members`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       setMembers(response.data.members || []);
@@ -45,13 +46,13 @@ export default function CommitteeMembersTab() {
     e.preventDefault();
     try {
       if (editingMember) {
-        await axios.put(`http://localhost:5000/api/admin/committee-members/${editingMember.id}`,
+        await axios.put(`${API_BASE_URL}/api/admin/committee-members/${editingMember.id}`,
           { ...formData, is_active: true },
           { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }
         );
         toast({ title: 'Success', description: 'Member updated successfully' });
       } else {
-        await axios.post('http://localhost:5000/api/admin/committee-members', formData, {
+        await axios.post(`${API_BASE_URL}/api/admin/committee-members`, formData, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
         });
         toast({ title: 'Success', description: 'Member added successfully' });
@@ -120,7 +121,7 @@ export default function CommitteeMembersTab() {
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this member?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/committee-members/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/committee-members/${id}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       toast({ title: 'Success', description: 'Member deleted successfully' });

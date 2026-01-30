@@ -3,6 +3,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { API_BASE_URL } from '@/lib/utils';
 import {
   FileText,
   Download,
@@ -36,7 +37,7 @@ export default function Resources() {
   const loadResources = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5000/api/resources?category=${activeTab}`);
+      const response = await fetch(`${API_BASE_URL}/api/resources?category=${activeTab}`);
       const data = await response.json();
       if (data.success) {
         setResources(data.resources || []);
@@ -51,7 +52,7 @@ export default function Resources() {
   const handleDownload = async (resourceId: number, fileUrl: string) => {
     try {
       // Increment download count
-      await fetch(`http://localhost:5000/api/resources/${resourceId}/download`, {
+      await fetch(`${API_BASE_URL}/api/resources/${resourceId}/download`, {
         method: 'POST'
       });
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, Award, Calendar, FileText, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { API_BASE_URL } from '@/lib/utils';
 import jsPDF from 'jspdf';
 
 export default function Certificates() {
@@ -25,7 +26,7 @@ export default function Certificates() {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/certificates/my-certificates', {
+      const response = await fetch(`${API_BASE_URL}/api/certificates/my-certificates`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

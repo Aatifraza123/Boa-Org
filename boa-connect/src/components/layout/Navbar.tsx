@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Eye, LogOut, LayoutDashboard, Settings, ChevronDown, Globe, Type, Contrast, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE_URL } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -114,7 +115,7 @@ export function Navbar() {
     
     // Then fetch fresh data in background if token exists
     if (token) {
-      fetch('http://localhost:5000/api/users/profile', {
+      fetch(`${API_BASE_URL}/api/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

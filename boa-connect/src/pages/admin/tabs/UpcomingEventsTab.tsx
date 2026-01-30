@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { adminAuthAPI } from '@/lib/api';
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/utils';
 
 export default function UpcomingEventsTab() {
   const { toast } = useToast();
@@ -34,7 +35,7 @@ export default function UpcomingEventsTab() {
 
   const loadEvents = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/upcoming-events', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/upcoming-events`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       setEvents(response.data.events || []);
@@ -106,13 +107,13 @@ export default function UpcomingEventsTab() {
 
     try {
       if (editingEvent) {
-        await axios.put(`http://localhost:5000/api/admin/upcoming-events/${editingEvent.id}`, 
+        await axios.put(`${API_BASE_URL}/api/admin/upcoming-events/${editingEvent.id}`, 
           submissionData,
           { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }}
         );
         toast({ title: 'Success', description: 'Event updated successfully' });
       } else {
-        await axios.post('http://localhost:5000/api/admin/upcoming-events', submissionData, {
+        await axios.post(`${API_BASE_URL}/api/admin/upcoming-events`, submissionData, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
         });
         toast({ title: 'Success', description: 'Event added successfully' });
@@ -159,7 +160,7 @@ export default function UpcomingEventsTab() {
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/upcoming-events/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/upcoming-events/${id}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       toast({ title: 'Success', description: 'Event deleted successfully' });

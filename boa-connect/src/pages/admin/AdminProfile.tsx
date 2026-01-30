@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Shield, Calendar, Edit, Save, X } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/utils';
 
 export default function AdminProfile() {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ export default function AdminProfile() {
         updateData.new_password = formData.new_password;
       }
 
-      const response = await fetch('http://localhost:5000/api/admin-auth/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/admin-auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { X, Calendar, MapPin, ArrowRight, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { seminarAPI } from '@/lib/api';
+import { API_BASE_URL } from '@/lib/utils';
 
 const POPUP_DISMISSED_KEY = 'boa_seminar_popup_dismissed';
 const RELOAD_POPUP_SHOWN_KEY = 'boa_reload_popup_shown';
@@ -28,7 +29,7 @@ export function SeminarPopup() {
 
       // Load upcoming events
       try {
-        const response = await fetch('http://localhost:5000/api/upcoming-events');
+        const response = await fetch(`${API_BASE_URL}/api/upcoming-events`);
         const data = await response.json();
 
         if (data.success && data.events && data.events.length > 0) {

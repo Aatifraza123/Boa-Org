@@ -1,5 +1,7 @@
 import { toast } from 'sonner';
 
+import { API_BASE_URL } from './utils';
+
 declare global {
   interface Window {
     Razorpay: any;
@@ -88,7 +90,7 @@ class RazorpayService {
   async testConnection(): Promise<void> {
     try {
       console.log('Testing backend connection...');
-      const response = await fetch('http://localhost:5000/api/payment/test-connection', {
+      const response = await fetch(`${API_BASE_URL}/api/payment/test-connection`, {
         method: 'GET'
       });
 
@@ -108,7 +110,7 @@ class RazorpayService {
       const requestBody = JSON.stringify(orderData);
       console.log('Frontend: Request body:', requestBody);
       
-      const response = await fetch('http://localhost:5000/api/payment/create-order', {
+      const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -148,7 +150,7 @@ class RazorpayService {
       const requestBody = JSON.stringify(paymentData);
       console.log('Request body:', requestBody);
       
-      const response = await fetch('http://localhost:5000/api/payment/verify-payment', {
+      const response = await fetch(`${API_BASE_URL}/api/payment/verify-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

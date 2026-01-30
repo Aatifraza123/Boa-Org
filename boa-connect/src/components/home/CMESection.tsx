@@ -3,6 +3,7 @@ import { GraduationCap, Award, Calendar, Clock, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '@/lib/utils';
 
 export function CMESection() {
   const [seminars, setSeminars] = useState<any[]>([]);
@@ -14,7 +15,7 @@ export function CMESection() {
 
   const loadSeminars = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/seminars');
+      const response = await fetch(`${API_BASE_URL}/api/seminars`);
       const data = await response.json();
       if (data.success) {
         // Get latest 3 seminars

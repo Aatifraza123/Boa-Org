@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+import { API_BASE_URL } from '@/lib/utils';
   Select,
   SelectContent,
   SelectItem,
@@ -52,7 +53,7 @@ export default function MembershipCategoriesTab() {
       setIsLoading(true);
       // Add cache-busting parameter
       const timestamp = new Date().getTime();
-      const response = await fetch(`http://localhost:5000/api/membership-categories?t=${timestamp}`, {
+      const response = await fetch(`${API_BASE_URL}/api/membership-categories?t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache',
@@ -112,8 +113,8 @@ export default function MembershipCategoriesTab() {
       }
 
       const url = editingCategory
-        ? `http://localhost:5000/api/admin/membership-categories/${editingCategory.id}`
-        : 'http://localhost:5000/api/admin/membership-categories';
+        ? `${API_BASE_URL}/api/admin/membership-categories/${editingCategory.id}`
+        : `${API_BASE_URL}/api/admin/membership-categories`;
 
       const response = await fetch(url, {
         method: editingCategory ? 'PUT' : 'POST',
@@ -149,7 +150,7 @@ export default function MembershipCategoriesTab() {
     if (!confirm('Are you sure you want to delete this category?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/membership-categories/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/membership-categories/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -178,7 +179,7 @@ export default function MembershipCategoriesTab() {
 
   const handleToggleActive = async (id: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/membership-categories/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/membership-categories/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

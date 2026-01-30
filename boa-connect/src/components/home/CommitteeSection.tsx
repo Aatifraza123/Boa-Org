@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/utils';
 
 export function CommitteeSection() {
   const [committeeMembers, setCommitteeMembers] = useState<any[]>([]);
@@ -11,7 +12,7 @@ export function CommitteeSection() {
   const loadCommitteeMembers = async () => {
     try {
       console.log('Loading committee members...');
-      const response = await fetch('http://localhost:5000/api/committee-members?page_type=home');
+      const response = await fetch(`${API_BASE_URL}/api/committee-members?page_type=home`);
       console.log('Response status:', response.status);
       const data = await response.json();
       console.log('Committee data:', data);

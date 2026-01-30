@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+import { API_BASE_URL } from '@/lib/utils';
   Tabs,
   TabsContent,
   TabsList,
@@ -75,7 +76,7 @@ export default function UsersTab() {
 
   const loadUserDetails = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/details`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/details`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -102,7 +103,7 @@ export default function UsersTab() {
 
   const handleExportUser = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/export`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/export`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -132,7 +133,7 @@ export default function UsersTab() {
 
   const handleExportAll = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users/export-all', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/export-all`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }

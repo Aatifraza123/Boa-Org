@@ -13,6 +13,7 @@ import { seminarAPI, registrationAPI } from '@/lib/api';
 import { titleOptions, genderOptions, indianStates } from '@/lib/mockData';
 import { razorpayService } from '@/lib/razorpay';
 import { Footer } from '@/components/layout/Footer';
+import { API_BASE_URL } from '@/lib/utils';
 type Step = 'personal' | 'address' | 'registration' | 'fee' | 'consent' | 'payment';
 
 // Helper function to format title consistently
@@ -299,7 +300,7 @@ export default function SeminarRegistration() {
 
   const loadCommitteeMembers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/committee-members');
+      const response = await fetch(`${API_BASE_URL}/api/committee-members`);
       const data = await response.json();
       if (data.success) {
         // Remove duplicates based on member name
@@ -326,7 +327,7 @@ export default function SeminarRegistration() {
 
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
-      const response = await fetch(`http://localhost:5000/api/generate-seminar-pdf/${seminar.id}?t=${timestamp}`, {
+      const response = await fetch(`${API_BASE_URL}/api/generate-seminar-pdf/${seminar.id}?t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -510,7 +511,7 @@ export default function SeminarRegistration() {
     setIsVerifying(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/verify-membership', {
+      const response = await fetch(`${API_BASE_URL}/api/users/verify-membership`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

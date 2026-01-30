@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Upload, Download } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/utils';
 
 export default function OfflineUsersTab() {
   const { toast } = useToast();
@@ -29,7 +30,7 @@ export default function OfflineUsersTab() {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/admin/import-offline-user', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/admin/import-offline-user`, formData, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
