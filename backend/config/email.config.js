@@ -53,7 +53,7 @@ async function sendEmailWithFallback(mailOptions) {
         const fallbackMailOptions = {
           ...mailOptions,
           from: {
-            name: 'Bihar Ophthalmic Association',
+            name: 'Ophthalmic Association Of Bihar',
             address: process.env.FALLBACK_EMAIL_USER
           }
         };
@@ -79,7 +79,7 @@ const sendPasswordResetEmail = async (to, resetLink, userName) => {
       address: process.env.EMAIL_USER || 'biharophthalmic2022@gmail.com'
     },
     to: to,
-    subject: 'Reset Your Password - Bihar Ophthalmic Association',
+    subject: 'Reset Your Password - Ophthalmic Association Of Bihar',
     html: `
       <!DOCTYPE html>
       <html>
@@ -199,7 +199,7 @@ const sendPasswordResetEmail = async (to, resetLink, userName) => {
           <div class="header">
             <img src="https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png" alt="BOA Logo" class="logo">
             <h1>Password Reset Request</h1>
-            <p>Bihar Ophthalmic Association</p>
+            <p>Ophthalmic Association Of Bihar</p>
           </div>
           
           <!-- Main Content -->
@@ -207,7 +207,7 @@ const sendPasswordResetEmail = async (to, resetLink, userName) => {
             <div class="greeting">Hello ${userName || 'User'},</div>
             
             <div class="message">
-              <p>We received a request to reset your password for your Bihar Ophthalmic Association account.</p>
+              <p>We received a request to reset your password for your Ophthalmic Association Of Bihar account.</p>
               <p>Click the button below to create a new password:</p>
             </div>
             
@@ -235,12 +235,12 @@ const sendPasswordResetEmail = async (to, resetLink, userName) => {
           
           <!-- Footer -->
           <div class="footer">
-            <p><strong>Bihar Ophthalmic Association</strong></p>
+            <p><strong>Ophthalmic Association Of Bihar</strong></p>
             <p>Shivpuri Road, Anishabad, Patna 800002</p>
             <p>Email: biharophthalmic2022@gmail.com | Phone: 9334332714</p>
             <div class="footer-note">
               This is an automated email. Please do not reply to this message.<br>
-              © ${new Date().getFullYear()} Bihar Ophthalmic Association. All rights reserved.
+              © ${new Date().getFullYear()} Ophthalmic Association Of Bihar. All rights reserved.
             </div>
           </div>
         </div>
@@ -450,7 +450,7 @@ const sendContactConfirmationEmail = async (contactData) => {
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: email,
-    subject: 'Thank you for contacting us - Bihar Ophthalmic Association',
+    subject: 'Thank you for contacting us - Ophthalmic Association Of Bihar',
     html: `
       <!DOCTYPE html>
       <html>
@@ -530,14 +530,14 @@ const sendContactConfirmationEmail = async (contactData) => {
           <div class="header">
             <img src="https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png" alt="BOA Logo" class="logo">
             <h1>Thank You for Contacting Us</h1>
-            <p>Bihar Ophthalmic Association</p>
+            <p>Ophthalmic Association Of Bihar</p>
           </div>
           
           <div class="content">
             <div class="greeting">Dear ${firstName} ${lastName},</div>
             
             <div class="message">
-              <p>Thank you for reaching out to the Bihar Ophthalmic Association. We have received your message and will get back to you as soon as possible.</p>
+              <p>Thank you for reaching out to the Ophthalmic Association Of Bihar. We have received your message and will get back to you as soon as possible.</p>
             </div>
             
             <div class="info-box">
@@ -549,12 +549,12 @@ const sendContactConfirmationEmail = async (contactData) => {
             <div class="message">
               <p>Our team will review your inquiry and respond to you at this email address. If you have any urgent matters, please feel free to call us directly.</p>
               
-              <p>Thank you for your interest in the Bihar Ophthalmic Association.</p>
+              <p>Thank you for your interest in the Ophthalmic Association Of Bihar.</p>
             </div>
           </div>
           
           <div class="footer">
-            <p><strong>Bihar Ophthalmic Association</strong></p>
+            <p><strong>Ophthalmic Association Of Bihar</strong></p>
             <p>Shivpuri Road, Anishabad, Patna 800002</p>
             <p>Email: info@boabihar.org | Phone: 9334332714</p>
             <p style="margin-top: 15px; color: #999; font-size: 12px;">
@@ -673,7 +673,7 @@ const sendSeminarRegistrationConfirmation = async (registrationData, seminarData
           <div class="header">
             <img src="https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png" alt="BOA Logo" class="logo">
             <h1>Registration Confirmed!</h1>
-            <p>Bihar Ophthalmic Association</p>
+            <p>Ophthalmic Association Of Bihar</p>
           </div>
           
           <div class="content">
@@ -739,7 +739,7 @@ const sendSeminarRegistrationConfirmation = async (registrationData, seminarData
           </div>
           
           <div class="footer">
-            <p><strong>Bihar Ophthalmic Association</strong></p>
+            <p><strong>Ophthalmic Association Of Bihar</strong></p>
             <p>Shivpuri Road, Anishabad, Patna 800002</p>
             <p>Email: info@boabihar.org | Phone: 9334332714</p>
           </div>
@@ -770,7 +770,7 @@ const sendMembershipConfirmation = async (membershipData) => {
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: email,
-    subject: 'Membership Application Confirmed - Bihar Ophthalmic Association',
+    subject: 'Membership Application Confirmed - Ophthalmic Association Of Bihar',
     html: `
       <!DOCTYPE html>
       <html>
@@ -854,7 +854,7 @@ const sendMembershipConfirmation = async (membershipData) => {
           <div class="header">
             <img src="https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png" alt="BOA Logo" class="logo">
             <h1>Membership Application Confirmed!</h1>
-            <p>Bihar Ophthalmic Association</p>
+            <p>Ophthalmic Association Of Bihar</p>
           </div>
           
           <div class="content">
@@ -862,7 +862,7 @@ const sendMembershipConfirmation = async (membershipData) => {
             
             <p>Dear ${name},</p>
             
-            <p>Thank you for applying for membership with the Bihar Ophthalmic Association. Your application has been successfully submitted and payment confirmed.</p>
+            <p>Thank you for applying for membership with the Ophthalmic Association Of Bihar. Your application has been successfully submitted and payment confirmed.</p>
             
             <div class="details-box">
               <h3 style="margin-top: 0; color: #0B3C5D;">Membership Details</h3>
@@ -912,11 +912,11 @@ const sendMembershipConfirmation = async (membershipData) => {
               <li>You can contact us for any queries regarding your membership</li>
             </ul>
             
-            <p>Welcome to the Bihar Ophthalmic Association family!</p>
+            <p>Welcome to the Ophthalmic Association Of Bihar family!</p>
           </div>
           
           <div class="footer">
-            <p><strong>Bihar Ophthalmic Association</strong></p>
+            <p><strong>Ophthalmic Association Of Bihar</strong></p>
             <p>Shivpuri Road, Anishabad, Patna 800002</p>
             <p>Email: info@boabihar.org | Phone: 9334332714</p>
           </div>
@@ -947,7 +947,7 @@ const sendMembershipAdminNotification = async (membershipData) => {
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'info@boabihar.org',
-    subject: 'New Membership Application - Bihar Ophthalmic Association',
+    subject: 'New Membership Application - Ophthalmic Association Of Bihar',
     html: `
       <!DOCTYPE html>
       <html>
@@ -1028,7 +1028,7 @@ const sendMembershipAdminNotification = async (membershipData) => {
         <div class="email-container">
           <div class="header">
             <h1>New Membership Application</h1>
-            <p style="margin: 5px 0 0 0; font-size: 14px;">Bihar Ophthalmic Association</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Ophthalmic Association Of Bihar</p>
           </div>
           
           <div class="content">
@@ -1188,7 +1188,7 @@ const sendSeminarAdminNotification = async (registrationData, seminarData) => {
         <div class="email-container">
           <div class="header">
             <h1>New Seminar Registration</h1>
-            <p style="margin: 5px 0 0 0; font-size: 14px;">Bihar Ophthalmic Association</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Ophthalmic Association Of Bihar</p>
           </div>
           
           <div class="content">

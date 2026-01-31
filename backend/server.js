@@ -216,7 +216,7 @@ try {
           favicon_url: '',
           logo_url: '',
           hero_circle_image_url: '',
-          site_title: 'Bihar Ophthalmic Association',
+          site_title: 'Ophthalmic Association Of Bihar',
           site_description: ''
         }
       });
@@ -363,7 +363,7 @@ try {
           </head>
           <body>
             <div class="header">
-              <h1>Bihar Ophthalmic Association</h1>
+              <h1>Ophthalmic Association Of Bihar</h1>
               <h2>${seminar.name}</h2>
               <p><strong>Venue:</strong> ${seminar.venue || 'TBA'}</p>
               <p><strong>Date:</strong> ${seminar.start_date ? new Date(seminar.start_date).toLocaleDateString('en-IN') : 'TBA'}</p>
@@ -430,7 +430,7 @@ try {
             </div>
             
             <div class="declaration">
-              <p><strong>Declaration:</strong> I hereby register for the ${seminar.name} and agree to abide by the terms and conditions set by the Bihar Ophthalmic Association. I understand that this registration is subject to approval and payment of applicable fees.</p>
+              <p><strong>Declaration:</strong> I hereby register for the ${seminar.name} and agree to abide by the terms and conditions set by the Ophthalmic Association Of Bihar. I understand that this registration is subject to approval and payment of applicable fees.</p>
             </div>
             
             <div class="signature-section">
@@ -445,7 +445,7 @@ try {
             </div>
             
             <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
-              <p>Bihar Ophthalmic Association | www.boabihar.org | info@boabihar.org</p>
+              <p>Ophthalmic Association Of Bihar | www.boabihar.org | info@boabihar.org</p>
             </div>
           </body>
           </html>
@@ -499,7 +499,7 @@ try {
             </head>
             <body>
               <div class="header">
-                <h1>Bihar Ophthalmic Association</h1>
+                <h1>Ophthalmic Association Of Bihar</h1>
                 <h2>${seminar.name}</h2>
                 <p><strong>Venue:</strong> ${seminar.venue || 'TBA'}</p>
                 <p><strong>Date:</strong> ${seminar.start_date ? new Date(seminar.start_date).toLocaleDateString('en-IN') : 'TBA'}</p>
@@ -519,7 +519,7 @@ try {
               </div>
               
               <p style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
-                Bihar Ophthalmic Association | www.boabihar.org | info@boabihar.org
+                Ophthalmic Association Of Bihar | www.boabihar.org | info@boabihar.org
               </p>
             </body>
             </html>

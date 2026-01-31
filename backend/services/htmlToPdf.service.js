@@ -147,7 +147,7 @@ class HtmlToPdfService {
         const textContent = this.extractTextFromHtml(html);
         
         // Add content to PDF
-        doc.fontSize(16).text('Bihar Ophthalmic Association', { align: 'center' });
+        doc.fontSize(16).text('Ophthalmic Association Of Bihar', { align: 'center' });
         doc.moveDown();
         
         // Split content into lines and add to PDF
@@ -192,8 +192,8 @@ class HtmlToPdfService {
       const placeholders = {
         '{{CURRENT_DATE}}': new Date().toLocaleDateString('en-IN'),
         '{{CURRENT_YEAR}}': new Date().getFullYear(),
-        '{{BOA_NAME}}': 'Bihar Ophthalmic Association',
-        '{{BOA_ADDRESS}}': 'Bihar Ophthalmic Association Address',
+        '{{BOA_NAME}}': 'Ophthalmic Association Of Bihar',
+        '{{BOA_ADDRESS}}': 'Ophthalmic Association Of Bihar Address',
         '{{BOA_PHONE}}': '+91-XXXXXXXXXX',
         '{{BOA_EMAIL}}': 'info@boabihar.org',
         '{{BOA_WEBSITE}}': 'www.boabihar.org'
@@ -322,7 +322,7 @@ class HtmlToPdfService {
         '{{REGISTRATION_END}}': seminarData.registration_end ? new Date(seminarData.registration_end).toLocaleDateString('en-IN') : '',
         '{{CURRENT_DATE}}': new Date().toLocaleDateString('en-IN'),
         '{{CURRENT_YEAR}}': new Date().getFullYear(),
-        '{{BOA_NAME}}': 'Bihar Ophthalmic Association',
+        '{{BOA_NAME}}': 'Ophthalmic Association Of Bihar',
         '{{BOA_EMAIL}}': 'info@boabihar.org',
         '{{BOA_WEBSITE}}': 'www.boabihar.org'
       };

@@ -2210,7 +2210,7 @@ exports.getSiteConfig = async (req, res) => {
         favicon_url: '',
         logo_url: '',
         hero_circle_image_url: '',
-        site_title: 'Bihar Ophthalmic Association',
+        site_title: 'Ophthalmic Association Of Bihar',
         site_description: ''
       }
     });
@@ -3127,7 +3127,7 @@ exports.downloadPaymentPDF = async (req, res) => {
     doc.pipe(res);
 
     // Header
-    doc.fontSize(20).text('Bihar Ophthalmic Association', { align: 'center' });
+    doc.fontSize(20).text('Ophthalmic Association Of Bihar', { align: 'center' });
     doc.fontSize(16).text('Payment Receipt', { align: 'center' });
     doc.moveDown();
     doc.fontSize(10).text(`Receipt Date: ${new Date().toLocaleDateString('en-GB')}`, { align: 'right' });
