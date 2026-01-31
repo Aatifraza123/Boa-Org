@@ -57,7 +57,7 @@ export default function MembershipDetails() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Bihar Ophthalmic Association', 105, 15, { align: 'center' });
+    doc.text('Ophthalmic Association Of Bihar', 105, 15, { align: 'center' });
     
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');

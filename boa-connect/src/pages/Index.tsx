@@ -11,25 +11,25 @@ import { SeminarPopup } from '@/components/home/SeminarPopup';
 const Index = () => {
   return (
     <Layout>
-      <div className="page-enter px-4 sm:px-6 lg:px-10">
+      <div className="page-enter mt-12">
         <HeroSection />
-        <div className="section-enter">
+        <div className="section-enter px-4 sm:px-6 lg:px-10">
           <StatsSection />
         </div>
-        <div className="section-enter animate-delay-100">
+        <div className="section-enter animate-delay-100 px-4 sm:px-6 lg:px-10">
           <AboutSection />
         </div>
-        <div className="section-enter animate-delay-200">
+        <div className="section-enter animate-delay-200 px-4 sm:px-6 lg:px-10">
           <CommitteeSection />
         </div>
         <hr />
-        <div className="section-enter animate-delay-300">
+        <div className="section-enter animate-delay-300 px-4 sm:px-6 lg:px-10">
           <UpcomingEventsCarousel />
         </div>
-        <div className="section-enter">
+        <div className="section-enter px-4 sm:px-6 lg:px-10">
           <GallerySection />
         </div>
-        <div className="section-enter">
+        <div className="section-enter px-4 sm:px-6 lg:px-10">
           <TestimonialsSection />
         </div>
 

@@ -678,7 +678,7 @@ export default function SeminarRegistration() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('BIHAR OPHTHALMIC ASSOCIATION', pageWidth / 2, 20, { align: 'center' });
+    doc.text('OPHTHALMIC ASSOCIATION OF BIHAR', pageWidth / 2, 20, { align: 'center' });
 
     // Receipt title
     doc.setTextColor(0, 0, 0);
@@ -812,7 +812,7 @@ export default function SeminarRegistration() {
     doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
-    doc.text('Bihar Ophthalmic Association | www.boabihar.org | Email: info@boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+    doc.text('Ophthalmic Association Of Bihar | www.boabihar.org | Email: info@boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
 
     doc.save(`BOA_Registration_Receipt_${Date.now()}.pdf`);
   };
@@ -820,9 +820,12 @@ export default function SeminarRegistration() {
 
   const handlePayment = async () => {
     try {
+      console.log('=== STARTING PAYMENT PROCESS ===');
+      
       // Prepare registration data using form information instead of user token
       const registrationData = {
         // Use form data instead of user_id from token
+        user_id: null, // Explicitly set to null for guest registration
         user_info: {
           title: title,
           full_name: fullName,
@@ -854,24 +857,42 @@ export default function SeminarRegistration() {
         mobile: mobile
       };
 
+      console.log('Registration data:', registrationData);
+      console.log('User details:', userDetails);
+      console.log('Total amount:', totalAmount);
+
       // Validate total amount before payment
       if (!totalAmount || typeof totalAmount !== 'number' || isNaN(totalAmount) || totalAmount <= 0) {
         throw new Error(`Invalid payment amount: ${totalAmount}. Please check your fee selection.`);
       }
 
       // Process payment through Razorpay
+      console.log('Calling razorpayService.processSeminarPayment...');
       const paymentResult = await razorpayService.processSeminarPayment(
         totalAmount,
         registrationData,
         userDetails
       );
 
-      if (paymentResult.success) {
+      console.log('Payment result:', paymentResult);
+
+      if (paymentResult && paymentResult.success) {
+        console.log('Payment successful, updating UI...');
         setPaymentComplete(true);
-        toast({
-          title: 'Payment Successful!',
-          description: 'Your registration has been confirmed',
-        });
+        
+        // Force a small delay to ensure state updates
+        setTimeout(() => {
+          toast({
+            title: 'Payment Successful!',
+            description: 'Your registration has been confirmed. You will receive a confirmation email shortly.',
+          });
+        }, 100);
+        
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        console.error('Payment result indicates failure:', paymentResult);
+        throw new Error(paymentResult?.message || 'Payment processing failed');
       }
 
     } catch (error: any) {
@@ -1520,24 +1541,29 @@ export default function SeminarRegistration() {
                     </div>
 
                     {!paymentComplete ? (
-                      <div className="p-6 border border-border rounded-xl">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
-                            <CreditCard className="h-5 w-5 text-primary-foreground" />
+                      <div className="space-y-4">
+                        <div className="p-6 border border-border rounded-xl">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                              <CreditCard className="h-5 w-5 text-primary-foreground" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">Razorpay Secure Checkout</p>
+                              <p className="text-sm text-muted-foreground">Card, UPI, Netbanking, Wallets</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-foreground">Razorpay Secure Checkout</p>
-                            <p className="text-sm text-muted-foreground">Card, UPI, Netbanking, Wallets</p>
-                          </div>
+                          <Button
+                            onClick={handlePayment}
+                            className="w-full gradient-primary text-primary-foreground h-12 text-base px-6"
+                            disabled={!agreedToTerms || !selectedCategory || !selectedSlab}
+                          >
+                            Pay Rs {totalAmount.toLocaleString()}
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
                         </div>
-                        <Button
-                          onClick={handlePayment}
-                          className="w-full gradient-primary text-primary-foreground h-12 text-base px-6"
-                          disabled={!agreedToTerms || !selectedCategory || !selectedSlab}
-                        >
-                          Pay Rs {totalAmount.toLocaleString()}
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
+                        
+                        {/* Manual Verification Option */}
+                        
                       </div>
                     ) : (
                       <div className="space-y-6">

@@ -18,11 +18,11 @@ export default function AdminLogin() {
 
   useEffect(() => {
     // Set page title for admin login
-    document.title = 'Admin Login - Bihar Ophthalmic Association';
+    document.title = 'Admin Login - Ophthalmic Association Of Bihar';
     
     // Restore original title when component unmounts
     return () => {
-      document.title = 'Bihar Ophthalmic Association';
+      document.title = 'Ophthalmic Association Of Bihar';
     };
   }, []);
 

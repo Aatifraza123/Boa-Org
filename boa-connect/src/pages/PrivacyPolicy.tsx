@@ -13,7 +13,7 @@ const PrivacyPolicy = () => {
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none">
             <p>
-              Bihar Ophthalmic Association ("BOA", "we", "us", or "our") is committed to protecting your privacy. 
+              Ophthalmic Association Of Bihar ("BOA", "we", "us", or "our") is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you 
               use our BOA Connect platform.
             </p>
@@ -177,7 +177,7 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us:
             </p>
             <div className="text-sm text-muted-foreground space-y-1">
-              <p><strong>Bihar Ophthalmic Association</strong></p>
+              <p><strong>Ophthalmic Association Of Bihar</strong></p>
               <p>Email: privacy@boabihar.org</p>
               <p>Phone: +91 612 2234567</p>
               <p>Address: Patna, Bihar, India</p>

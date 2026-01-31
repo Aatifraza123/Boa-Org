@@ -32,11 +32,11 @@ export default function AdminPanel() {
 
   useEffect(() => {
     // Set page title for admin panel
-    document.title = 'Admin Panel - Bihar Ophthalmic Association';
+    document.title = 'Admin Panel - Ophthalmic Association Of Bihar';
     
     // Restore original title when component unmounts
     return () => {
-      document.title = 'Bihar Ophthalmic Association';
+      document.title = 'Ophthalmic Association Of Bihar';
     };
   }, []);
 

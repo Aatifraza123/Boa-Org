@@ -74,10 +74,10 @@ export default function About() {
           <div className="container mx-auto px-4 max-w-4xl" style={{ opacity: 1, visibility: 'visible' }}>
             <div className="text-center" style={{ opacity: 1, visibility: 'visible' }}>
               <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900" style={{ fontFamily: 'Noto Sans, sans-serif', opacity: 1, visibility: 'visible' }}>
-                About Bihar Ophthalmic Association
+                About Ophthalmic Association Of Bihar
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto" style={{ opacity: 1, visibility: 'visible' }}>
-                A Government-recognized medical association serving the ophthalmology community of Bihar since 1975
+                A Government-recognized medical association serving the ophthalmic community of Bihar since 2021
               </p>
             </div>
           </div>
@@ -92,8 +92,8 @@ export default function About() {
               </h2>
               <div className="prose prose-lg max-w-none">
                 <p className="text-gray-700 leading-relaxed mb-6 text-lg">
-                  The Bihar Ophthalmic Association (BOA) was established in 1975 as a professional medical association
-                  to serve the ophthalmology community across the state of Bihar. Operating under the jurisdiction of
+                  The Ophthalmic Association Of Bihar (BOA) was established in 2021 as a professional medical association
+                  to serve the ophthalmic community across the state of Bihar. Operating under the jurisdiction of
                   the Government of Bihar, BOA functions as the official representative body for ophthalmologists and
                   eye care professionals in the region.
                 </p>

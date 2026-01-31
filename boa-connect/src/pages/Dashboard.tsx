@@ -286,7 +286,7 @@ export default function Dashboard() {
     doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
-    doc.text('Bihar Ophthalmic Association | www.boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+    doc.text('Ophthalmic Association Of Bihar | www.boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
 
     doc.save(`Registration_${reg.registration_no}.pdf`);
   };

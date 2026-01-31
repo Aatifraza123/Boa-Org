@@ -40,7 +40,7 @@ export function HeroSection() {
         <div className="container py-20">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-4" style={{ color: '#1F2933' }}>
-              Bihar Ophthalmic Association
+              Ophthalmic Association Of Bihar
             </h1>
             <p className="text-lg md:text-xl mb-8" style={{ color: '#616E7C' }}>
               Advancing eye care excellence through education, research, and collaboration since 1975.
@@ -58,13 +58,13 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative overflow-hidden" style={{ background: '#F9FAFB' }}>
+    <section className="relative overflow-hidden -mt-4 sm:-mt-6 md:-mt-8" style={{ background: '#F9FAFB' }}>
       {/* Simple background - no fancy patterns */}
 
-      <div className="container relative py-12 sm:py-16 md:py-20 lg:py-24">
+      <div className="container relative pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-6">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Content */}
-          <div className="space-y-6 lg:space-y-8 text-center lg:text-left">
+          <div className="space-y-4 lg:space-y-6 text-center lg:text-left">
             {activeSeminar && activeSeminar.online_registration_enabled === 1 && (
               <div className="gov-badge-accent inline-flex">
                 <span className="w-2 h-2 rounded-full mr-2 inline-block bg-green-500" />
@@ -72,9 +72,9 @@ export function HeroSection() {
               </div>
             )}
 
-            <div className="space-y-3 lg:space-y-4">
+            <div className="space-y-2 lg:space-y-3">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight" style={{ color: '#1F2933' }}>
-                Bihar Ophthalmic Association
+                Ophthalmic Association Of Bihar
               </h1>
               <p className="text-base sm:text-lg md:text-xl max-w-lg mx-auto lg:mx-0" style={{ color: '#616E7C' }}>
                 Advancing eye care excellence through education, research, and collaboration since 1975.

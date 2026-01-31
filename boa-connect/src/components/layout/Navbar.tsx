@@ -203,24 +203,24 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
                 <a
-                  href={`mailto:${contactInfo?.email || 'info@boa.org.in'}`}
+                  href={`mailto:${contactInfo?.email || 'info@boabihar.org'}`}
                   className="gov-transition-colors hover:text-white"
                 >
-                  {contactInfo?.email || 'info@boa.org.in'}
+                  {contactInfo?.email || 'info@boabihar.org'}
                 </a>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
                 <a
-                  href={`tel:${contactInfo?.mobile || '+916121234567'}`}
+                  href={`tel:${contactInfo?.mobile || '+91-9771019937'}`}
                   className="gov-transition-colors hover:text-white"
                 >
-                  {contactInfo?.mobile || '+91 612 123 4567'}
+                  {contactInfo?.mobile || '+91 9771019937'}
                 </a>
               </div>
             </div>
             <div className="text-xs text-gray-300 hidden lg:block">
-              Government Recognized Medical Association | Est. 1975
+              Government Recognized Medical Association | Est. 2021
             </div>
           </div>
         </div>
@@ -242,7 +242,7 @@ export function Navbar() {
                   />
                   <div className="hidden sm:flex flex-col">
                     <span className="text-base sm:text-lg font-semibold text-white leading-tight">
-                      Bihar Ophthalmic Association
+                      Ophthalmic Association Of Bihar
                     </span>
                     <span className="text-xs text-blue-200 hidden md:block">
                       Government Recognized Medical Association
@@ -256,7 +256,7 @@ export function Navbar() {
                   </div>
                   <div className="hidden sm:flex flex-col">
                     <span className="text-base sm:text-lg font-semibold text-white leading-tight">
-                      Bihar Ophthalmic Association
+                      Ophthalmic Association Of Bihar
                     </span>
                     <span className="text-xs text-blue-200 hidden md:block">
                       Government Recognized Medical Association

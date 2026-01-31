@@ -23,7 +23,7 @@ export function Footer() {
     }
   };
 
-  const currentYear = new Date().getFullYear();
+  
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -47,12 +47,12 @@ export function Footer() {
               )}
               <div>
                 <div className="text-lg font-bold text-white">BOA</div>
-                <div className="text-xs text-gray-300">Bihar Ophthalmic Association</div>
+                <div className="text-xs text-gray-300">Ophthalmic Association Of Bihar</div>
               </div>
             </div>
             
             <p className="text-sm text-gray-300 leading-relaxed">
-              A Government-recognized medical association dedicated to advancing ophthalmology 
+              A Government-recognized medical association dedicated to advancing ophthalmic
               excellence and eye care services across Bihar state.
             </p>
           </div>
@@ -129,6 +129,14 @@ export function Footer() {
                   {contactInfo?.mobile || '+91 612 123 4567'}
                 </a>
               </div>
+              <div className='flex items-center justify-start py-5 gap-6'>
+                <Link to="/terms-of-service">
+                      <p>Term and Condition</p>
+                      </Link>
+                      <Link to="/privacy-policy">
+                      <p>Privacy Policy</p>
+                      </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -137,12 +145,9 @@ export function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-700 bg-gray-800">
         <div className="container py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm text-gray-400">
             <p>
-              © {currentYear} Bihar Ophthalmic Association. All rights reserved.
-            </p>
-            <p>
-              Designed & Maintained by BOA IT Team
+              © 2021 Ophthalmic Association Of Bihar. All rights reserved.
             </p>
           </div>
         </div>

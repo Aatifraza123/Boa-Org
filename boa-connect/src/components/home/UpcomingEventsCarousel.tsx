@@ -283,7 +283,7 @@ export function UpcomingEventsCarousel() {
         </head>
         <body>
           <div class="header">
-            <div class="logo">Bihar Ophthalmic Association</div>
+            <div class="logo">Ophthalmic Association Of Bihar</div>
             <div class="subtitle">Official Event Circular</div>
           </div>
 
@@ -311,7 +311,7 @@ export function UpcomingEventsCarousel() {
 
             <div class="section">
               <div class="section-title">About the Event</div>
-              <p>${event.description || 'Join us for this important event organized by Bihar Ophthalmic Association. This event will feature expert speakers, networking opportunities, and the latest developments in ophthalmology.'}</p>
+              <p>${event.description || 'Join us for this important event organized by Ophthalmic Association Of Bihar. This event will feature expert speakers, networking opportunities, and the latest developments in ophthalmology.'}</p>
             </div>
 
             <div class="section">
@@ -327,13 +327,13 @@ export function UpcomingEventsCarousel() {
 
             <div class="contact-info">
               <div class="section-title">Contact Information</div>
-              <p><strong>Bihar Ophthalmic Association</strong></p>
+              <p><strong>Ophthalmic Association Of Bihar</strong></p>
               <p>For registration and queries, please contact us through our official website or visit the event registration page.</p>
             </div>
           </div>
 
           <div class="footer">
-            <p>This is an official circular from Bihar Ophthalmic Association</p>
+            <p>This is an official circular from Ophthalmic Association Of Bihar</p>
             <p>Generated on: ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')}</p>
           </div>
 
@@ -381,7 +381,7 @@ export function UpcomingEventsCarousel() {
             </h2>
           </div>
           <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
-            Stay informed about official events, conferences, and important announcements from Bihar Ophthalmic Association
+            Stay informed about official events, conferences, and important announcements from Ophthalmic Association Of Bihar
           </p>
         </div>
 
@@ -513,7 +513,7 @@ export function UpcomingEventsCarousel() {
                           <div className="flex items-center gap-2 text-gray-700">
                             <div className="h-3.5 w-3.5 bg-blue-600 rounded-sm flex-shrink-0"></div>
                             <span className="font-medium">Organizing Authority:</span>
-                            <span className="line-clamp-1">Bihar Ophthalmic Association</span>
+                            <span className="line-clamp-1">Ophthalmic Association Of Bihar</span>
                           </div>
                         </div>
 

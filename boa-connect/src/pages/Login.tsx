@@ -88,7 +88,7 @@ export default function Login() {
                   <div className="space-y-4">
                     <div>
                       <h2 className="text-2xl font-semibold mb-2 text-white">
-                        Bihar Ophthalmic Association
+                        Ophthalmic Association Of Bihar
                       </h2>
                       <p className="text-sm text-white/80">
                         Advancing eye care excellence through education, research, and collaboration since 1975

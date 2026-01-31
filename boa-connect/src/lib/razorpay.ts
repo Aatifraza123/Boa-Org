@@ -240,11 +240,14 @@ class RazorpayService {
           key: orderResponse.key_id,
           amount: orderResponse.order.amount,
           currency: orderResponse.order.currency,
-          name: 'Bihar Ophthalmic Association',
+          name: 'Ophthalmic Association Of Bihar',
           description: 'Seminar Registration Fee',
           order_id: orderResponse.order.id,
           handler: async (response: RazorpayResponse) => {
             try {
+              console.log('=== RAZORPAY SUCCESS HANDLER ===');
+              console.log('Razorpay response:', response);
+              
               // Verify payment
               const verificationResult = await this.verifyPayment({
                 razorpay_order_id: response.razorpay_order_id,
@@ -258,8 +261,10 @@ class RazorpayService {
                 payment_type: 'seminar'
               });
 
+              console.log('Verification result:', verificationResult);
               resolve(verificationResult);
             } catch (error) {
+              console.error('Payment verification error:', error);
               reject(error);
             }
           },
@@ -350,7 +355,7 @@ class RazorpayService {
           key: orderResponse.key_id,
           amount: orderResponse.order.amount,
           currency: orderResponse.order.currency,
-          name: 'Bihar Ophthalmic Association',
+          name: 'Ophthalmic Association Of Bihar',
           description: 'Membership Registration Fee',
           order_id: orderResponse.order.id,
           handler: async (response: RazorpayResponse) => {

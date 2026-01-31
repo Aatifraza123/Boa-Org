@@ -62,7 +62,7 @@ export default function Seminars() {
               Seminars & Conferences
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground">
-              Explore our upcoming events and register for conferences that advance your ophthalmology practice.
+              Explore our upcoming events and register for conferences that advance your ophthalmic practice.
             </p>
           </div>
 

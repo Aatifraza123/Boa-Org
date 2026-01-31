@@ -205,13 +205,13 @@ export default function Membership() {
         <div className="container text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-primary-foreground text-sm font-medium mb-4">
             <Users className="h-4 w-4" />
-            Join 500+ Members
+            Join Members
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Become a BOA Member
+            Become a Life Member
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Join Bihar's premier ophthalmology association and advance your career while serving the community
+            Join Bihar's premier ophthalmic association and advance your career while serving the community
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button
