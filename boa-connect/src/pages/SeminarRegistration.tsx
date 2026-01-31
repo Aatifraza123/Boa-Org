@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, CreditCard, FileText, User, MapPin, Receipt, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -895,28 +895,28 @@ export default function SeminarRegistration() {
 
   return (
     <>
-      <div className="min-h-[calc(100vh-4rem)] py-8 px-4" style={{ animation: 'none', transition: 'none', opacity: 1, visibility: 'visible' }}>
+      <div className="min-h-[calc(100vh-4rem)] py-4 sm:py-6 md:py-8 px-3 sm:px-4" style={{ animation: 'none', transition: 'none', opacity: 1, visibility: 'visible' }}>
         <div className="max-w-7xl mx-auto" style={{ animation: 'none', transition: 'none', opacity: 1, visibility: 'visible' }}>
           {/* Header */}
-          <div className="text-center mb-8">
-            <Badge className="gradient-gold text-secondary-foreground border-0 mb-4">
+          <div className="text-center mb-6 md:mb-8">
+            <Badge className="gradient-gold text-secondary-foreground border-0 mb-3 md:mb-4 text-xs sm:text-sm">
               Registration Open
             </Badge>
 
             {/* Main Seminar Name */}
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2 md:mb-3 px-2">
               {activeSeminar.name}
             </h1>
 
             {/* Title/Tagline if exists */}
             {activeSeminar.title && (
-              <p className="text-lg md:text-xl text-black font-semibold mb-4">
+              <p className="text-base sm:text-lg md:text-xl text-black font-semibold mb-3 md:mb-4 px-2">
                 {activeSeminar.title}
               </p>
             )}
 
             {/* Date and Venue Info */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-2 text-muted-foreground text-base md:text-lg">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-muted-foreground text-sm sm:text-base md:text-lg px-2">
               <span className="font-medium">
                 {new Date(activeSeminar.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 {activeSeminar.end_date && activeSeminar.start_date !== activeSeminar.end_date && (
@@ -935,31 +935,67 @@ export default function SeminarRegistration() {
             {/* Left Column - Registration Form */}
             <div className="lg:col-span-2">
               {/* Progress Steps */}
-              <div className="flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-2">
-                {displaySteps.map((step, index) => (
-                  <div key={step.id} className="flex items-center">
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${index === displayCurrentIndex
-                      ? 'gradient-primary text-primary-foreground shadow-glow'
-                      : index < displayCurrentIndex
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted text-muted-foreground'
-                      }`}>
-                      {index < displayCurrentIndex ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <step.icon className="h-4 w-4" />
+              <div className="mb-6 md:mb-8">
+                {/* Mobile Steps - Compact View */}
+                <div className="block sm:hidden">
+                  <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {displaySteps[displayCurrentIndex] && (
+                        <>
+                          <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center">
+                            {React.createElement(displaySteps[displayCurrentIndex].icon, { className: "h-4 w-4 text-primary-foreground" })}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{displaySteps[displayCurrentIndex].label}</p>
+                            <p className="text-xs text-muted-foreground">Step {displayCurrentIndex + 1} of {displaySteps.length}</p>
+                          </div>
+                        </>
                       )}
-                      <span className="text-sm font-medium hidden sm:inline">{step.label}</span>
                     </div>
-                    {index < displaySteps.length - 1 && (
-                      <div className={`w-6 h-0.5 ${index < displayCurrentIndex ? 'bg-primary' : 'bg-border'
-                        }`} />
-                    )}
+                    <div className="flex gap-1">
+                      {displaySteps.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`h-2 w-6 rounded-full transition-colors ${
+                            index === displayCurrentIndex
+                              ? 'bg-primary'
+                              : index < displayCurrentIndex
+                              ? 'bg-primary/60'
+                              : 'bg-border'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Desktop Steps - Full View */}
+                <div className="hidden sm:flex items-center justify-center gap-2 overflow-x-auto pb-2">
+                  {displaySteps.map((step, index) => (
+                    <div key={step.id} className="flex items-center">
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${index === displayCurrentIndex
+                        ? 'gradient-primary text-primary-foreground shadow-glow'
+                        : index < displayCurrentIndex
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                        }`}>
+                        {index < displayCurrentIndex ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <step.icon className="h-4 w-4" />
+                        )}
+                        <span className="text-sm font-medium">{step.label}</span>
+                      </div>
+                      {index < displaySteps.length - 1 && (
+                        <div className={`w-6 h-0.5 ${index < displayCurrentIndex ? 'bg-primary' : 'bg-border'
+                          }`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="bg-card rounded-2xl border border-border p-8 shadow-card" style={{ animation: 'none', transition: 'none', opacity: 1, visibility: 'visible', transform: 'none' }}>
+              <div className="bg-card rounded-xl md:rounded-2xl border border-border p-4 sm:p-6 md:p-8 shadow-card" style={{ animation: 'none', transition: 'none', opacity: 1, visibility: 'visible', transform: 'none' }}>
                 {/* Personal Information */}
                 {currentStep === 'personal' && (
                   <div className="space-y-6" style={{ animation: 'none', opacity: 1, visibility: 'visible' }}>
