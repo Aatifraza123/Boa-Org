@@ -269,10 +269,10 @@ try {
     }
   });
 
-  // Generate PDF from HTML template routes (PROTECTED)
+  // Generate PDF from HTML template routes (PUBLIC - no auth required)
   const authMiddleware = require('./middleware/auth.middleware');
   
-  app.get('/api/generate-membership-pdf', authMiddleware, async (req, res) => {
+  app.get('/api/generate-membership-pdf', async (req, res) => {
     try {
       // Set cache control headers to prevent caching
       res.set({
