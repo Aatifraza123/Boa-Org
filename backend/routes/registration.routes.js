@@ -13,6 +13,16 @@ router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Registration routes working' });
 });
 
+// Test auth endpoint
+router.get('/test-auth', auth, (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Auth working',
+    user_id: req.user?.id,
+    user_email: req.user?.email
+  });
+});
+
 // Simple test POST endpoint
 router.post('/test-post', (req, res) => {
   res.json({ success: true, message: 'POST test working', user_id: req.user?.id });

@@ -76,17 +76,29 @@ export default function Dashboard() {
 
       // Load registrations
       try {
+        console.log('=== LOADING REGISTRATIONS ===');
         const regResponse = await registrationAPI.getMyRegistrations();
+        console.log('Registration API response:', regResponse);
         
         if (regResponse.registrations && Array.isArray(regResponse.registrations)) {
+          console.log('Setting registrations:', regResponse.registrations.length);
           setRegistrations(regResponse.registrations);
         } else {
           console.error('Invalid registrations data:', regResponse);
           setRegistrations([]);
         }
-      } catch (regError) {
+      } catch (regError: any) {
         console.error('Failed to load registrations:', regError);
+        console.error('Error response:', regError.response);
+        console.error('Error message:', regError.message);
         setRegistrations([]);
+        
+        // Show error toast
+        toast({
+          title: 'Error',
+          description: 'Failed to load registrations: ' + (regError.response?.data?.message || regError.message),
+          variant: 'destructive'
+        });
       }
 
       // Load active seminar

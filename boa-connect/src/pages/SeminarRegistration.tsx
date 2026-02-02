@@ -845,11 +845,24 @@ export default function SeminarRegistration() {
 
   const handlePayment = async () => {
     try {
+      // Get logged-in user info
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      let loggedInUserId = null;
       
-      // Prepare registration data using form information instead of user token
+      if (token && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          loggedInUserId = userData.id;
+          console.log('Logged in user ID:', loggedInUserId);
+        } catch (e) {
+          console.error('Failed to parse user data:', e);
+        }
+      }
+      
+      // Prepare registration data
       const registrationData = {
-        // Use form data instead of user_id from token
-        user_id: null, // Explicitly set to null for guest registration
+        user_id: loggedInUserId, // Use logged-in user ID if available, otherwise null for guest
         user_info: {
           title: title,
           full_name: fullName,
@@ -874,6 +887,8 @@ export default function SeminarRegistration() {
         }))
       };
 
+      console.log('Registration data with user_id:', registrationData);
+
       // User details for Razorpay prefill
       const userDetails = {
         name: `${formatTitle(title)} ${fullName} ${surname}`,
@@ -888,7 +903,6 @@ export default function SeminarRegistration() {
       }
 
       // Process payment through Razorpay
-     
       const paymentResult = await razorpayService.processSeminarPayment(
         totalAmount,
         registrationData,
