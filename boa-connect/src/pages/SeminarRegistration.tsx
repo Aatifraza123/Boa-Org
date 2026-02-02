@@ -854,7 +854,6 @@ export default function SeminarRegistration() {
         try {
           const userData = JSON.parse(storedUser);
           loggedInUserId = userData.id;
-          console.log('Logged in user ID:', loggedInUserId);
         } catch (e) {
           console.error('Failed to parse user data:', e);
         }
@@ -887,7 +886,6 @@ export default function SeminarRegistration() {
         }))
       };
 
-      console.log('Registration data with user_id:', registrationData);
 
       // User details for Razorpay prefill
       const userDetails = {

@@ -76,12 +76,9 @@ export default function Dashboard() {
 
       // Load registrations
       try {
-        console.log('=== LOADING REGISTRATIONS ===');
         const regResponse = await registrationAPI.getMyRegistrations();
-        console.log('Registration API response:', regResponse);
         
         if (regResponse.registrations && Array.isArray(regResponse.registrations)) {
-          console.log('Setting registrations:', regResponse.registrations.length);
           setRegistrations(regResponse.registrations);
         } else {
           console.error('Invalid registrations data:', regResponse);

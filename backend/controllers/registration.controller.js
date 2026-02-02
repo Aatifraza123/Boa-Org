@@ -235,9 +235,6 @@ exports.createRegistration = async (req, res) => {
 // Get user registrations
 exports.getUserRegistrations = async (req, res) => {
   try {
-    console.log('=== GET USER REGISTRATIONS START ===');
-    console.log('Request user:', req.user);
-    console.log('Request headers authorization:', req.headers.authorization);
     
     // Check if user is authenticated
     if (!req.user || !req.user.id) {
@@ -250,14 +247,12 @@ exports.getUserRegistrations = async (req, res) => {
     }
 
     const userId = req.user.id;
-    console.log('Fetching registrations for user ID:', userId);
 
     // First, check if user exists
     const [userCheck] = await promisePool.query(
       'SELECT id, email, first_name, surname FROM users WHERE id = ?',
       [userId]
     );
-    console.log('User check result:', userCheck);
 
     if (userCheck.length === 0) {
       console.log('ERROR: User not found in database');
@@ -273,7 +268,6 @@ exports.getUserRegistrations = async (req, res) => {
       'SELECT * FROM registrations WHERE user_id = ?',
       [userId]
     );
-    console.log('All registrations for user:', allRegs.length);
 
     const [registrations] = await promisePool.query(
       `SELECT r.*, s.name as seminar_name, s.location, s.start_date, s.end_date,
@@ -287,7 +281,7 @@ exports.getUserRegistrations = async (req, res) => {
       [userId]
     );
 
-    console.log('Registrations found with JOINs:', registrations.length);
+    
 
     // Get additional persons for each registration
     for (let reg of registrations) {
@@ -300,11 +294,8 @@ exports.getUserRegistrations = async (req, res) => {
         [reg.id]
       );
       reg.additional_persons = persons;
-      console.log(`Additional persons for registration ${reg.id}:`, persons.length);
     }
 
-    console.log('=== SENDING RESPONSE ===');
-    console.log('Total registrations:', registrations.length);
 
     res.json({
       success: true,

@@ -395,7 +395,6 @@ export const adminAPI = {
     // Add timestamp to prevent caching
     const timestamp = Date.now();
     const response = await adminApi.get(`/admin/members?_t=${timestamp}`);
-    console.log('🔍 [API] Response received:', response.data);
     return response.data;
   },
   updateMembershipDetails: async (id: string, data: any) => {
