@@ -189,8 +189,8 @@ export default function UsersTab() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Users Management</h2>
-          <p className="text-muted-foreground">Total Users: {users.length}</p>
+          <h2 className="text-2xl font-bold">All Registered Users</h2>
+          <p className="text-muted-foreground">All users who created accounts (Total: {users.length}) - For paid members only, use "Paid Members Only" tab</p>
         </div>
         <Button onClick={handleExportAll} className="gap-2">
           <Download className="h-4 w-4" />

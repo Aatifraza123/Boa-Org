@@ -15,7 +15,7 @@ export function useSiteConfig() {
     favicon_url: '',
     logo_url: '',
     hero_circle_image_url: '',
-    site_title: 'Bihar Ophthalmic Association',
+    site_title: 'Ophthalmic Association Of Bihar',
     site_description: ''
   });
   const [isLoading, setIsLoading] = useState(true);

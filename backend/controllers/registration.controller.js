@@ -51,6 +51,24 @@ exports.createRegistration = async (req, res) => {
       razorpay_payment_id
     } = req.body;
 
+    // Check if user has already registered for this seminar
+    const [existingRegistration] = await connection.query(
+      'SELECT id, registration_no, status FROM registrations WHERE user_id = ? AND seminar_id = ?',
+      [userId, seminar_id]
+    );
+
+    if (existingRegistration.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'You have already registered for this seminar',
+        existing_registration: {
+          registration_no: existingRegistration[0].registration_no,
+          status: existingRegistration[0].status
+        }
+      });
+    }
+
     // Convert delegate_type to proper format for ENUM
     // "BOA Member" -> "boa-member", "Non BOA Member" -> "non-boa-member", "Accompanying Person" -> "accompanying-person"
     let normalizedDelegateType = delegate_type

@@ -99,7 +99,14 @@ class RazorpayService {
   async testConnection(): Promise<void> {
     try {
       console.log('Testing backend connection...');
-      const response = await fetch(`${API_BASE_URL}/api/payment/test-connection`, {
+      
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
+      const url = isDevelopment 
+        ? '/api/payment/test-connection'
+        : `${API_BASE_URL}/api/payment/test-connection`;
+      
+      const response = await fetch(url, {
         method: 'GET'
       });
 
@@ -119,7 +126,13 @@ class RazorpayService {
       const requestBody = JSON.stringify(orderData);
       console.log('Frontend: Request body:', requestBody);
       
-      const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
+      const url = isDevelopment 
+        ? '/api/payment/create-order'
+        : `${API_BASE_URL}/api/payment/create-order`;
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -159,7 +172,13 @@ class RazorpayService {
       const requestBody = JSON.stringify(paymentData);
       console.log('Request body:', requestBody);
       
-      const response = await fetch(`${API_BASE_URL}/api/payment/verify-payment`, {
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
+      const url = isDevelopment 
+        ? '/api/payment/verify-payment'
+        : `${API_BASE_URL}/api/payment/verify-payment`;
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -194,7 +194,7 @@ exports.getMembershipDetails = async (req, res) => {
     // Get user details with membership information and payment details
     const [user] = await promisePool.query(`
       SELECT u.*, 
-             mr.membership_type, mr.status, mr.valid_from, mr.valid_until, mr.notes,
+             mr.membership_type, mr.membership_status as status, mr.valid_from, mr.valid_until, mr.notes,
              mr.amount, mr.payment_status, mr.payment_method, mr.transaction_id,
              mr.razorpay_payment_id, mr.payment_date, mr.qualification, mr.year_passing,
              mr.institution, mr.working_place,
@@ -244,9 +244,11 @@ exports.verifyMembership = async (req, res) => {
 
     // Check in users table for BOA members
     const [users] = await promisePool.query(
-      `SELECT id, first_name, surname, email, membership_no, is_boa_member, created_at
-       FROM users 
-       WHERE membership_no = ? AND is_boa_member = TRUE AND is_active = TRUE`,
+      `SELECT u.id, u.first_name, u.surname, u.email, u.membership_no, u.is_boa_member, u.created_at,
+              mr.membership_status
+       FROM users u
+       LEFT JOIN membership_registrations mr ON u.email = mr.email
+       WHERE u.membership_no = ? AND u.is_boa_member = TRUE AND u.is_active = TRUE`,
       [membershipNo]
     );
 
@@ -259,6 +261,15 @@ exports.verifyMembership = async (req, res) => {
     }
 
     const user = users[0];
+
+    // Check if membership is active
+    if (user.membership_status && user.membership_status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        message: 'No active membership found. Please contact admin for membership activation.',
+        verified: false
+      });
+    }
 
     res.json({
       success: true,

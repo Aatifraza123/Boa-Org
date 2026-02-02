@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { authAPI } from '@/lib/api';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'email' | 'membership'>('email');
@@ -18,6 +19,9 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [membershipNo, setMembershipNo] = useState('');
   const [password, setPassword] = useState('');
+
+  // Get the redirect path from location state
+  const from = location.state?.from || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +60,9 @@ export default function Login() {
         description: `Welcome back, ${response.user.first_name}!`,
       });
 
-      // Reload and redirect to dashboard
+      // Redirect to the intended page or dashboard
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = from;
       }, 500);
 
     } catch (error: any) {

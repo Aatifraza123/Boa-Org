@@ -30,15 +30,7 @@ import {
 } from '@/components/ui/select';
 import { API_BASE_URL } from '@/lib/utils';
 
-// Helper function to convert delegate_type to readable format
-const formatDelegateType = (delegateType: string) => {
-  const typeMap: { [key: string]: string } = {
-    'boa-member': 'BOA Member',
-    'non-boa-member': 'Non BOA Member',
-    'accompanying-person': 'Accompanying Person'
-  };
-  return typeMap[delegateType] || delegateType;
-};
+// Payment interface and types
 
 interface Payment {
   id: string;
@@ -87,13 +79,15 @@ export default function AllPaymentsTab() {
   const loadPayments = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/admin/payments/all`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments/all?t=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
       });
       const data = await response.json();
+      console.log('[AllPaymentsTab] Received data:', data);
       if (data.success) {
+        console.log('[AllPaymentsTab] Payments:', data.payments);
         setPayments(data.payments || []);
         setStats(data.stats || { total: 0, completed: 0, pending: 0, totalAmount: 0 });
       }
@@ -342,7 +336,7 @@ export default function AllPaymentsTab() {
                   <tr key={payment.id} className="border-t hover:bg-muted/50">
                     <td className="p-4">
                       <div>
-                        <p className="font-medium">{payment.user_name}</p>
+                        <p className="font-medium">{payment.user_name || 'Unknown User'}</p>
                         <p className="text-sm text-muted-foreground">{payment.user_email}</p>
                         <p className="text-sm text-muted-foreground">{payment.user_mobile}</p>
                       </div>
@@ -435,7 +429,7 @@ export default function AllPaymentsTab() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-muted-foreground">Name</label>
-                    <p className="font-medium">{selectedPayment.user_name}</p>
+                    <p className="font-medium">{selectedPayment.user_name || 'Unknown User'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">Email</label>
@@ -517,7 +511,7 @@ export default function AllPaymentsTab() {
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground">Delegate Category</label>
-                        <p className="font-medium">{selectedPayment.details.delegate_category ? formatDelegateType(selectedPayment.details.delegate_category) : 'N/A'}</p>
+                        <p className="font-medium">{selectedPayment.details.delegate_category || 'N/A'}</p>
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground">Registration Number</label>
@@ -568,7 +562,7 @@ export default function AllPaymentsTab() {
               Are you sure you want to delete this payment? This action cannot be undone.
               {paymentToDelete && (
                 <div className="mt-4 p-3 bg-muted rounded-lg">
-                  <p><strong>User:</strong> {paymentToDelete.user_name}</p>
+                  <p><strong>User:</strong> {paymentToDelete.user_name || 'Unknown User'}</p>
                   <p><strong>Amount:</strong> ₹{paymentToDelete.amount.toLocaleString()}</p>
                   <p><strong>Type:</strong> {paymentToDelete.payment_type}</p>
                   <p><strong>Transaction ID:</strong> {paymentToDelete.transaction_id}</p>

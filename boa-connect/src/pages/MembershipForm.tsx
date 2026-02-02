@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
 import { razorpayService } from '@/lib/razorpay';
 import { API_BASE_URL } from '@/lib/utils';
 
 export default function MembershipForm() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -33,6 +34,7 @@ export default function MembershipForm() {
   });
 
   useEffect(() => {
+    checkExistingMembership();
     loadCategories();
     // Also reload categories when component becomes visible
     const handleVisibilityChange = () => {
@@ -44,11 +46,46 @@ export default function MembershipForm() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  const checkExistingMembership = async () => {
+    try {
+      // Get current user's email from token or user data
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Check if user has already submitted membership form
+      const response = await fetch(`${API_BASE_URL}/api/users/membership`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // If user has membership data (even if inactive), they've already filled the form
+        if (data.membership && data.membership.membership_type) {
+          toast.error('You have already submitted a membership application. Only one application per user is allowed.');
+          navigate('/membership-details');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing membership:', error);
+      // Continue loading if check fails
+    }
+  };
+
   const loadCategories = async () => {
     try {
-      // Force fresh data with timestamp and no-cache headers
+      // In development, use relative URL to go through Vite proxy
+      // In production, use the full API URL
+      const isDevelopment = import.meta.env.DEV;
       const timestamp = new Date().getTime();
-      const response = await fetch(`${API_BASE_URL}/api/membership-categories?t=${timestamp}`, {
+      const url = isDevelopment 
+        ? `/api/membership-categories?t=${timestamp}`
+        : `${API_BASE_URL}/api/membership-categories?t=${timestamp}`;
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -57,12 +94,22 @@ export default function MembershipForm() {
         },
         cache: 'no-store'
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      
       if (data.success) {
         setCategories(data.categories || []);
+      } else {
+        console.error('Failed to load categories:', data);
+        toast.error('Failed to load membership categories');
       }
     } catch (error) {
-      console.error('Failed to load membership categories:', error);
+      console.error('Error loading categories:', error);
+      toast.error('Failed to load membership categories. Please refresh the page.');
     }
   };
 
@@ -70,210 +117,54 @@ export default function MembershipForm() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDownloadOfflineForm = () => {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const contentWidth = pageWidth - (margin * 2);
+  const handleDownloadOfflineForm = async () => {
+    try {
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
+      const timestamp = new Date().getTime();
+      const url = isDevelopment 
+        ? `/api/generate-membership-pdf?t=${timestamp}`
+        : `${API_BASE_URL}/api/generate-membership-pdf?t=${timestamp}`;
 
-    // Header with BOA branding
-    doc.setFillColor(11, 60, 93); // BOA Blue
-    doc.rect(0, 0, pageWidth, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MEMBERSHIP FORM', pageWidth / 2, 15, { align: 'center' });
-    
-    doc.setFontSize(14);
-    doc.text('OPHTHALMIC ASSOCIATION OF BIHAR', pageWidth / 2, 25, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.text('(Reg.no.-S00403/21-22)', pageWidth / 2, 32, { align: 'center' });
+      const response = await fetch(url, {
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-    let yPos = 55;
-    doc.setTextColor(0, 0, 0);
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
 
-    // Contact Information
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Shivpuri Road, Anishabad, Patna 800002', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 5;
-    doc.text('Email: biharophthalmic2022@gmail.com', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 5;
-    doc.text('Contact: 9334332714 / 7903220742 / 9572212739', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 15;
+      // Get PDF blob
+      const pdfBlob = await response.blob();
 
-    // Form Fields
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    
-    // Name field
-    doc.text('NAME:', margin, yPos);
-    doc.line(margin + 20, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Father's/Husband's name
-    doc.text("FATHER'S/HUSBAND NAME:", margin, yPos);
-    doc.line(margin + 50, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Academic Qualification
-    doc.text('ACADEMIC QUALIFICATION:', margin, yPos);
-    doc.line(margin + 50, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Two column fields
-    const midPoint = pageWidth / 2;
-    
-    // Year of Passing and DOB
-    doc.text('YEAR OF PASSING:', margin, yPos);
-    doc.line(margin + 35, yPos, midPoint - 5, yPos);
-    doc.text('DOB:', midPoint + 5, yPos);
-    doc.line(midPoint + 15, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Institution
-    doc.text('NAME OF INSTITUTION:', margin, yPos);
-    doc.line(margin + 45, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Working Place
-    doc.text('WORKING PLACE:', margin, yPos);
-    doc.line(margin + 35, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Sex and Age
-    doc.text('SEX:', margin, yPos);
-    doc.line(margin + 15, yPos, midPoint - 5, yPos);
-    doc.text('AGE:', midPoint + 5, yPos);
-    doc.line(midPoint + 15, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Address (3 lines)
-    doc.text('ADDRESS:', margin, yPos);
-    doc.line(margin + 25, yPos, pageWidth - margin, yPos);
-    yPos += 8;
-    doc.line(margin, yPos, pageWidth - margin, yPos);
-    yPos += 8;
-    doc.line(margin, yPos, pageWidth - margin, yPos);
-    yPos += 10;
-
-    // Mobile and Email
-    doc.text('MOBILE:', margin, yPos);
-    doc.line(margin + 20, yPos, midPoint - 5, yPos);
-    doc.text('EMAIL:', midPoint + 5, yPos);
-    doc.line(midPoint + 15, yPos, pageWidth - margin, yPos);
-    yPos += 15;
-
-    // Self Declaration Box
-    doc.setFillColor(249, 249, 249);
-    doc.rect(margin, yPos, contentWidth, 35, 'F');
-    doc.setDrawColor(0, 0, 0);
-    doc.rect(margin, yPos, contentWidth, 35);
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SELF DECLARATION', pageWidth / 2, yPos + 8, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    const declarationText = [
-      'I Smt/Sri/Kumari _________________________ Son/Daughter/wife of Mr. _________________________',
-      'Age _______ Sex _______ Do hereby declare that, the information given above and enclosed documents',
-      'are true to the best of my knowledge and belief. I am well aware of the fact that if the information',
-      'given by me is proved false/not true, I will be liable for action as per the law of association.',
-      'I also declare that after getting membership of association I will never violate the rule & regulation',
-      'of association and will always try my best for getting the objectives/goal of association.'
-    ];
-
-    let textY = yPos + 15;
-    declarationText.forEach(line => {
-      doc.text(line, margin + 2, textY);
-      textY += 4;
-    });
-
-    yPos += 45;
-
-    // Signature section
-    doc.text('PLACE: ________________________', margin, yPos);
-    doc.text('SIGNATURE: ________________________', pageWidth - margin - 60, yPos);
-    yPos += 8;
-    doc.text('DATE: ________________________', margin, yPos);
-    yPos += 15;
-
-    // Enclosures
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Enclosures:', margin, yPos);
-    yPos += 8;
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    const enclosures = [
-      '1. Self attested copy of marksheet of diploma in ophthalmic assistant/para ophthalmic care',
-      '   Or bachelor in ophthalmic technology/technique, for student ID card',
-      '2. Two passport size colour photo',
-      '3. Self attested copy of AADHAR'
-    ];
-
-    enclosures.forEach(item => {
-      doc.text(item, margin, yPos);
-      yPos += 5;
-    });
-
-    yPos += 5;
-
-    // Payment Details
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('NOTE - FOR ANY PAYMENT:', margin, yPos);
-    yPos += 6;
-    doc.text('A/C NO (current): 40983059661', margin, yPos);
-    yPos += 5;
-    doc.text('IFSC CODE: SBIN0000152', margin, yPos);
-    yPos += 5;
-    doc.text('OPHTHALMIC ASSOCIATION OF BIHAR (SBI MAIN BRANCH GANDHI MAIDAN PATNA)', margin, yPos);
-    yPos += 10;
-
-    // Fee Structure
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MEMBERSHIP FEES:', margin, yPos);
-    yPos += 6;
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    
-    // Generate dynamic fee structure from categories
-    const feeStructure = [];
-    
-    categories.forEach((cat, index) => {
-      const professionalFee = `Rs ${parseFloat(cat.price).toLocaleString()}`;
-      const studentFee = cat.student_price && parseFloat(cat.student_price) > 0 
-        ? `Rs ${parseFloat(cat.student_price).toLocaleString()}` 
-        : 'N/A';
+      // Create download link with timestamp
+      const downloadUrl = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `BOA_Membership_Application_Form_${timestamp}.pdf`;
+      document.body.appendChild(link);
+      link.click();
       
-      feeStructure.push(`${index + 1}. ${cat.title}:`);
-      feeStructure.push(`   Professional/Passout: ${professionalFee}`);
-      feeStructure.push(`   Student: ${studentFee}`);
-    });
-
-    feeStructure.forEach(item => {
-      doc.text(item, margin, yPos);
-      yPos += 4;
-    });
-
-    // Footer
-    doc.setFillColor(11, 60, 93);
-    doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.text('Ophthalmic Association Of Bihar | www.boabihar.org | Email: biharophthalmic2022@gmail.com', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
-
-    // Save the PDF
-    doc.save('BOA_Membership_Form_Offline.pdf');
-    toast.success('Offline form downloaded as PDF successfully!');
+      // Clean up with a small delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 100);
+      
+      // Use setTimeout to avoid extension conflicts with toast
+      setTimeout(() => {
+        toast.success('Offline form downloaded successfully!');
+      }, 200);
+      
+    } catch (error) {
+      // Use setTimeout to avoid extension conflicts with toast
+      setTimeout(() => {
+        toast.error('Failed to download form. Please try again.');
+      }, 100);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -349,8 +240,6 @@ export default function MembershipForm() {
       }
 
     } catch (error: any) {
-      console.error('Payment error:', error);
-      
       if (error.message === 'Payment cancelled by user') {
         toast.error('Payment cancelled. You can try again when ready.');
       } else {
@@ -624,22 +513,22 @@ export default function MembershipForm() {
 
             <div className="lg:col-span-1 mt-6 lg:mt-0">
               <div className="sticky top-6 space-y-4">
-                <Card>
+                <Card className='bg-[#aa962d]'>
                   <CardHeader className="pb-3 sm:pb-4">
-                    <CardTitle className="text-sm sm:text-base">Offline Form</CardTitle>
+                    <CardTitle className="text-sm sm:text-base text-black"><span className='p-1.5 bg-primary rounded-md text-white'>Offline Form</span></CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+                  <CardContent className="pt-0 ">
+                    <p className="text-xs sm:text-sm text-black mb-3">
                       Prefer to fill the form offline? Download the printable form.
                     </p>
                     <Button 
                       onClick={handleDownloadOfflineForm}
                       variant="outline" 
-                      className="w-full text-xs sm:text-sm h-9 sm:h-10"
+                      className="w-full hover:bg-black hover:text-white text-xs sm:text-sm h-9 sm:h-10"
                       size="sm"
                     >
                       <Download className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Download Offline Form
+                      Download Form
                     </Button>
                   </CardContent>
                 </Card>

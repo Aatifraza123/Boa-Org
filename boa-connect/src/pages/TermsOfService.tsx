@@ -13,7 +13,7 @@ const TermsOfService = () => {
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none">
             <p>
-              Welcome to BOA Connect, the official platform of Bihar Ophthalmic Association ("BOA", "we", "us", or "our"). 
+              Welcome to BOA Connect, the official platform of Ophthalmic Association Of Bihar ("BOA", "we", "us", or "our"). 
               By accessing or using our platform, you agree to be bound by these Terms of Service ("Terms"). 
               If you do not agree to these Terms, please do not use our platform.
             </p>
@@ -114,7 +114,7 @@ const TermsOfService = () => {
           <CardContent>
             <p className="text-sm text-muted-foreground mb-3">
               All content on the BOA Connect platform, including text, graphics, logos, images, and software, 
-              is the property of Bihar Ophthalmic Association or its licensors and is protected by copyright, 
+              is the property of Ophthalmic Association Of Bihar or its licensors and is protected by copyright, 
               trademark, and other intellectual property laws.
             </p>
             <p className="text-sm text-muted-foreground">
@@ -243,7 +243,7 @@ const TermsOfService = () => {
               If you have any questions about these Terms of Service, please contact us:
             </p>
             <div className="text-sm text-muted-foreground space-y-1">
-              <p><strong>Bihar Ophthalmic Association</strong></p>
+              <p><strong>Ophthalmic Association Of Bihar</strong></p>
               <p>Email: info@boabihar.org</p>
               <p>Phone: +91 612 2234567</p>
               <p>Address: Patna, Bihar, India</p>

@@ -7,22 +7,24 @@ const { promisePool } = require('../config/database');
 const razorpayService = require('../services/razorpay.service');
 const { sendMembershipConfirmation, sendSeminarRegistrationConfirmation, sendMembershipAdminNotification, sendSeminarAdminNotification } = require('../config/email.config');
 
+// Helper function to format title consistently
+const formatTitle = (title) => {
+  const titleMap = {
+    'dr': 'Dr.',
+    'mr': 'Mr.',
+    'mrs': 'Mrs.',
+    'ms': 'Ms.',
+    'prof': 'Prof.'
+  };
+  return titleMap[title?.toLowerCase()] || title || '';
+};
+
 // Helper function to log to file
 function logToFile(message) {
   const logPath = path.join(__dirname, '..', 'payment-debug.log');
   const timestamp = new Date().toISOString();
   fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
 }
-
-// Simple connectivity test endpoint
-router.get('/test-connection', (req, res) => {
-  logToFile('Frontend connectivity test called');
-  res.json({
-    success: true,
-    message: 'Backend is reachable',
-    timestamp: new Date().toISOString()
-  });
-});
 
 // Handle preflight requests
 router.options('/create-order', (req, res) => {
@@ -31,23 +33,6 @@ router.options('/create-order', (req, res) => {
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.sendStatus(200);
-});
-
-// Test endpoint for debugging
-router.post('/test', async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      message: 'Test endpoint working',
-      received: req.body
-    });
-  } catch (error) {
-    console.error('Test endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Test endpoint failed'
-    });
-  }
 });
 
 // Create Razorpay order for seminar registration
@@ -312,12 +297,21 @@ async function processSeminarRegistration(registrationData, paymentInfo) {
 
     logToFile(`Generated registration number: ${registration_no}`);
 
+    // Prepare guest information for logging and insertion
+    const guestName = user_id ? null : (user_info ? `${formatTitle(user_info.title || '')} ${user_info.full_name || user_info.first_name || ''} ${user_info.surname || ''}`.trim() : null);
+    const guestEmail = user_id ? null : (user_info ? user_info.email : null);
+    const guestMobile = user_id ? null : (user_info ? user_info.mobile : null);
+    const guestAddress = user_id ? null : (user_info ? user_info.address : null);
+
+    logToFile(`Guest info being inserted: name="${guestName}", email="${guestEmail}", mobile="${guestMobile}", address="${guestAddress}"`);
+
     // Insert main registration (user_id can be null for guest registrations)
     const [regResult] = await connection.query(
       `INSERT INTO registrations 
        (registration_no, user_id, seminar_id, category_id, slab_id, delegate_type, category_name,
-        amount, status, transaction_id, payment_method, payment_date, razorpay_order_id, razorpay_payment_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)`,
+        amount, status, transaction_id, payment_method, payment_date, razorpay_order_id, razorpay_payment_id,
+        guest_name, guest_email, guest_mobile, guest_address)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)`,
       [
         registration_no,
         user_id || null, // Explicitly set to null if user_id is falsy
@@ -328,10 +322,15 @@ async function processSeminarRegistration(registrationData, paymentInfo) {
         originalCategoryName,
         paymentInfo.amount,
         paymentInfo.status,
-        paymentInfo.payment_id,
-        'razorpay',
-        paymentInfo.order_id,
-        paymentInfo.payment_id
+        paymentInfo.payment_id, // transaction_id
+        'razorpay', // payment_method
+        paymentInfo.order_id, // razorpay_order_id
+        paymentInfo.payment_id, // razorpay_payment_id
+        // Guest information (will be null if user_id exists)
+        guestName,
+        guestEmail,
+        guestMobile,
+        guestAddress
       ]
     );
 
@@ -385,12 +384,17 @@ async function processSeminarRegistration(registrationData, paymentInfo) {
           await sendSeminarRegistrationConfirmation(registrationEmailData, seminarDetails[0]);
           logToFile(`Seminar registration confirmation email sent to: ${user_info.email}`);
           
-          // Send admin notification
+          // Generate and send PDF receipt via email
           try {
-            await sendSeminarAdminNotification(registrationEmailData, seminarDetails[0]);
-            logToFile('Seminar admin notification email sent successfully');
-          } catch (adminEmailError) {
-            logToFile(`Failed to send seminar admin notification: ${adminEmailError.message}`);
+            const { generateAndSendPDFReceipt } = require('../controllers/admin.controller');
+            const pdfResult = await generateAndSendPDFReceipt(`sem_${registrationId}`, 'seminar');
+            if (pdfResult.success) {
+              logToFile(`PDF receipt email sent successfully to: ${user_info.email}`);
+            } else {
+              logToFile(`Failed to send PDF receipt email: ${pdfResult.message}`);
+            }
+          } catch (pdfError) {
+            logToFile(`PDF receipt generation error: ${pdfError.message}`);
           }
         }
       }
@@ -419,6 +423,17 @@ async function processMembershipRegistration(membershipData, paymentInfo) {
     logToFile('=== PROCESSING MEMBERSHIP REGISTRATION ===');
     logToFile(`Membership data: ${JSON.stringify(membershipData)}`);
     logToFile(`Payment info: ${JSON.stringify(paymentInfo)}`);
+
+    // Check if user has already submitted membership form
+    const [existingMembership] = await promisePool.query(
+      'SELECT id, name, email, payment_status FROM membership_registrations WHERE email = ?',
+      [membershipData.email]
+    );
+
+    if (existingMembership.length > 0) {
+      logToFile(`Duplicate membership registration attempt for email: ${membershipData.email}`);
+      throw new Error(`You have already submitted a membership application. Only one application per email is allowed.`);
+    }
 
     const [result] = await promisePool.query(
       `INSERT INTO membership_registrations 
@@ -465,12 +480,17 @@ async function processMembershipRegistration(membershipData, paymentInfo) {
       await sendMembershipConfirmation(membershipConfirmationData);
       logToFile(`Membership confirmation email sent to: ${membershipData.email}`);
       
-      // Send admin notification
+      // Generate and send PDF receipt via email
       try {
-        await sendMembershipAdminNotification(membershipConfirmationData);
-        logToFile('Membership admin notification email sent successfully');
-      } catch (adminEmailError) {
-        logToFile(`Failed to send membership admin notification: ${adminEmailError.message}`);
+        const { generateAndSendPDFReceipt } = require('../controllers/admin.controller');
+        const pdfResult = await generateAndSendPDFReceipt(`mem_${result.insertId}`, 'membership');
+        if (pdfResult.success) {
+          logToFile(`PDF receipt email sent successfully to: ${membershipData.email}`);
+        } else {
+          logToFile(`Failed to send PDF receipt email: ${pdfResult.message}`);
+        }
+      } catch (pdfError) {
+        logToFile(`PDF receipt generation error: ${pdfError.message}`);
       }
     } catch (emailError) {
       logToFile(`Failed to send membership confirmation email: ${emailError.message}`);
@@ -645,12 +665,17 @@ router.post('/check-payment', async (req, res) => {
         await sendMembershipConfirmation(membershipConfirmationData);
         logToFile(`Membership confirmation email sent to: ${userData.email}`);
         
-        // Send admin notification
+        // Generate and send PDF receipt via email
         try {
-          await sendMembershipAdminNotification(membershipConfirmationData);
-          logToFile('Membership admin notification email sent successfully');
-        } catch (adminEmailError) {
-          logToFile(`Failed to send membership admin notification: ${adminEmailError.message}`);
+          const { generateAndSendPDFReceipt } = require('../controllers/admin.controller');
+          const pdfResult = await generateAndSendPDFReceipt(`mem_${result.insertId}`, 'membership');
+          if (pdfResult.success) {
+            logToFile(`PDF receipt email sent successfully to: ${userData.email}`);
+          } else {
+            logToFile(`Failed to send PDF receipt email: ${pdfResult.message}`);
+          }
+        } catch (pdfError) {
+          logToFile(`PDF receipt generation error: ${pdfError.message}`);
         }
       } catch (emailError) {
         logToFile(`Failed to send membership confirmation email: ${emailError.message}`);

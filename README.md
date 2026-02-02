@@ -1,6 +1,6 @@
-# BOA Connect - Bihar Ophthalmic Association
+# BOA Connect - Ophthalmic Association Of Bihar
 
-Complete web application for managing seminars, memberships, and user registrations for Bihar Ophthalmic Association.
+Complete web application for managing seminars, memberships, and user registrations for Ophthalmic Association Of Bihar.
 
 ## 🌟 Features
 
@@ -218,7 +218,7 @@ Check `backend/USER_LOGIN_CREDENTIALS.txt` for test credentials
 
 ## 📝 License
 
-Private - Bihar Ophthalmic Association
+Private - Ophthalmic Association Of Bihar
 
 ## 👥 Support
 
@@ -237,6 +237,6 @@ For issues and questions:
 
 ---
 
-**Developed for Bihar Ophthalmic Association**
+**Developed for Ophthalmic Association Of Bihar**
 
 Last Updated: January 2025

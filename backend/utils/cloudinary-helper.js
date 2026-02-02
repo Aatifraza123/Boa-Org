@@ -25,7 +25,6 @@ const getPublicIdFromUrl = (imageUrl) => {
     
     return publicId;
   } catch (error) {
-    console.error('Error extracting public_id:', error);
     return null;
   }
 };
@@ -38,19 +37,13 @@ const deleteImageFromCloudinary = async (imageUrl) => {
     const publicId = getPublicIdFromUrl(imageUrl);
     
     if (!publicId) {
-      console.log('No valid public_id found, skipping deletion');
       return { success: false, message: 'Invalid image URL' };
     }
 
-    console.log('Deleting image from Cloudinary:', publicId);
-    
     const result = await cloudinary.uploader.destroy(publicId);
-    
-    console.log('Cloudinary deletion result:', result);
     
     return { success: true, result };
   } catch (error) {
-    console.error('Error deleting from Cloudinary:', error);
     return { success: false, error: error.message };
   }
 };

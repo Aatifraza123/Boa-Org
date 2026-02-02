@@ -117,20 +117,25 @@ export function Navbar() {
         }
       })
         .then(response => {
-          console.log('Profile fetch response status:', response.status);
           if (response.ok) {
             return response.json();
           }
           // If token is invalid, clear localStorage
           if (response.status === 401) {
-            console.log('Token expired or invalid');
+            console.log('Token expired or invalid - clearing auth data');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             setUser(null);
+            return null;
           }
           if (response.status === 404) {
-            console.log('Profile endpoint not found - using cached data');
-            return null; // Just use cached data
+            // Profile endpoint not found - user account doesn't exist
+            // Clear invalid auth data
+            console.log('User account not found - clearing invalid auth data');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+            return null;
           }
           throw new Error(`Failed to fetch user profile: ${response.status}`);
         })
@@ -142,8 +147,11 @@ export function Navbar() {
           }
         })
         .catch(error => {
-          // Silently fail - user data already loaded from localStorage
-          console.log('Background profile refresh failed (non-critical):', error.message);
+          // Clear invalid auth data on any error
+          console.log('Profile fetch failed - clearing auth data');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
         });
     }
   };

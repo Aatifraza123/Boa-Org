@@ -17,7 +17,8 @@ import {
   CreditCard,
   GraduationCap,
   Briefcase,
-  Lock
+  Lock,
+  LogIn
 } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/utils';
 
@@ -25,19 +26,43 @@ export default function Membership() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     loadCategories();
+    checkAuthentication();
     
     // Also reload when page becomes visible
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         loadCategories();
+        checkAuthentication();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
+
+  const checkAuthentication = () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    setIsAuthenticated(!!(token && user));
+  };
+
+  const handleMembershipFormClick = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to apply for membership');
+      navigate('/login', { state: { from: '/membership-form' } });
+      return;
+    }
+    navigate('/membership-form');
+    
+    // Trigger form to open automatically
+    setTimeout(() => {
+      const event = new CustomEvent('openMembershipForm');
+      window.dispatchEvent(event);
+    }, 100);
+  };
 
   const loadCategories = async () => {
     try {
@@ -88,13 +113,23 @@ export default function Membership() {
       link.download = `BOA_Membership_Application_Form_${timestamp}.pdf`;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
       
-      toast.success('Offline form downloaded successfully!');
+      // Clean up with a small delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      // Use setTimeout to avoid extension conflicts with toast
+      setTimeout(() => {
+        toast.success('Offline form downloaded successfully!');
+      }, 200);
+      
     } catch (error) {
-      console.error('Failed to download form:', error);
-      toast.error('Failed to download form. Please try again.');
+      // Use setTimeout to avoid extension conflicts with toast
+      setTimeout(() => {
+        toast.error('Failed to download form. Please try again.');
+      }, 100);
     }
   };
 
@@ -182,7 +217,7 @@ export default function Membership() {
   const faqs = [
     {
       question: 'Who can become a member of BOA?',
-      answer: 'Any qualified ophthalmologist registered with Medical Council of India or ophthalmic residents can apply for BOA membership.'
+      answer: 'Any qualified DOA registered with Medical Council of India or ophthalmic residents can apply for BOA membership.'
     },
     {
       question: 'How long does the approval process take?',
@@ -217,16 +252,10 @@ export default function Membership() {
             <Button
               size="lg"
               className="gradient-primary text-primary-foreground"
-              onClick={() => {
-                navigate('/membership-form');
-                // Trigger form to open automatically
-                setTimeout(() => {
-                  const event = new CustomEvent('openMembershipForm');
-                  window.dispatchEvent(event);
-                }, 100);
-              }}
+              onClick={handleMembershipFormClick}
             >
-              Apply Online
+              {!isAuthenticated && <LogIn className="mr-2 h-5 w-5" />}
+              {isAuthenticated ? 'Apply Online' : 'Login to Apply'}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             
@@ -365,12 +394,15 @@ export default function Membership() {
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/membership-form">
-              <Button size="lg" className="gradient-primary text-primary-foreground">
-                Start Your Application
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="gradient-primary text-primary-foreground"
+              onClick={handleMembershipFormClick}
+            >
+              {!isAuthenticated && <LogIn className="mr-2 h-5 w-5" />}
+              {isAuthenticated ? 'Start Your Application' : 'Login to Apply'}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </section>

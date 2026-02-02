@@ -48,14 +48,7 @@ export default function AdminPanel() {
     const adminToken = localStorage.getItem('adminToken');
     const adminStr = localStorage.getItem('admin');
     
-    console.log('🔍 Admin Auth Check:', {
-      hasToken: !!adminToken,
-      tokenLength: adminToken?.length,
-      hasAdminData: !!adminStr
-    });
-    
     if (!adminToken) {
-      console.error('❌ No admin token found - redirecting to login');
       toast({
         title: 'Access Denied',
         description: 'Please login as admin to access this panel',
@@ -68,7 +61,6 @@ export default function AdminPanel() {
     try {
       const admin = JSON.parse(adminStr || '{}');
       if (!admin.id) {
-        console.error('❌ Invalid admin data - redirecting to login');
         localStorage.removeItem('adminToken');
         localStorage.removeItem('admin');
         navigate('/admin-login');

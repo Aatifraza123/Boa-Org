@@ -102,15 +102,15 @@ export function NewsGallerySection() {
       {/* News Section */}
       {news.length > 0 && (
         <section className="gov-section">
-          <div className="container">
-            <div className="text-center mb-8">
+          <div className="container px-2 sm:px-4 md:px-6">
+            <div className="text-center mb-6 sm:mb-8">
               <h2 className="gov-section-title p-2 bg-[#09638E] text-white flex items-center justify-center gap-2">
                 
                 Media Coverage
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
               {news.slice(0, 3).map((item) => (
                 <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
                   <div className="aspect-video overflow-hidden">
@@ -180,69 +180,30 @@ export function NewsGallerySection() {
       {/* Gallery Section */}
       {galleryImages.length > 0 && (
         <section className="gov-section bg-gradient-to-br from-[#EBF4F6] via-white to-[#7AB2B2]/20">
-          <div className="container">
-            <div className="text-center mb-8">
+          <div className="container px-2 sm:px-4 md:px-6">
+            <div className="text-center mb-4 sm:mb-8">
               <h2 className="gov-section-title p-2 bg-[#09638E] text-white flex items-center justify-center gap-2">
                 Gallery Highlights
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {galleryImages.slice(0, 3).map((image) => (
-                <div key={image.id} className="bg-white border border-gray-200 hover:shadow-lg transition-shadow duration-300 group cursor-pointer overflow-hidden" style={{ borderRadius: '0.5rem' }}>
-                  {/* Image container with no spacing - using absolute positioning */}
-                  <div className="w-full aspect-square relative overflow-hidden" style={{ margin: 0, padding: 0, display: 'block', lineHeight: 0, fontSize: 0 }}>
-                    <img
-                      src={image.image_url}
-                      alt={image.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={{ 
-                        top: 0,
-                        left: 0,
-                        margin: 0, 
-                        padding: 0,
-                        display: 'block',
-                        verticalAlign: 'top',
-                        borderTopLeftRadius: '0.5rem',
-                        borderTopRightRadius: '0.5rem',
-                        borderBottomLeftRadius: '0px',
-                        borderBottomRightRadius: '0px'
-                      }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/api/placeholder/400/400';
-                      }}
-                    />
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 mt-12 gap-3 md:gap-4">
+  {galleryImages.slice(0, 3).map((image, index) => (
+    <div key={index} className="w-full overflow-hidden rounded-lg">
+      <img
+        src={image.image_url}
+        alt={`Gallery ${index + 1}`}
+        className="w-full h-auto object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = '/api/placeholder/400/400';
+        }}
+      />
+    </div>
+  ))}
+</div>
 
-                  {/* Content section */}
-                  <div className="p-4">
-                    <h4 className="font-semibold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                      {image.title}
-                    </h4>
-                    
-                    {image.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                        {truncateContent(image.description, 80)}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(image.created_at)}
-                      </div>
-                      
-                      <Link to="/gallery" className="text-xs text-primary hover:text-primary/80 font-medium">
-                        View Gallery →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center">
+            <div className="text-center mt-10">
               <Link to="/gallery">
                 <Button className="bg-[#09637E] hover:bg-[#088395] text-white">
                   See More Gallery

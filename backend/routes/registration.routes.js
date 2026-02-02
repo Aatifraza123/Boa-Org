@@ -13,11 +13,6 @@ router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Registration routes working' });
 });
 
-// Simple test POST endpoint
-router.post('/test-post', auth, (req, res) => {
-  res.json({ success: true, message: 'POST test working', user_id: req.user?.id });
-});
-
 // Create registration
 router.post('/', auth, registrationController.createRegistration);
 

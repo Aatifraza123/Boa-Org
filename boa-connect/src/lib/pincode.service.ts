@@ -82,7 +82,7 @@ class PincodeService {
   }
 
   private getFallbackData(pincode: string): PincodeData | null {
-    // Common Bihar pincodes (since this is BOA - Bihar Ophthalmic Association)
+    // Common Bihar pincodes (since this is BOA - Ophthalmic Association Of Bihar)
     const biharPincodes: { [key: string]: PincodeData } = {
       '800001': { pincode: '800001', city: 'Patna', state: 'Bihar', district: 'Patna' },
       '800002': { pincode: '800002', city: 'Patna', state: 'Bihar', district: 'Patna' },

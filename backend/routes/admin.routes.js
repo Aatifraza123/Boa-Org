@@ -107,6 +107,11 @@ router.put('/members/:id', adminAuth, adminController.updateMembershipDetails);
 router.get('/check-membership-availability', adminAuth, adminController.checkMembershipAvailability);
 router.get('/export-members', adminAuth, adminController.exportMembers);
 
+// Membership-specific operations
+router.delete('/members/:id/membership', adminAuth, adminController.deleteMembership);
+router.put('/members/:id/toggle-status', adminAuth, adminController.toggleMembershipStatus);
+router.put('/members/:id/status', adminAuth, adminController.updateMembershipStatus);
+
 // Resources Management
 router.get('/resources', adminAuth, adminController.getResources);
 router.post('/resources', adminAuth, adminController.createResource);

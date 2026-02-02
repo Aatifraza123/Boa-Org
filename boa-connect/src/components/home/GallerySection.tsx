@@ -44,52 +44,31 @@ export function GallerySection() {
   return (
     <section className="gov-section">
       <div className="container">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="gov-section-title p-2 bg-[#0B3C5D] text-white">Gallery</h2>
           <p className="gov-section-subtitle">
             Moments from our seminars, conferences, and community outreach programs
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
           {galleryItems.map((item, index) => (
-            <div key={index} className="gov-card overflow-hidden">
-              <div className="p-0">
-                <div className="relative aspect-video overflow-hidden">
-                  {item.type === 'image' ? (
-                    <img 
-                      src={item.url} 
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="relative w-full h-full flex items-center justify-center" style={{background: '#F9FAFB'}}>
-                      <Video className="h-12 w-12" style={{color: '#9CA3AF'}} />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                          <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent ml-1" style={{borderLeft: '12px solid #0B3C5D'}}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    {item.type === 'image' ? (
-                      <div className="bg-white rounded-full p-2">
-                        <Image className="h-4 w-4" style={{color: '#0B3C5D'}} />
-                      </div>
-                    ) : (
-                      <div className="bg-white rounded-full p-2">
-                        <Video className="h-4 w-4" style={{color: '#0B3C5D'}} />
-                      </div>
-                    )}
+            item.type === 'image' ? (
+              <img 
+                key={index}
+                src={item.url} 
+                alt=""
+                className="w-full aspect-square object-cover hover:scale-105 transition-transform duration-300 rounded border-4 border-gray-300 shadow-sm"
+              />
+            ) : (
+              <div key={index} className="relative aspect-square overflow-hidden rounded border-4 border-gray-300 shadow-sm" style={{background: '#F9FAFB'}}>
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">
+                    <div className="w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent ml-1" style={{borderLeft: '6px solid #0B3C5D'}}></div>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-medium mb-1" style={{color: '#1F2933'}}>{item.title}</h3>
-                  <p className="text-sm" style={{color: '#616E7C'}}>{item.description}</p>
-                </div>
               </div>
-            </div>
+            )
           ))}
         </div>
 

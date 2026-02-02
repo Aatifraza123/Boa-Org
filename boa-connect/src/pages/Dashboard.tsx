@@ -41,6 +41,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadUserData();
+    
+    // Refresh when page becomes visible (user switches back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadUserData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const loadUserData = async () => {
@@ -367,29 +377,38 @@ export default function Dashboard() {
                     <span className="text-muted-foreground">Mobile</span>
                     <span className="text-foreground">{user.mobile}</span>
                   </div>
-                  {membershipData?.membership_type && (
+                  {membershipData?.membership_type && membershipData?.status === 'active' ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Membership Type</span>
+                        <Badge variant="outline" className="capitalize">
+                          {membershipData.membership_type}
+                        </Badge>
+                      </div>
+                      {membershipData?.payment_status && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Payment Status</span>
+                          <Badge className={`${membershipData.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                            membershipData.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                              'bg-gray-100 text-gray-800 border-gray-200'
+                            }`}>
+                            {membershipData.payment_status}
+                          </Badge>
+                        </div>
+                      )}
+                      {membershipData?.amount && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Amount Paid</span>
+                          <span className="text-foreground font-medium">₹{parseFloat(membershipData.amount).toLocaleString()}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Membership Type</span>
-                      <Badge variant="outline" className="capitalize">
-                        {membershipData.membership_type}
+                      <span className="text-muted-foreground">Membership Status</span>
+                      <Badge variant="outline" className="text-orange-600 border-orange-300">
+                        No Active Membership
                       </Badge>
-                    </div>
-                  )}
-                  {membershipData?.payment_status && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Payment Status</span>
-                      <Badge className={`${membershipData.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
-                        membershipData.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                          'bg-gray-100 text-gray-800 border-gray-200'
-                        }`}>
-                        {membershipData.payment_status}
-                      </Badge>
-                    </div>
-                  )}
-                  {membershipData?.amount && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Amount Paid</span>
-                      <span className="text-foreground font-medium">₹{parseFloat(membershipData.amount).toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
@@ -409,7 +428,7 @@ export default function Dashboard() {
                     onClick={() => navigate('/membership-details')}
                   >
                     <Award className="mr-2 h-4 w-4" />
-                    View Membership Details
+                    Membership
                   </Button>
                   <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>

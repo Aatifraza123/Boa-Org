@@ -42,7 +42,7 @@ export const exportToCSV = (data: any[], filename: string, headers?: string[]) =
 export const formatPaymentForExport = (payments: any[]) => {
   return payments.map(payment => ({
     'Payment ID': payment.id,
-    'User Name': payment.user_name,
+    'User Name': payment.user_name || 'Unknown User',
     'Email': payment.user_email,
     'Mobile': payment.user_mobile,
     'Payment Type': payment.payment_type,

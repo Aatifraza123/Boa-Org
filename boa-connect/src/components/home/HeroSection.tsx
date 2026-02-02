@@ -60,14 +60,22 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden -mt-4 sm:-mt-6 md:-mt-8" style={{ background: '#F9FAFB' }}>
-      {/* Simple background - no fancy patterns */}
+      {/* Background Eye Image for Mobile */}
+      <div className="absolute inset-0 lg:hidden opacity-50 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F9FAFB]" />
+        <img
+          src="https://res.cloudinary.com/derzj7d4u/image/upload/v1770063826/seminars/l3mbgixhgdaoek5fode2.png"
+          alt=""
+          className="w-full h-full object-contain object-center"
+        />
+      </div>
 
       <div className="container relative pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-6">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Content */}
           <div className="space-y-4 lg:space-y-6 text-center lg:text-left">
             {activeSeminar && activeSeminar.online_registration_enabled === 1 && (
-              <div className="gov-badge-accent inline-flex">
+              <div className="gov-badge-accent inline-flex mt-2">
                 <span className="w-2 h-2 rounded-full mr-2 inline-block bg-green-500" />
                 <span className="text-black text-sm">{activeSeminar.name} - Registration Open</span>
               </div>
@@ -77,8 +85,8 @@ export function HeroSection() {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight" style={{ color: '#1F2933' }}>
                 Ophthalmic Association Of Bihar
               </h1>
-              <p className="text-base sm:text-lg md:text-xl max-w-lg mx-auto lg:mx-0" style={{ color: '#616E7C' }}>
-                Advancing eye care excellence through education, research, and collaboration since 2021.
+              <p className="text-base sm:text-lg md:text-xl max-w-lg mx-auto lg:mx-0" style={{ color: '#474849ff' }}>
+                <b>Advancing eye care excellence through education, research, and collaboration since 2021.</b>
               </p>
             </div>
 

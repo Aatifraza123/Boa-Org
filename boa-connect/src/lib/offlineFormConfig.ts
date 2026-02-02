@@ -108,7 +108,7 @@ export const defaultOfflineFormConfig: OfflineFormConfig = {
     { id: '4', name: 'Spouse', fees: { early: 2500, regular: 3000, late: 3200, spot: 3500 }, enabled: true },
     { id: '5', name: 'Trade', fees: { early: 2500, regular: 3000, late: 4000, spot: 5000 }, enabled: true },
   ],
-  consentText: 'I hereby declare that the information provided above is true and correct. I agree to abide by the rules and regulations of Bihar Ophthalmic Association.'
+  consentText: 'I hereby declare that the information provided above is true and correct. I agree to abide by the rules and regulations of Ophthalmic Association Of Bihar.'
 };
 
 // Helper function to get form config (in real app, this would fetch from backend)

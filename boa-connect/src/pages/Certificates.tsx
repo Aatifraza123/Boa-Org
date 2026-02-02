@@ -67,8 +67,12 @@ export default function Certificates() {
         link.download = certificate.certificate_name.replace(/[^a-z0-9]/gi, '_') + '.pdf';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
+        
+        // Clean up with a small delay
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(downloadUrl);
+        }, 100);
       } else {
         // Convert image to PDF
         const img = new Image();
@@ -84,35 +88,43 @@ export default function Certificates() {
           pdf.addImage(img, 'JPEG', 0, 0, img.width, img.height);
           pdf.save(certificate.certificate_name.replace(/[^a-z0-9]/gi, '_') + '.pdf');
           
-          toast({
-            title: 'Success',
-            description: 'Certificate downloaded as PDF',
-          });
+          setTimeout(() => {
+            toast({
+              title: 'Success',
+              description: 'Certificate downloaded as PDF',
+            });
+          }, 200);
         };
         
         img.onerror = () => {
-          toast({
-            title: 'Error',
-            description: 'Failed to load certificate image',
-            variant: 'destructive',
-          });
+          setTimeout(() => {
+            toast({
+              title: 'Error',
+              description: 'Failed to load certificate image',
+              variant: 'destructive',
+            });
+          }, 100);
         };
         
         img.src = url;
         return;
       }
       
-      toast({
-        title: 'Success',
-        description: 'Certificate downloaded successfully',
-      });
+      setTimeout(() => {
+        toast({
+          title: 'Success',
+          description: 'Certificate downloaded successfully',
+        });
+      }, 200);
+      
     } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to download certificate',
-        variant: 'destructive',
-      });
+      setTimeout(() => {
+        toast({
+          title: 'Error',
+          description: 'Failed to download certificate',
+          variant: 'destructive',
+        });
+      }, 100);
     }
   };
 

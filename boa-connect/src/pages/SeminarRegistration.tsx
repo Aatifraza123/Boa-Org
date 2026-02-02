@@ -71,7 +71,7 @@ export default function SeminarRegistration() {
   useEffect(() => {
     // Test backend connection
     razorpayService.testConnection();
-
+console.log("commete member",committeeMembers);
     loadSeminarData();
   }, [id]);
 
@@ -90,12 +90,10 @@ export default function SeminarRegistration() {
     if (delegateType) {
       const categoryName = delegateType;
 
-
       // Find matching fee category with flexible matching
       const matchingFeeCategory = feeCategories.find(cat => {
         const catNameNormalized = cat.name.toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-');
         const searchNameNormalized = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-');
-
 
         // Try exact match first
         if (catNameNormalized === searchNameNormalized) {
@@ -106,7 +104,6 @@ export default function SeminarRegistration() {
         if (searchNameNormalized === 'life-member' || searchNameNormalized.includes('life')) {
           // Must match exactly "life-member" or "life member" 
           if (catNameNormalized.includes('life') && catNameNormalized.includes('member')) {
-            
             return true;
           }
           return false;
@@ -115,7 +112,6 @@ export default function SeminarRegistration() {
         // Special case: non-boa-member should match "Non-BOA Member"
         if (searchNameNormalized.includes('non-boa') || searchNameNormalized.includes('non-member')) {
           if (catNameNormalized.includes('non') && catNameNormalized.includes('boa')) {
-            
             return true;
           }
           return false;
@@ -124,7 +120,6 @@ export default function SeminarRegistration() {
         // Try partial match (contains) - but exclude specific cases handled above
         if (!searchNameNormalized.includes('life') && !searchNameNormalized.includes('boa') && 
             (catNameNormalized.includes(searchNameNormalized) || searchNameNormalized.includes(catNameNormalized))) {
-          
           return true;
         }
 
@@ -132,7 +127,6 @@ export default function SeminarRegistration() {
       });
 
       if (matchingFeeCategory) {
-       
         setSelectedCategory(matchingFeeCategory.id.toString());
 
         // Auto-select current slab based on date
@@ -140,9 +134,7 @@ export default function SeminarRegistration() {
         today.setHours(0, 0, 0, 0); // Start of today
         let currentSlab = null;
 
-
         for (const slab of feeSlabs) {
-
           // Use database dates if available, otherwise parse text
           let endDate = null;
 
@@ -150,7 +142,6 @@ export default function SeminarRegistration() {
             // Use database end_date field
             endDate = new Date(slab.endDate);
             endDate.setHours(23, 59, 59, 999); // End of day
-           
           } else {
             // Fallback: Parse date range text
             const dateRange = slab.dateRange;
@@ -168,33 +159,23 @@ export default function SeminarRegistration() {
                 const monthNum = months[month.toLowerCase().substring(0, 3)];
                 endDate = new Date(parseInt(year), monthNum, parseInt(day));
                 endDate.setHours(23, 59, 59, 999);
-               
               }
             }
           }
 
-          if (endDate) {
-
-            if (today <= endDate) {
-              currentSlab = slab;
-              break;
-            } else {
-              console.log(`  ✗ Date passed, skipping`);
-            }
-          } else {
-            console.log(`  ⚠️ Could not parse date`);
+          if (endDate && today <= endDate) {
+            currentSlab = slab;
+            break;
           }
         }
 
         // If no slab found (all dates passed), use last slab (Spot registration)
         if (!currentSlab && feeSlabs.length > 0) {
           currentSlab = feeSlabs[feeSlabs.length - 1];
-          
         }
 
         if (currentSlab) {
           setSelectedSlab(currentSlab.id.toString());
-          
         }
       } else {
         // If no exact match, clear selections
@@ -216,6 +197,27 @@ export default function SeminarRegistration() {
       }
 
       setSeminar(response.seminar);
+
+      // Check if user has already registered for this seminar
+      try {
+        const registrationsResponse = await registrationAPI.getMyRegistrations();
+        const existingRegistration = registrationsResponse.registrations.find(
+          (reg: any) => reg.seminar_id === parseInt(id)
+        );
+
+        if (existingRegistration) {
+          toast({
+            title: 'Already Registered',
+            description: `You have already registered for this seminar (Registration No: ${existingRegistration.registration_no})`,
+            variant: 'destructive',
+          });
+          navigate('/dashboard');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking existing registrations:', error);
+        // Continue loading if registration check fails
+      }
 
       // Transform categories for compatibility
       const categories = (response.seminar.categories || []).map((cat: any) => ({
@@ -265,7 +267,13 @@ export default function SeminarRegistration() {
 
   const loadCommitteeMembers = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/committee-members`);
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
+      const url = isDevelopment 
+        ? '/api/committee-members'
+        : `${API_BASE_URL}/api/committee-members`;
+        
+      const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
         // Remove duplicates based on member name
@@ -290,9 +298,14 @@ export default function SeminarRegistration() {
         return;
       }
 
-      // Add timestamp to prevent caching
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
       const timestamp = new Date().getTime();
-      const response = await fetch(`${API_BASE_URL}/api/generate-seminar-pdf/${seminar.id}?t=${timestamp}`, {
+      const url = isDevelopment 
+        ? `/api/generate-seminar-pdf/${seminar.id}?t=${timestamp}`
+        : `${API_BASE_URL}/api/generate-seminar-pdf/${seminar.id}?t=${timestamp}`;
+
+      const response = await fetch(url, {
         cache: 'no-cache',
         headers: {
           'Content-Type': 'application/json'
@@ -312,39 +325,49 @@ export default function SeminarRegistration() {
       const blob = await response.blob();
 
       // Create download link with timestamp in filename
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       
       if (isHtml) {
         // If HTML fallback, download as HTML file
         link.download = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form_${timestamp}.html`;
-        toast({
-          title: "PDF Generation Issue",
-          description: "Downloaded as HTML file. Please print from browser.",
-          variant: "default"
-        });
+        setTimeout(() => {
+          toast({
+            title: "PDF Generation Issue",
+            description: "Downloaded as HTML file. Please print from browser.",
+            variant: "default"
+          });
+        }, 200);
       } else {
         // Normal PDF download
         link.download = `${seminar.name.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form_${timestamp}.pdf`;
-        toast({
-          title: "Success",
-          description: "Registration form downloaded successfully!",
-          variant: "default"
-        });
+        setTimeout(() => {
+          toast({
+            title: "Success",
+            description: "Registration form downloaded successfully!",
+            variant: "default"
+          });
+        }, 200);
       }
       
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Clean up with a small delay
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 100);
+      
     } catch (error) {
-      console.error('Failed to download form:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to download form. Please try again.',
-        variant: 'destructive',
-      });
+      setTimeout(() => {
+        toast({
+          title: 'Error',
+          description: 'Failed to download form. Please try again.',
+          variant: 'destructive',
+        });
+      }, 100);
     }
   };
 
@@ -403,7 +426,6 @@ export default function SeminarRegistration() {
     
     // If we have delegate categories from API, use them
     if (delegateCategories.length > 0) {
-      console.log('Using delegate categories from API:', delegateCategories);
       categories = delegateCategories.map(cat => ({
         value: cat.value,
         label: cat.label.toUpperCase(),
@@ -412,7 +434,6 @@ export default function SeminarRegistration() {
     }
     // Fallback: If no delegate categories, generate from fee categories
     else if (feeCategories.length > 0) {
-      console.log('Generating delegate categories from fee categories');
       categories = feeCategories.map(cat => ({
         value: cat.name.toLowerCase().replace(/\s+/g, '-'),
         label: cat.name.toUpperCase(),
@@ -461,7 +482,6 @@ export default function SeminarRegistration() {
   const rawAmount = selectedFee && selectedSlab ? selectedFee.fees[selectedSlab] : 0;
   const selectedAmount = typeof rawAmount === 'number' && !isNaN(rawAmount) ? rawAmount : 0;
 
-
   const selectedSlabLabel = feeSlabs.find(s => s.id.toString() === selectedSlab)?.label || '';
   const additionalAmount = additionalPersons.reduce((sum, p) => {
     const amount = typeof p.amount === 'number' && !isNaN(p.amount) ? p.amount : 0;
@@ -492,7 +512,13 @@ export default function SeminarRegistration() {
     setIsVerifying(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/verify-membership`, {
+      // In development, use relative URL to go through Vite proxy
+      const isDevelopment = import.meta.env.DEV;
+      const url = isDevelopment 
+        ? '/api/users/verify-membership'
+        : `${API_BASE_URL}/api/users/verify-membership`;
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1758,24 +1784,24 @@ export default function SeminarRegistration() {
             <div className="lg:col-span-1">
               <div className="sticky top-6">
                 {/* Offline Form Download */}
-                <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+                <div className="bg-yellow rounded-lg shadow-lg border border-gray-200">
                   <div className="px-6 py-4" style={{ background: '#0B3C5D' }}>
                     <h3 className="text-lg font-semibold text-white">Offline Registration</h3>
                   </div>
-                  <div className="p-6">
-                    <p className="text-sm text-gray-600 mb-4">
+                  <div className="p-6 bg-[#aa962d]">
+                    <p className="text-sm text-black mb-4">
                       Prefer to register offline? Download the printable registration form.
                     </p>
                     <Button
                       onClick={generateOfflineRegistrationForm}
                       variant="outline"
-                      className="w-full border-2"
-                      style={{ borderColor: '#0B3C5D', color: '#0B3C5D' }}
+                      style={{borderColor:'#0B3C5D'}}
+                      className="w-full hover:bg-black hover:text-white border-2"
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Download Offline Form (PDF)
+                      Download Form
                     </Button>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-black mt-2">
                       Fill the form manually and submit at the registration desk.
                     </p>
                   </div>
@@ -1797,12 +1823,12 @@ export default function SeminarRegistration() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                   {committeeMembers.map((member) => (
-                    <div key={member.id} className="text-center">
-                      <div className="relative mb-4">
+                    <div style={{border:"0.5px solid #c7c7c4ff"}} key={member.id} className="rounded-xl p-5 max-w-44 text-center">
+                      <div className="relative w-32 h-32 mb-4">
                         <img
                           src={member.image_url || '/api/placeholder/120/120'}
                           alt={member.name}
-                          className="w-24 h-24 rounded-full mx-auto object-cover border-4"
+                          className="h-full w-full rounded-full mx-auto object-cover border-4"
                           style={{ borderColor: '#C9A227' }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -1815,6 +1841,10 @@ export default function SeminarRegistration() {
                       </h3>
                       <p className="text-xs" style={{ color: '#616E7C' }}>
                         {member.designation}
+                      </p>
+                      
+                      <p className="text-xs text-blue-600 font-semibold">
+                        {member.profession}
                       </p>
                     </div>
                   ))}

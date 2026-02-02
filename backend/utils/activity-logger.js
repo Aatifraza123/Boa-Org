@@ -47,9 +47,7 @@ async function createActivityNotification(type, data) {
       [title, message, seminar_id]
     );
 
-    console.log(`Activity notification created: ${title}`);
   } catch (error) {
-    console.error('Failed to create activity notification:', error);
     // Don't throw error - activity logging should not break main flow
   }
 }

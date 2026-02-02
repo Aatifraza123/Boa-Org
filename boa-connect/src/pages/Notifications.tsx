@@ -83,20 +83,30 @@ export default function Notifications() {
       if (isHtml) {
         // If HTML fallback, download as HTML file
         link.download = `${seminarName.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.html`;
-        toast.info('PDF generation issue. Downloaded as HTML file. Please print from browser.');
+        setTimeout(() => {
+          toast.info('PDF generation issue. Downloaded as HTML file. Please print from browser.');
+        }, 200);
       } else {
         // Normal PDF download
         link.download = `${seminarName.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`;
-        toast.success('Form downloaded successfully!');
+        setTimeout(() => {
+          toast.success('Form downloaded successfully!');
+        }, 200);
       }
       
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Clean up with a small delay
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
     } catch (error) {
-      console.error('Failed to download form:', error);
-      toast.error(`Failed to download form: ${error.message}. Please try again.`);
+      setTimeout(() => {
+        toast.error(`Failed to download form. Please try again.`);
+      }, 100);
     }
   };
 

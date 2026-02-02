@@ -262,7 +262,7 @@ export const generateOfflineRegistrationPdf = (): void => {
   doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
-  doc.text('Bihar Ophthalmic Association | www.boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
+  doc.text('Ophthalmic Association Of Bihar | www.boabihar.org', pageWidth / 2, doc.internal.pageSize.getHeight() - 7, { align: 'center' });
 
   // Save the PDF
   doc.save(`${config.seminarName.replace(/[^a-zA-Z0-9]/g, '_')}_Registration_Form.pdf`);

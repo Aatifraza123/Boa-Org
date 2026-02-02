@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Image as ImageIcon, X, Calendar } from 'lucide-react';
+import { Image as ImageIcon, X } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import {
   Dialog,
@@ -36,14 +36,6 @@ export default function Gallery() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
   };
 
   // Optimized Bento Grid Layout Classes - No empty spaces
@@ -92,8 +84,6 @@ export default function Gallery() {
               <p className="hero-subtitle text-lg md:text-xl text-gray-600 leading-relaxed mb-6 max-w-2xl mx-auto">
                 Explore memorable moments from our seminars, conferences, and community programs.
               </p>
-              
-           
             </div>
           </div>
           
@@ -104,7 +94,7 @@ export default function Gallery() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-12 pb-12">
 
-          {/* Optimized Gallery Grid */}
+          {/* Gallery Grid */}
           {galleryImages.length === 0 ? (
             <div className="text-center py-12">
               <ImageIcon className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
@@ -113,44 +103,30 @@ export default function Gallery() {
             </div>
           ) : (
             <>
-              {/* Mobile View - Single Column */}
+              {/* Mobile View - 2 Column Grid */}
               <div className="block sm:hidden">
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-2">
                   {galleryImages.map((image) => (
                     <div
                       key={image.id}
-                      className="aspect-square group cursor-pointer overflow-hidden rounded-xl bg-gray-100 hover:shadow-xl transition-all duration-300 relative"
+                      className="aspect-square group cursor-pointer overflow-hidden rounded-lg bg-gray-100 hover:shadow-lg transition-all duration-300 relative"
                       style={{ backgroundColor: '#f8f9fa' }}
                       onClick={() => setSelectedImage(image)}
                     >
                       <img
                         src={image.image_url}
-                        alt={image.title}
+                        alt=""
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = '/api/placeholder/400/400';
                         }}
                       />
-                      
-                      {/* Overlay with title */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">
-                            {image.title}
-                          </h3>
-                          {image.description && (
-                            <p className="text-white/80 text-xs line-clamp-1">
-                              {image.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
 
-                      {/* Hover effect overlay */}
+                      {/* Simple hover effect overlay */}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                          <ImageIcon className="h-6 w-6 text-white" />
+                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                          <ImageIcon className="h-4 w-4 text-white" />
                         </div>
                       </div>
                     </div>
@@ -162,39 +138,25 @@ export default function Gallery() {
               <div className="hidden sm:block">
                 {galleryImages.length <= 6 ? (
                   // Simple grid for fewer images
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                     {galleryImages.map((image) => (
                       <div
                         key={image.id}
-                        className="aspect-square group cursor-pointer overflow-hidden rounded-xl bg-gray-100 hover:shadow-xl transition-all duration-300 relative"
+                        className="aspect-square group cursor-pointer overflow-hidden rounded-lg bg-gray-100 hover:shadow-lg transition-all duration-300 relative"
                         style={{ backgroundColor: '#f8f9fa' }}
                         onClick={() => setSelectedImage(image)}
                       >
                         <img
                           src={image.image_url}
-                          alt={image.title}
+                          alt=""
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = '/api/placeholder/400/400';
                           }}
                         />
-                        
-                        {/* Overlay with title */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="text-white font-semibold text-sm md:text-base line-clamp-2 mb-1">
-                              {image.title}
-                            </h3>
-                            {image.description && (
-                              <p className="text-white/80 text-xs line-clamp-1">
-                                {image.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
 
-                        {/* Hover effect overlay */}
+                        {/* Simple hover effect overlay */}
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
                             <ImageIcon className="h-6 w-6 text-white" />
@@ -205,39 +167,25 @@ export default function Gallery() {
                   </div>
                 ) : (
                   // Bento grid for more images
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-[200px] gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-[150px] sm:auto-rows-[200px] gap-2 sm:gap-3">
                     {galleryImages.map((image, index) => (
                       <div
                         key={image.id}
-                        className={`${getBentoClass(index)} group cursor-pointer overflow-hidden rounded-xl bg-gray-100 hover:shadow-xl transition-all duration-300 relative`}
+                        className={`${getBentoClass(index)} group cursor-pointer overflow-hidden rounded-lg bg-gray-100 hover:shadow-lg transition-all duration-300 relative`}
                         style={{ backgroundColor: '#f8f9fa' }}
                         onClick={() => setSelectedImage(image)}
                       >
                         <img
                           src={image.image_url}
-                          alt={image.title}
+                          alt=""
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = '/api/placeholder/400/400';
                           }}
                         />
-                        
-                        {/* Overlay with title */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="text-white font-semibold text-sm md:text-base line-clamp-2 mb-1">
-                              {image.title}
-                            </h3>
-                            {image.description && (
-                              <p className="text-white/80 text-xs line-clamp-1">
-                                {image.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
 
-                        {/* Hover effect overlay */}
+                        {/* Simple hover effect overlay */}
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
                             <ImageIcon className="h-6 w-6 text-white" />
@@ -251,7 +199,7 @@ export default function Gallery() {
             </>
           )}
 
-          {/* Image Modal */}
+          {/* Image Modal - Only Image, No Title */}
           <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
             <DialogContent className="max-w-5xl p-0 bg-black/95">
               {selectedImage && (
@@ -263,42 +211,22 @@ export default function Gallery() {
                     <X className="h-5 w-5" />
                   </button>
                   
-                  <div className="flex flex-col lg:flex-row">
-                    {/* Image */}
-                    <div className="lg:w-3/4 bg-gray-50 flex items-center justify-center">
-                      <img
-                        src={selectedImage.image_url}
-                        alt={selectedImage.title}
-                        className="w-full max-h-[80vh] object-contain"
-                        style={{ 
-                          objectFit: 'contain', 
-                          objectPosition: 'center',
-                          backgroundColor: '#f8f9fa'
-                        }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/api/placeholder/800/600';
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Details */}
-                    <div className="lg:w-1/4 p-6 bg-white">
-                      <h2 className="text-xl font-bold mb-3 text-gray-900">
-                        {selectedImage.title}
-                      </h2>
-                      
-                      {selectedImage.description && (
-                        <p className="text-gray-600 mb-4 leading-relaxed">
-                          {selectedImage.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(selectedImage.created_at)}
-                      </div>
-                    </div>
+                  {/* Only Image - No Details */}
+                  <div className="bg-gray-50 flex items-center justify-center">
+                    <img
+                      src={selectedImage.image_url}
+                      alt=""
+                      className="w-full max-h-[90vh] object-contain"
+                      style={{ 
+                        objectFit: 'contain', 
+                        objectPosition: 'center',
+                        backgroundColor: '#f8f9fa'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/api/placeholder/800/600';
+                      }}
+                    />
                   </div>
                 </div>
               )}

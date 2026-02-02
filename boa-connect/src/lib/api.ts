@@ -1,6 +1,19 @@
 import axios from 'axios';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
+// Determine API URL based on environment
+const getApiUrl = () => {
+  const isDevelopment = import.meta.env.DEV;
+  
+  if (isDevelopment) {
+    // In development, use relative URL to go through Vite proxy
+    return '/api';
+  } else {
+    // In production, use the full API URL
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
+  }
+};
+
+const API_URL = getApiUrl();
 
 // Create axios instance for users
 const api = axios.create({
@@ -158,7 +171,15 @@ export const userAPI = {
   },
 
   getMembershipDetails: async () => {
-    const response = await api.get('/users/membership');
+    // Add cache-busting timestamp to ensure fresh data
+    const timestamp = Date.now();
+    const response = await api.get(`/users/membership?_t=${timestamp}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     return response.data;
   },
 };
@@ -349,13 +370,29 @@ export const adminAPI = {
     return response.data;
   },
 
-  // Membership Management
+  // Membership Management - ONLY MEMBERSHIP REGISTRATIONS
   getAllMembers: async () => {
-    const response = await adminApi.get('/admin/members');
+    console.log('🔍 [API] Calling GET /admin/members');
+    // Add timestamp to prevent caching
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/admin/members?_t=${timestamp}`);
+    console.log('🔍 [API] Response received:', response.data);
     return response.data;
   },
   updateMembershipDetails: async (id: string, data: any) => {
     const response = await adminApi.put(`/admin/members/${id}`, data);
+    return response.data;
+  },
+  deleteMembership: async (id: string) => {
+    const response = await adminApi.delete(`/admin/members/${id}/membership`);
+    return response.data;
+  },
+  toggleMembershipStatus: async (id: string) => {
+    const response = await adminApi.put(`/admin/members/${id}/toggle-status`);
+    return response.data;
+  },
+  updateMembershipStatus: async (id: string, status: string) => {
+    const response = await adminApi.put(`/admin/members/${id}/status`, { status });
     return response.data;
   },
 

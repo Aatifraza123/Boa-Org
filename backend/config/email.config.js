@@ -75,7 +75,7 @@ async function sendEmailWithFallback(mailOptions) {
 const sendPasswordResetEmail = async (to, resetLink, userName) => {
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'biharophthalmic2022@gmail.com'
     },
     to: to,
@@ -287,7 +287,7 @@ const sendContactEmail = async (contactData) => {
 
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: process.env.EMAIL_USER || 'info@boabihar.org',
@@ -423,18 +423,8 @@ This email was sent from the BOA website contact form.
   try {
     console.log('Attempting to send contact email...');
     const info = await sendEmailWithFallback(mailOptions);
-    console.log('Contact email sent successfully:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Contact email error:', error.message);
-    
-    // Log the full error for debugging but don't crash the server
-    console.error('Full email error details:', {
-      code: error.code,
-      response: error.response,
-      command: error.command
-    });
-    
     // Return a user-friendly error
     throw new Error('Failed to send email. Please try again later or contact us directly.');
   }
@@ -446,7 +436,7 @@ const sendContactConfirmationEmail = async (contactData) => {
 
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: email,
@@ -585,7 +575,7 @@ const sendSeminarRegistrationConfirmation = async (registrationData, seminarData
 
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: user_info.email,
@@ -766,7 +756,7 @@ const sendMembershipConfirmation = async (membershipData) => {
 
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: email,
@@ -943,7 +933,7 @@ const sendMembershipAdminNotification = async (membershipData) => {
 
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'info@boabihar.org',
@@ -1103,7 +1093,7 @@ const sendSeminarAdminNotification = async (registrationData, seminarData) => {
 
   const mailOptions = {
     from: {
-      name: 'Bihar Ophthalmic Association',
+      name: 'Ophthalmic Association Of Bihar',
       address: process.env.EMAIL_USER || 'info@boabihar.org'
     },
     to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'info@boabihar.org',
@@ -1264,6 +1254,173 @@ const sendSeminarAdminNotification = async (registrationData, seminarData) => {
   }
 };
 
+// Send PDF receipt via email
+const sendPDFReceiptEmail = async (paymentData, pdfBuffer) => {
+  const { user_email, user_name, payment_for, amount, type } = paymentData;
+
+  const mailOptions = {
+    from: {
+      name: 'Ophthalmic Association Of Bihar',
+      address: process.env.EMAIL_USER || 'info@boabihar.org'
+    },
+    to: user_email,
+    subject: `Payment Receipt - ${payment_for}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+          }
+          .email-container {
+            max-width: 600px;
+            margin: 30px auto;
+            background: white;
+            border: 1px solid #ddd;
+          }
+          .header {
+            background: #0B3C5D;
+            padding: 30px;
+            text-align: center;
+            color: white;
+          }
+          .logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 15px;
+          }
+          .header h1 {
+            margin: 10px 0 5px 0;
+            font-size: 24px;
+          }
+          .content {
+            padding: 40px 30px;
+            background: white;
+          }
+          .success-badge {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: bold;
+          }
+          .details-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+          }
+          .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+          }
+          .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+          }
+          .detail-label {
+            font-weight: bold;
+            color: #0B3C5D;
+          }
+          .footer {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <img src="https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png" alt="BOA Logo" class="logo">
+            <h1>Payment Receipt</h1>
+            <p>Ophthalmic Association Of Bihar</p>
+          </div>
+          
+          <div class="content">
+            <div class="success-badge">✓ Payment Confirmed</div>
+            
+            <p>Dear ${user_name || 'Valued Member'},</p>
+            
+            <p>Thank you for your payment. Please find your official receipt attached to this email.</p>
+            
+            <div class="details-box">
+              <h3 style="margin-top: 0; color: #0B3C5D;">Payment Summary</h3>
+              <div class="detail-row">
+                <span class="detail-label">Payment For:</span>
+                <span>${payment_for}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Amount Paid:</span>
+                <span>₹${parseFloat(amount || 0).toLocaleString()}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Payment Type:</span>
+                <span>${type}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Receipt Date:</span>
+                <span>${new Date().toLocaleDateString('en-GB')}</span>
+              </div>
+            </div>
+            
+            <p><strong>Important Notes:</strong></p>
+            <ul>
+              <li>Please keep this receipt for your records</li>
+              <li>This is an official payment confirmation</li>
+              <li>Contact us if you have any questions about your payment</li>
+              <li>The attached PDF contains detailed payment information</li>
+            </ul>
+            
+            <p>Thank you for choosing Ophthalmic Association Of Bihar!</p>
+          </div>
+          
+          <div class="footer">
+            <p><strong>Ophthalmic Association Of Bihar</strong></p>
+            <p>Shivpuri Road, Anishabad, Patna 800002</p>
+            <p>Email: info@boabihar.org | Phone: 9334332714</p>
+            <p style="margin-top: 15px; color: #999; font-size: 12px;">
+              This is an automated email with your payment receipt attached.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    attachments: [
+      {
+        filename: `payment_receipt_${Date.now()}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      }
+    ]
+  };
+
+  try {
+    console.log('Sending PDF receipt email to:', user_email);
+    const info = await sendEmailWithFallback(mailOptions);
+    console.log('PDF receipt email sent successfully:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('PDF receipt email error:', error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   sendPasswordResetEmail,
   sendContactEmail,
@@ -1272,5 +1429,6 @@ module.exports = {
   sendMembershipConfirmation,
   sendMembershipAdminNotification,
   sendSeminarAdminNotification,
+  sendPDFReceiptEmail,
   testEmailConfig
 };

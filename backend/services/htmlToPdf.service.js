@@ -12,7 +12,6 @@ class HtmlToPdfService {
     }
 
     try {
-      console.log('Testing Puppeteer availability...');
       const browser = await puppeteer.launch({
         headless: 'new',
         args: [
@@ -24,18 +23,21 @@ class HtmlToPdfService {
           '--no-zygote',
           '--disable-gpu',
           '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--single-process'
+          '--disable-features=VizDisplayCompositor'
         ],
-        timeout: 10000
+        timeout: 30000,
+        protocolTimeout: 30000
       });
       
+      // Test creating a page
+      const page = await browser.newPage();
+      await page.setContent('<html><body><h1>Test</h1></body></html>');
+      await page.close();
       await browser.close();
-      console.log('✓ Puppeteer is available');
+      
       this.puppeteerAvailable = true;
       return true;
     } catch (error) {
-      console.error('✗ Puppeteer not available:', error.message);
       this.puppeteerAvailable = false;
       return false;
     }
@@ -49,8 +51,7 @@ class HtmlToPdfService {
       try {
         return await this.convertWithPuppeteer(html, options);
       } catch (error) {
-        console.error('Puppeteer PDF generation failed:', error.message);
-        console.log('Falling back to PDFKit...');
+        // Fallback to PDFKit silently
       }
     }
 
@@ -58,7 +59,6 @@ class HtmlToPdfService {
     try {
       return await this.convertWithPDFKit(html, options);
     } catch (error) {
-      console.error('PDFKit PDF generation failed:', error.message);
       throw new Error('All PDF generation methods failed');
     }
   }
@@ -68,7 +68,6 @@ class HtmlToPdfService {
     let page = null;
     
     try {
-      console.log('Generating PDF with Puppeteer...');
       
       browser = await puppeteer.launch({
         headless: 'new',
@@ -78,21 +77,12 @@ class HtmlToPdfService {
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
-          '--no-zygote',
           '--disable-gpu',
-          '--disable-cache',
-          '--disk-cache-size=0',
           '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--disable-background-networking',
-          '--disable-background-timer-throttling',
-          '--disable-renderer-backgrounding',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-ipc-flooding-protection',
-          '--single-process'
+          '--disable-features=VizDisplayCompositor'
         ],
-        executablePath: process.env.CHROME_BIN || undefined,
-        timeout: 60000
+        timeout: 30000,
+        protocolTimeout: 30000
       });
       
       page = await browser.newPage();
@@ -115,7 +105,6 @@ class HtmlToPdfService {
       };
 
       const pdfBuffer = await page.pdf(pdfOptions);
-      console.log('✓ PDF generated with Puppeteer, size:', pdfBuffer.length);
       return pdfBuffer;
       
     } finally {
@@ -127,7 +116,6 @@ class HtmlToPdfService {
   async convertWithPDFKit(html, options = {}) {
     return new Promise((resolve, reject) => {
       try {
-        console.log('Generating PDF with PDFKit fallback...');
         const PDFDocument = require('pdfkit');
         const doc = new PDFDocument({
           size: 'A4',
@@ -138,7 +126,6 @@ class HtmlToPdfService {
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => {
           const pdfBuffer = Buffer.concat(buffers);
-          console.log('✓ PDF generated with PDFKit, size:', pdfBuffer.length);
           resolve(pdfBuffer);
         });
         doc.on('error', reject);
@@ -296,18 +283,12 @@ class HtmlToPdfService {
         displayHeaderFooter: false
       });
     } catch (error) {
-      console.error('Membership form PDF generation error:', error);
       throw error;
     }
   }
 
   async generateSeminarFormPdf(htmlTemplate, seminarData = {}) {
     try {
-      console.log('=== GENERATING SEMINAR PDF ===');
-      console.log('HTML Template length:', htmlTemplate?.length);
-      console.log('Seminar:', seminarData.name);
-      console.log('First 300 chars of HTML:', htmlTemplate?.substring(0, 300));
-      
       let processedHtml = htmlTemplate;
 
       // Replace seminar-specific placeholders
@@ -332,8 +313,6 @@ class HtmlToPdfService {
         const regex = new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g');
         processedHtml = processedHtml.replace(regex, placeholders[placeholder]);
       });
-      
-      console.log('After placeholder replacement, length:', processedHtml?.length);
 
       // Add BOA styling if not present
       if (!processedHtml.includes('<style>') && !processedHtml.includes('stylesheet')) {
@@ -433,7 +412,6 @@ class HtmlToPdfService {
         displayHeaderFooter: false
       });
     } catch (error) {
-      console.error('Seminar form PDF generation error:', error);
       throw error;
     }
   }

@@ -19,7 +19,7 @@ export function SiteConfigTab() {
     favicon_url: '',
     logo_url: '',
     hero_circle_image_url: '',
-    site_title: 'Bihar Ophthalmic Association',
+    site_title: 'Ophthalmic Association Of Bihar',
     site_description: ''
   });
 
@@ -313,7 +313,7 @@ export function SiteConfigTab() {
             <Input
               value={config.site_title}
               onChange={(e) => setConfig({ ...config, site_title: e.target.value })}
-              placeholder="Bihar Ophthalmic Association"
+              placeholder="Ophthalmic Association Of Bihar"
             />
           </div>
           <div>

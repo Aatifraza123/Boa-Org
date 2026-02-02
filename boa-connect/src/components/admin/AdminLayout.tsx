@@ -182,9 +182,9 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
     {
       title: 'User Management',
       items: [
-        { id: 'users', label: 'Online Users', icon: Users },
+        { id: 'users', label: 'All Registered Users', icon: Users },
         { id: 'offline-users', label: 'Offline Users', icon: UserPlus },
-        { id: 'membership-management', label: 'Membership Management', icon: Award },
+        { id: 'membership-management', label: 'Paid Members Only', icon: Award },
       ]
     },
     {
@@ -478,7 +478,7 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
                 <LayoutDashboard className="h-4 w-4" />
                 <span>BOA Admin Panel</span>
                 <span>•</span>
-                <span>Bihar Ophthalmic Association</span>
+                <span>Ophthalmic Association Of Bihar</span>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>© {new Date().getFullYear()} BOA. All rights reserved.</span>

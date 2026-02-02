@@ -32,7 +32,6 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      console.error('CORS blocked origin:', origin);
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -269,10 +268,8 @@ try {
     }
   });
 
-  // Generate PDF from HTML template routes (PROTECTED)
-  const authMiddleware = require('./middleware/auth.middleware');
-  
-  app.get('/api/generate-membership-pdf', authMiddleware, async (req, res) => {
+  // Generate PDF from HTML template routes (PUBLIC - no auth required for blank forms)
+  app.get('/api/generate-membership-pdf', async (req, res) => {
     try {
       // Set cache control headers to prevent caching
       res.set({
@@ -306,7 +303,6 @@ try {
       
       res.send(pdfBuffer);
     } catch (error) {
-      console.error('Failed to generate membership PDF:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to generate PDF'
@@ -314,7 +310,7 @@ try {
     }
   });
 
-  app.get('/api/generate-seminar-pdf/:seminarId', authMiddleware, async (req, res) => {
+  app.get('/api/generate-seminar-pdf/:seminarId', async (req, res) => {
     try {
       // Set cache control headers to prevent caching
       res.set({
@@ -475,8 +471,6 @@ try {
       return res.send(pdfBuffer);
       
     } catch (error) {
-      console.error('PDF Error stack:', error.stack);
-      console.error('Failed to generate seminar PDF:', error);
       
       // Final fallback: Return HTML for manual printing
       try {
@@ -540,7 +534,7 @@ try {
           return res.send(basicHtml);
         }
       } catch (fallbackError) {
-        console.error('Fallback HTML generation also failed:', fallbackError);
+        // Fallback HTML generation also failed
       }
       
       res.status(500).json({
@@ -581,7 +575,6 @@ try {
         }
       });
     } catch (error) {
-      console.error('Stats error:', error);
       res.status(500).json({ success: false, message: 'Failed to fetch stats' });
     }
   });
@@ -605,7 +598,6 @@ try {
       
       res.json({ success: true, categories: parsedCategories });
     } catch (error) {
-      console.error('Admin membership categories error:', error);
       res.status(500).json({ success: false, message: 'Failed to fetch membership categories' });
     }
   });
@@ -644,7 +636,6 @@ try {
 
       res.json({ success: true, id: result.insertId, message: 'Category created successfully' });
     } catch (error) {
-      console.error('Create membership category error:', error);
       res.status(500).json({ success: false, message: 'Failed to create category' });
     }
   });
@@ -690,7 +681,6 @@ try {
 
       res.json({ success: true, message: 'Category updated successfully' });
     } catch (error) {
-      console.error('Update membership category error:', error);
       res.status(500).json({ success: false, message: 'Failed to update category' });
     }
   });
@@ -705,7 +695,6 @@ try {
 
       res.json({ success: true, message: 'Category deleted successfully' });
     } catch (error) {
-      console.error('Delete membership category error:', error);
       res.status(500).json({ success: false, message: 'Failed to delete category' });
     }
   });
@@ -734,7 +723,6 @@ try {
       
       res.json({ success: true, categories: parsedCategories });
     } catch (error) {
-      console.error('Membership categories error:', error);
       res.status(500).json({ success: false, message: 'Failed to fetch membership categories' });
     }
   });
@@ -752,7 +740,6 @@ try {
       
       res.json({ success: true, items });
     } catch (error) {
-      console.error('Gallery error:', error);
       res.status(500).json({ success: false, message: 'Failed to fetch gallery items' });
     }
   });
@@ -777,7 +764,6 @@ try {
       
       res.json({ success: true, resources });
     } catch (error) {
-      console.error('Resources error:', error);
       res.status(500).json({ success: false, message: 'Failed to fetch resources' });
     }
   });
@@ -795,21 +781,18 @@ try {
       
       res.json({ success: true });
     } catch (error) {
-      console.error('Download count error:', error);
       res.status(500).json({ success: false, message: 'Failed to update download count' });
     }
   });
   
 } catch (error) {
-  console.error('Error loading routes:', error);
-  console.error(error.stack);
+  // Error loading routes - server will continue with basic functionality
 }
 
 // Global error handler for JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     logToFile(`JSON parsing error: ${err.message}`);
-    console.error('JSON parsing error:', err.message);
     return res.status(400).json({
       success: false,
       message: 'Invalid JSON format in request body',
@@ -821,7 +804,6 @@ app.use((err, req, res, next) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error',

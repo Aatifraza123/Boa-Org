@@ -11,14 +11,6 @@ class RazorpayService {
   // Create Razorpay order
   async createOrder(amount, currency = 'INR', receipt = null) {
     try {
-      console.log('=== RAZORPAY SERVICE CREATE ORDER ===');
-      console.log('Creating Razorpay order with:', {
-        key_id: process.env.RAZORPAY_KEY_ID ? 'Set' : 'Not set',
-        key_secret: process.env.RAZORPAY_KEY_SECRET ? 'Set' : 'Not set',
-        amount,
-        currency
-      });
-
       if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
         throw new Error('Razorpay credentials not configured');
       }
@@ -30,23 +22,13 @@ class RazorpayService {
         payment_capture: 1, // Auto capture payment
       };
 
-      console.log('Razorpay order options:', options);
-
       const order = await razorpay.orders.create(options);
-      console.log('Razorpay order created successfully:', order.id);
       
       return {
         success: true,
         order,
       };
     } catch (error) {
-      console.error('=== RAZORPAY CREATE ORDER ERROR ===');
-      console.error('Razorpay create order error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        description: error.description
-      });
       return {
         success: false,
         error: error.message,

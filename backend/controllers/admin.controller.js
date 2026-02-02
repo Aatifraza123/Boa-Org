@@ -143,11 +143,6 @@ exports.updateSeminar = async (req, res) => {
       color, online_registration_enabled
     } = req.body;
 
-    console.log('=== UPDATE SEMINAR DEBUG ===');
-    console.log('Seminar ID:', id);
-    console.log('offline_form_html length:', offline_form_html?.length || 0);
-    console.log('First 200 chars:', offline_form_html?.substring(0, 200));
-
     await promisePool.query(
       `UPDATE seminars SET name = ?, title = ?, location = ?, venue = ?, start_date = ?, 
        end_date = ?, registration_start = ?, registration_end = ?, 
@@ -158,7 +153,7 @@ exports.updateSeminar = async (req, res) => {
        color || '#0B3C5D', online_registration_enabled !== false ? 1 : 0, id]
     );
     
-    console.log('Seminar updated successfully');
+  
 
     // Check if notification exists for this seminar
     const [existingNotif] = await promisePool.query(
@@ -461,7 +456,7 @@ exports.exportUserDetails = async (req, res) => {
       { header: 'Value', key: 'value', width: 40 }
     ];
     userSheet.addRows([
-      { field: 'Name', value: `${formatTitle(user.title)} ${user.first_name} ${user.surname}` },
+      { field: 'Name', value: `${formatTitle(user.title || '')} ${user.first_name || ''} ${user.surname || ''}`.trim() || 'Unknown User' },
       { field: 'Email', value: user.email },
       { field: 'Mobile', value: user.mobile },
       { field: 'DOB', value: user.dob },
@@ -568,7 +563,7 @@ exports.exportAllUsers = async (req, res) => {
 
     worksheet.addRows(users.map(user => ({
       id: user.id,
-      name: `${formatTitle(user.title)} ${user.first_name} ${user.surname}`,
+      name: `${formatTitle(user.title || '')} ${user.first_name || ''} ${user.surname || ''}`.trim() || 'Unknown User',
       email: user.email,
       mobile: user.mobile,
       dob: user.dob,
@@ -609,7 +604,7 @@ exports.getAllRegistrations = async (req, res) => {
         s.name as seminar_name, s.location as seminar_location,
         fc.name as category_name, fs.label as slab_label
       FROM registrations r
-      JOIN users u ON r.user_id = u.id
+      LEFT JOIN users u ON r.user_id = u.id
       JOIN seminars s ON r.seminar_id = s.id
       JOIN fee_categories fc ON r.category_id = fc.id
       JOIN fee_slabs fs ON r.slab_id = fs.id
@@ -835,26 +830,51 @@ exports.deleteNotification = async (req, res) => {
 // Get all members for admin management
 exports.getAllMembers = async (req, res) => {
   try {
+    
+    // Set no-cache headers to prevent caching issues
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    // JOIN with users table to get membership_no
     const [members] = await promisePool.query(`
-      SELECT u.*, 
-             mr.membership_type, mr.status, mr.valid_from, mr.valid_until, mr.notes,
-             mr.created_at as membership_created_at
-      FROM users u
-      LEFT JOIN membership_registrations mr ON u.email = mr.email
-      WHERE u.role = 'user'
-      ORDER BY u.created_at DESC
+      SELECT mr.id, mr.name, mr.email, mr.membership_type, mr.membership_status, mr.created_at,
+             u.membership_no, mr.valid_from, mr.valid_until, mr.notes
+      FROM membership_registrations mr
+      LEFT JOIN users u ON mr.email = u.email
+      ORDER BY mr.created_at DESC
     `);
 
-    // Remove passwords
-    members.forEach(member => delete member.password);
+    
+    
+    
+
+    // Simple formatting
+    const formattedMembers = members.map(member => ({
+      id: `mr_${member.id}`,
+      membership_registration_id: member.id,
+      first_name: member.name?.split(' ')[0] || '',
+      surname: member.name?.split(' ').slice(1).join(' ') || '',
+      email: member.email,
+      membership_no: member.membership_no || null, // Include membership number from users table
+      membership_type: member.membership_type,
+      status: member.membership_status || 'active',
+      valid_from: member.valid_from,
+      valid_until: member.valid_until,
+      notes: member.notes,
+      created_at: member.created_at
+    }));
+
 
     res.json({
       success: true,
-      count: members.length,
-      members
+      count: formattedMembers.length,
+      members: formattedMembers
     });
   } catch (error) {
-    console.error('Get all members error:', error);
+    console.error('[getAllMembers] Error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch members',
@@ -869,11 +889,49 @@ exports.updateMembershipDetails = async (req, res) => {
     const { id } = req.params;
     const { membership_no, membership_type, status, valid_from, valid_until, notes } = req.body;
 
+    
+
+    let membershipId;
+    let userEmail;
+
+    // Check if this is a membership registration ID or user ID
+    if (typeof id === 'string' && id.startsWith('mr_')) {
+      // This is a membership registration ID
+      membershipId = id.replace('mr_', '');
+      
+      // Get the email from membership_registrations
+      const [membership] = await promisePool.query(
+        'SELECT email FROM membership_registrations WHERE id = ?',
+        [membershipId]
+      );
+
+      if (membership.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Membership registration not found'
+        });
+      }
+
+      userEmail = membership[0].email;
+    } else {
+      // This is a user ID, get the email
+      const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
+      
+      if (user.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      userEmail = user[0].email;
+    }
+
     // Check if membership number already exists (excluding current user)
     if (membership_no) {
       const [existing] = await promisePool.query(
-        'SELECT id, CONCAT(first_name, " ", surname) as name FROM users WHERE membership_no = ? AND id != ?',
-        [membership_no, id]
+        'SELECT u.id, CONCAT(u.first_name, " ", u.surname) as name FROM users u WHERE u.membership_no = ? AND u.email != ?',
+        [membership_no, userEmail]
       );
 
       if (existing.length > 0) {
@@ -886,39 +944,35 @@ exports.updateMembershipDetails = async (req, res) => {
     }
 
     // Update user's membership number (allow NULL/empty to remove membership)
-    await promisePool.query(
-      'UPDATE users SET membership_no = ? WHERE id = ?',
-      [membership_no || null, id]
+    const [updateResult] = await promisePool.query(
+      'UPDATE users SET membership_no = ? WHERE email = ?',
+      [membership_no || null, userEmail]
     );
 
-    // Get user's email for membership_registrations update
-    const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
-    
-    if (user.length > 0) {
-      const userEmail = user[0].email;
-      
-      // Check if membership registration exists
-      const [existing] = await promisePool.query(
-        'SELECT id FROM membership_registrations WHERE email = ?',
-        [userEmail]
-      );
+    // Update membership registration
+    const [existingMembership] = await promisePool.query(
+      'SELECT id FROM membership_registrations WHERE email = ?',
+      [userEmail]
+    );
 
-      if (existing.length > 0) {
-        // Update existing membership registration
-        await promisePool.query(`
-          UPDATE membership_registrations 
-          SET membership_type = ?, status = ?, valid_from = ?, valid_until = ?, notes = ?
-          WHERE email = ?
-        `, [membership_type, status, valid_from || null, valid_until || null, notes, userEmail]);
-        } else if (membership_type) {
-        // Create new membership registration record only if membership_type is provided
+    if (existingMembership.length > 0) {
+      // Update existing membership registration
+      await promisePool.query(`
+        UPDATE membership_registrations 
+        SET membership_type = ?, membership_status = ?, valid_from = ?, valid_until = ?, notes = ?
+        WHERE email = ?
+      `, [membership_type, status || 'active', valid_from || null, valid_until || null, notes, userEmail]);
+    } else if (membership_type) {
+      // Create new membership registration record only if membership_type is provided
+      const [user] = await promisePool.query('SELECT * FROM users WHERE email = ?', [userEmail]);
+      if (user.length > 0) {
+        const userData = user[0];
         await promisePool.query(`
           INSERT INTO membership_registrations 
-          (email, name, membership_type, status, valid_from, valid_until, notes, created_at)
-          SELECT email, CONCAT(title, ' ', first_name, ' ', surname), ?, ?, ?, ?, ?, NOW()
-          FROM users WHERE id = ?
-        `, [membership_type, status, valid_from || null, valid_until || null, notes, id]);
-        }
+          (email, name, membership_type, membership_status, valid_from, valid_until, notes, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+        `, [userEmail, `${userData.title || ''} ${userData.first_name || ''} ${userData.surname || ''}`.trim(), membership_type, status || 'active', valid_from || null, valid_until || null, notes]);
+      }
     }
 
     res.json({
@@ -926,8 +980,8 @@ exports.updateMembershipDetails = async (req, res) => {
       message: 'Membership details updated successfully'
     });
   } catch (error) {
-    console.error('Update membership details error:', error);
-    console.error('Error stack:', error.stack);
+    console.error('[updateMembershipDetails] Error:', error);
+    console.error('[updateMembershipDetails] Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to update membership details',
@@ -948,13 +1002,37 @@ exports.checkMembershipAvailability = async (req, res) => {
       });
     }
 
+    let excludeEmail = null;
+
+    // Handle membership registration IDs (like mr_16) or regular user IDs
+    if (user_id) {
+      if (typeof user_id === 'string' && user_id.startsWith('mr_')) {
+        // This is a membership registration ID, get the email
+        const membershipId = user_id.replace('mr_', '');
+        const [membership] = await promisePool.query(
+          'SELECT email FROM membership_registrations WHERE id = ?',
+          [membershipId]
+        );
+        
+        if (membership.length > 0) {
+          excludeEmail = membership[0].email;
+        }
+      } else {
+        // This is a regular user ID, get the email
+        const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [user_id]);
+        if (user.length > 0) {
+          excludeEmail = user[0].email;
+        }
+      }
+    }
+
     // Check if membership number exists (excluding current user if provided)
-    let query = 'SELECT id, CONCAT(first_name, " ", surname) as name FROM users WHERE membership_no = ?';
+    let query = 'SELECT id, CONCAT(first_name, " ", surname) as name, email FROM users WHERE membership_no = ?';
     let params = [membership_no];
 
-    if (user_id) {
-      query += ' AND id != ?';
-      params.push(user_id);
+    if (excludeEmail) {
+      query += ' AND email != ?';
+      params.push(excludeEmail);
     }
 
     const [existing] = await promisePool.query(query, params);
@@ -1029,7 +1107,7 @@ exports.exportMembers = async (req, res) => {
     worksheet.addRows(members.map(member => ({
       id: member.id,
       membership_no: member.membership_no || 'Not Assigned',
-      name: `${formatTitle(member.title)} ${member.first_name} ${member.surname}`,
+      name: `${formatTitle(member.title || '')} ${member.first_name || ''} ${member.surname || ''}`.trim() || 'Unknown User',
       email: member.email,
       mobile: member.mobile,
       gender: member.gender,
@@ -1604,7 +1682,7 @@ exports.importOfflineUser = async (req, res) => {
       user: {
         id: userId,
         membership_no,
-        name: `${formatTitle(title)} ${first_name} ${surname}`,
+        name: `${formatTitle(title || '')} ${first_name || ''} ${surname || ''}`.trim() || 'Unknown User',
         email: userEmail
       }
     });
@@ -2360,16 +2438,10 @@ exports.updateOfflineFormsConfig = async (req, res) => {
   try {
     const { membership_form_html, seminar_form_html } = req.body;
 
-    console.log('=== UPDATE OFFLINE FORMS CONFIG DEBUG ===');
-    console.log('membership_form_html length:', membership_form_html?.length || 0);
-    console.log('seminar_form_html length:', seminar_form_html?.length || 0);
-    console.log('First 200 chars of membership HTML:', membership_form_html?.substring(0, 200));
-
     // Check if config exists
     const [existing] = await promisePool.query('SELECT id FROM offline_forms_config ORDER BY id DESC LIMIT 1');
 
     if (existing.length > 0) {
-      console.log('Updating existing config ID:', existing[0].id);
       // Update existing
       await promisePool.query(
         `UPDATE offline_forms_config SET 
@@ -2379,7 +2451,6 @@ exports.updateOfflineFormsConfig = async (req, res) => {
         [membership_form_html || '', seminar_form_html || '', existing[0].id]
       );
     } else {
-      console.log('Inserting new config');
       // Insert new
       await promisePool.query(
         `INSERT INTO offline_forms_config (membership_form_html, seminar_form_html)
@@ -2388,7 +2459,6 @@ exports.updateOfflineFormsConfig = async (req, res) => {
       );
     }
 
-    console.log('✓ Offline forms config updated successfully');
 
     res.json({
       success: true,
@@ -2769,8 +2839,8 @@ exports.getLatestPayments = async (req, res) => {
     
     // Get latest seminar payments
     const [seminarPayments] = await promisePool.query(
-      `SELECT r.id, r.amount, r.status, r.payment_method, r.transaction_id, 
-              r.payment_date, r.created_at,
+      `SELECT r.id, r.user_id, r.amount, r.status, r.payment_method, r.transaction_id, 
+              r.payment_date, r.created_at, r.guest_name, r.guest_email,
               u.title, u.first_name, u.surname, u.email,
               s.name as seminar_name
        FROM registrations r
@@ -2781,10 +2851,17 @@ exports.getLatestPayments = async (req, res) => {
     );
 
     seminarPayments.forEach(p => {
+      // Use guest information if user_id is null, otherwise use user information
+      const userName = p.user_id 
+        ? `${formatTitle(p.title || '')} ${p.first_name || ''} ${p.surname || ''}`.trim() || 'Unknown User'
+        : p.guest_name || 'Unknown User';
+      
+      const userEmail = p.user_id ? p.email : p.guest_email;
+
       payments.push({
         id: `sem_${p.id}`,
-        user_name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
-        user_email: p.email,
+        user_name: userName,
+        user_email: userEmail,
         payment_type: 'seminar',
         payment_for: p.seminar_name,
         amount: parseFloat(p.amount),
@@ -2844,7 +2921,8 @@ exports.getPaymentDetails = async (req, res) => {
     
     if (type === 'sem') {
       const [payments] = await promisePool.query(
-        `SELECT r.*, u.title, u.first_name, u.surname, u.email, u.mobile,
+        `SELECT r.*, r.guest_name, r.guest_email, r.guest_mobile,
+                u.title, u.first_name, u.surname, u.email, u.mobile,
                 s.name as seminar_name, s.start_date, s.end_date, s.location
          FROM registrations r
          LEFT JOIN users u ON r.user_id = u.id
@@ -2855,10 +2933,19 @@ exports.getPaymentDetails = async (req, res) => {
       
       if (payments.length > 0) {
         const p = payments[0];
+        
+        // Use guest information if user_id is null, otherwise use user information
+        const userName = p.user_id 
+          ? `${formatTitle(p.title || '')} ${p.first_name || ''} ${p.surname || ''}`.trim() || 'Unknown User'
+          : p.guest_name || 'Unknown User';
+        
+        const userEmail = p.user_id ? p.email : p.guest_email;
+        const userMobile = p.user_id ? p.mobile : p.guest_mobile;
+        
         paymentData = {
-          user_name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
-          user_email: p.email,
-          user_mobile: p.mobile,
+          user_name: userName,
+          user_email: userEmail,
+          user_mobile: userMobile,
           payment_type: 'seminar',
           payment_for: p.seminar_name,
           amount: parseFloat(p.amount),
@@ -2871,7 +2958,7 @@ exports.getPaymentDetails = async (req, res) => {
             seminar_location: p.location,
             start_date: p.start_date,
             end_date: p.end_date,
-            delegate_category: p.delegate_type
+            delegate_category: p.category_name || p.delegate_type
           }
         };
       }
@@ -2934,7 +3021,7 @@ exports.getAllPayments = async (req, res) => {
     const [seminarPayments] = await promisePool.query(
       `SELECT r.id, r.registration_no, r.user_id, r.amount, r.status, 
               r.payment_method, r.transaction_id, r.payment_date, r.created_at,
-              r.delegate_type,
+              r.delegate_type, r.category_name, r.guest_name, r.guest_email, r.guest_mobile,
               u.title, u.first_name, u.surname, u.email, u.mobile,
               s.name as seminar_name, s.start_date, s.end_date
        FROM registrations r
@@ -2945,12 +3032,20 @@ exports.getAllPayments = async (req, res) => {
 
     // Add seminar payments to array
     seminarPayments.forEach(payment => {
+      // Use guest information if user_id is null, otherwise use user information
+      const userName = payment.user_id 
+        ? `${formatTitle(payment.title || '')} ${payment.first_name || ''} ${payment.surname || ''}`.trim() || 'Unknown User'
+        : payment.guest_name || 'Unknown User';
+      
+      const userEmail = payment.user_id ? payment.email : payment.guest_email;
+      const userMobile = payment.user_id ? payment.mobile : payment.guest_mobile;
+
       payments.push({
         id: `sem_${payment.id}`,
         user_id: payment.user_id,
-        user_name: `${formatTitle(payment.title)} ${payment.first_name} ${payment.surname}`,
-        user_email: payment.email,
-        user_mobile: payment.mobile,
+        user_name: userName,
+        user_email: userEmail,
+        user_mobile: userMobile,
         payment_type: 'seminar',
         payment_for: payment.seminar_name,
         amount: parseFloat(payment.amount),
@@ -2965,17 +3060,20 @@ exports.getAllPayments = async (req, res) => {
             start_date: payment.start_date,
             end_date: payment.end_date
           },
-          delegate_category: payment.delegate_type
+          delegate_category: payment.category_name || payment.delegate_type
         }
       });
     });
 
     // Get membership payments
     const [membershipPayments] = await promisePool.query(
-      `SELECT mr.id, mr.name, mr.email, mr.mobile, mr.membership_type,
+      `SELECT mr.id, 
+              COALESCE(mr.name, 'Unknown User') as name, 
+              mr.email, mr.mobile, mr.membership_type,
               mr.transaction_id, mr.payment_status, mr.created_at,
-              mr.qualification, mr.institution,
-              mc.price, mc.category
+              mr.qualification, mr.institution, mr.amount,
+              COALESCE(mc.price, mr.amount, 0) as payment_amount,
+              mc.category
        FROM membership_registrations mr
        LEFT JOIN membership_categories mc ON mr.membership_type = mc.title
        ORDER BY mr.created_at DESC`
@@ -2983,22 +3081,24 @@ exports.getAllPayments = async (req, res) => {
 
     // Add membership payments to array
     membershipPayments.forEach(payment => {
+    
+      
       payments.push({
         id: `mem_${payment.id}`,
         user_id: null,
-        user_name: payment.name,
+        user_name: payment.name || 'Unknown User',
         user_email: payment.email,
         user_mobile: payment.mobile,
         payment_type: 'membership',
-        payment_for: `${payment.membership_type} Membership`,
-        amount: parseFloat(payment.price || 0),
+        payment_for: `${payment.membership_type || 'Standard'} Membership`,
+        amount: parseFloat(payment.payment_amount || payment.amount || 0),
         transaction_id: payment.transaction_id,
         payment_method: 'Online',
         status: payment.payment_status === 'completed' ? 'completed' : 'pending',
         created_at: payment.created_at,
         details: {
           membership: {
-            type: payment.membership_type,
+            type: payment.membership_type || 'Standard',
             category: payment.category,
             qualification: payment.qualification,
             institution: payment.institution
@@ -3033,37 +3133,48 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
-// Download payment receipt as PDF
-exports.downloadPaymentPDF = async (req, res) => {
+// Helper function to generate PDF buffer and send via email
+const generateAndSendPDFReceipt = async (paymentId, paymentType) => {
   try {
-    const { id } = req.params;
+    const { sendPDFReceiptEmail } = require('../config/email.config');
     const PDFDocument = require('pdfkit');
+    const https = require('https');
+    const http = require('http');
     
     // Parse payment ID
-    const [type, paymentId] = id.split('_');
+    const [type, id] = paymentId.split('_');
     
     let paymentData = null;
     
     if (type === 'sem') {
       // Get seminar payment
       const [payments] = await promisePool.query(
-        `SELECT r.*, u.title, u.first_name, u.surname, u.email, u.mobile, u.address,
+        `SELECT r.*, r.guest_name, r.guest_email, r.guest_mobile, r.guest_address,
+                u.title, u.first_name, u.surname, u.email, u.mobile, u.address,
                 s.name as seminar_name, s.start_date, s.end_date, s.location
          FROM registrations r
          LEFT JOIN users u ON r.user_id = u.id
          LEFT JOIN seminars s ON r.seminar_id = s.id
          WHERE r.id = ?`,
-        [paymentId]
+        [id]
       );
       
       if (payments.length > 0) {
         const p = payments[0];
+        
+        // Use guest information if user_id is null, otherwise use user information
+        const userName = p.user_id 
+          ? `${formatTitle(p.title || '')} ${p.first_name || ''} ${p.surname || ''}`.trim() || 'Unknown User'
+          : p.guest_name || 'Unknown User';
+        
+        const userEmail = p.user_id ? p.email : p.guest_email;
+        
         paymentData = {
           type: 'Seminar Registration',
-          user_name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
-          user_email: p.email,
-          user_mobile: p.mobile,
-          user_address: p.address,
+          user_name: userName,
+          user_email: userEmail,
+          user_mobile: p.user_id ? p.mobile : p.guest_mobile,
+          user_address: p.user_id ? p.address : p.guest_address,
           payment_for: p.seminar_name,
           registration_no: p.registration_no,
           amount: p.amount,
@@ -3075,14 +3186,300 @@ exports.downloadPaymentPDF = async (req, res) => {
             seminar_location: p.location,
             start_date: p.start_date,
             end_date: p.end_date,
-            delegate_category: p.delegate_type
+            delegate_category: p.category_name || p.delegate_type
           }
         };
       }
     } else if (type === 'mem') {
       // Get membership payment
       const [payments] = await promisePool.query(
-        `SELECT mr.*, mc.price, mc.category
+        `SELECT mr.*, 
+                COALESCE(mr.amount, mc.price, 0) as payment_amount,
+                mc.category
+         FROM membership_registrations mr
+         LEFT JOIN membership_categories mc ON mr.membership_type = mc.title
+         WHERE mr.id = ?`,
+        [id]
+      );
+      
+      if (payments.length > 0) {
+        const p = payments[0];
+        paymentData = {
+          type: 'Membership Registration',
+          user_name: p.name || 'Unknown User',
+          user_email: p.email,
+          user_mobile: p.mobile,
+          user_address: p.address,
+          payment_for: `${p.membership_type || 'Standard'} Membership`,
+          registration_no: 'N/A',
+          amount: parseFloat(p.payment_amount || 0),
+          transaction_id: p.transaction_id,
+          payment_method: 'Online',
+          status: p.payment_status === 'completed' ? 'COMPLETED' : (p.payment_status || 'PENDING').toUpperCase(),
+          date: p.created_at,
+          details: {
+            membership_type: p.membership_type || 'Standard',
+            category: p.category,
+            qualification: p.qualification,
+            institution: p.institution
+          }
+        };
+      }
+    }
+    
+    if (!paymentData || !paymentData.user_email) {
+      console.log('No payment data or email found for:', paymentId);
+      return { success: false, message: 'Payment data or email not found' };
+    }
+
+    // Helper function to fetch image from URL
+    const fetchImage = (url) => {
+      return new Promise((resolve, reject) => {
+        const protocol = url.startsWith('https:') ? https : http;
+        protocol.get(url, (response) => {
+          if (response.statusCode !== 200) {
+            reject(new Error(`Failed to fetch image: ${response.statusCode}`));
+            return;
+          }
+          
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+        }).on('error', reject);
+      });
+    };
+
+    // Generate PDF
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks = [];
+    
+    doc.on('data', chunk => chunks.push(chunk));
+    
+    return new Promise(async (resolve, reject) => {
+      doc.on('end', async () => {
+        try {
+          const pdfBuffer = Buffer.concat(chunks);
+          
+          // Send email with PDF attachment
+          const emailResult = await sendPDFReceiptEmail(paymentData, pdfBuffer);
+          resolve(emailResult);
+        } catch (emailError) {
+          console.error('Email sending error:', emailError);
+          resolve({ success: false, message: 'Failed to send email', error: emailError.message });
+        }
+      });
+
+      try {
+        // Add logo at top center
+        const centerX = doc.page.width / 2;
+        
+        try {
+          // Fetch and add the actual logo image
+          const logoUrl = 'https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png';
+          const logoBuffer = await fetchImage(logoUrl);
+          
+          // Add logo image at top center
+          doc.image(logoBuffer, centerX - 40, 30, { width: 80, height: 80 });
+          
+          // Add organization name below logo - centered
+          doc.fontSize(12)
+             .fillColor('#0B3C5D')
+             .font('Helvetica-Bold')
+             .text('Ophthalmic Association Of Bihar', centerX - 100, 120, { width: 200, align: 'center' });
+          
+          doc.moveDown(4);
+        } catch (logoError) {
+          console.error('Failed to load logo, using fallback:', logoError);
+          
+          // Fallback: Create a circular logo background with gradient effect
+          doc.circle(centerX, 70, 35)
+             .fillColor('#0B3C5D')
+             .fill();
+          
+          // Add inner circle for depth
+          doc.circle(centerX, 70, 30)
+             .fillColor('#088395')
+             .fill();
+          
+          // Add "BOA" text in the circle with better styling
+          doc.fontSize(18)
+             .fillColor('#FFFFFF')
+             .font('Helvetica-Bold')
+             .text('BOA', centerX - 22, 62, { width: 44, align: 'center' });
+          
+          // Add organization name below logo - centered
+          doc.fontSize(10)
+             .fillColor('#0B3C5D')
+             .font('Helvetica')
+             .text('Ophthalmic Association Of Bihar', centerX - 80, 110, { width: 160, align: 'center' });
+          
+          doc.moveDown(4);
+        }
+
+        // Header - LEFT ALIGNED
+        doc.fontSize(18).fillColor('#0B3C5D').font('Helvetica-Bold').text('Payment Receipt', 50, doc.y);
+        doc.moveDown();
+        
+        // Add a line separator
+        doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke();
+        doc.moveDown();
+        
+        // Receipt date - RIGHT ALIGNED
+        doc.fontSize(10).fillColor('#666666').text(`Receipt Date: ${new Date().toLocaleDateString('en-GB')}`, doc.page.width - 150, doc.y);
+        doc.moveDown(2);
+
+        // Payment Type - LEFT ALIGNED with better styling
+        doc.fontSize(14).fillColor('#0B3C5D').font('Helvetica-Bold').text(paymentData.type, 50, doc.y, { underline: true });
+        doc.fillColor('#000000').font('Helvetica');
+        doc.moveDown(1.5);
+
+        // User Details - LEFT ALIGNED
+        doc.fontSize(12).fillColor('#0B3C5D').font('Helvetica-Bold').text('User Details:', 50, doc.y);
+        doc.fontSize(10).fillColor('#000000').font('Helvetica');
+        doc.text(`Name: ${paymentData.user_name || 'Unknown User'}`, 50, doc.y + 8);
+        doc.text(`Email: ${paymentData.user_email || 'N/A'}`, 50, doc.y + 5);
+        doc.text(`Mobile: ${paymentData.user_mobile || 'N/A'}`, 50, doc.y + 5);
+        if (paymentData.user_address) {
+          doc.text(`Address: ${paymentData.user_address}`, 50, doc.y + 5);
+        }
+        doc.moveDown(1.5);
+
+        // Payment Details - LEFT ALIGNED
+        doc.fontSize(12).fillColor('#0B3C5D').font('Helvetica-Bold').text('Payment Details:', 50, doc.y);
+        doc.fontSize(10).fillColor('#000000').font('Helvetica');
+        doc.text(`Payment For: ${paymentData.payment_for || 'N/A'}`, 50, doc.y + 8);
+        if (paymentData.registration_no !== 'N/A') {
+          doc.text(`Registration No: ${paymentData.registration_no}`, 50, doc.y + 5);
+        }
+        doc.text(`Amount: ₹${parseFloat(paymentData.amount || 0).toLocaleString()}`, 50, doc.y + 5);
+        doc.text(`Transaction ID: ${paymentData.transaction_id || 'N/A'}`, 50, doc.y + 5);
+        doc.text(`Payment Method: ${paymentData.payment_method || 'Online'}`, 50, doc.y + 5);
+        doc.text(`Status: ${(paymentData.status || 'PENDING').toUpperCase()}`, 50, doc.y + 5);
+        doc.text(`Date: ${new Date(paymentData.date).toLocaleString('en-GB')}`, 50, doc.y + 5);
+        doc.moveDown(1.5);
+
+        // Additional Details - LEFT ALIGNED
+        if (paymentData.details) {
+          doc.fontSize(12).fillColor('#0B3C5D').font('Helvetica-Bold').text('Additional Details:', 50, doc.y);
+          doc.fontSize(10).fillColor('#000000').font('Helvetica');
+          
+          if (paymentData.type === 'Seminar Registration') {
+            if (paymentData.details.seminar_location) {
+              doc.text(`Location: ${paymentData.details.seminar_location}`, 50, doc.y + 8);
+            }
+            if (paymentData.details.start_date) {
+              doc.text(`Start Date: ${new Date(paymentData.details.start_date).toLocaleDateString('en-GB')}`, 50, doc.y + 5);
+            }
+            if (paymentData.details.end_date) {
+              doc.text(`End Date: ${new Date(paymentData.details.end_date).toLocaleDateString('en-GB')}`, 50, doc.y + 5);
+            }
+            
+            // Format delegate category for display
+            const delegateCategory = paymentData.details.delegate_category || 'N/A';
+            const formattedCategory = delegateCategory === 'boa-member' ? 'BOA Member' :
+                                       delegateCategory === 'non-boa-member' ? 'Non BOA Member' :
+                                       delegateCategory === 'accompanying-person' ? 'Accompanying Person' :
+                                       delegateCategory;
+            doc.text(`Delegate Category: ${formattedCategory}`, 50, doc.y + 5);
+          } else if (paymentData.type === 'Membership Registration') {
+            doc.text(`Membership Type: ${paymentData.details.membership_type || 'Standard'}`, 50, doc.y + 8);
+            if (paymentData.details.category) {
+              doc.text(`Category: ${paymentData.details.category}`, 50, doc.y + 5);
+            }
+            if (paymentData.details.qualification) {
+              doc.text(`Qualification: ${paymentData.details.qualification}`, 50, doc.y + 5);
+            }
+            if (paymentData.details.institution) {
+              doc.text(`Institution: ${paymentData.details.institution}`, 50, doc.y + 5);
+            }
+          }
+        }
+
+        doc.moveDown(3);
+        
+        // Add a line separator before footer
+        doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke();
+        doc.moveDown();
+        
+        // Footer - CENTER ALIGNED
+        doc.fontSize(8).fillColor('#666666').text('This is a computer-generated receipt and does not require a signature.', { align: 'center', italics: true });
+        
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  } catch (error) {
+    console.error('Generate and send PDF error:', error);
+    return { success: false, message: 'Failed to generate PDF', error: error.message };
+  }
+};
+
+// Download payment receipt as PDF
+exports.downloadPaymentPDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const PDFDocument = require('pdfkit');
+    const https = require('https');
+    const http = require('http');
+    
+    // Parse payment ID
+    const [type, paymentId] = id.split('_');
+    
+    let paymentData = null;
+    
+    if (type === 'sem') {
+      // Get seminar payment
+      const [payments] = await promisePool.query(
+        `SELECT r.*, r.guest_name, r.guest_email, r.guest_mobile, r.guest_address,
+                u.title, u.first_name, u.surname, u.email, u.mobile, u.address,
+                s.name as seminar_name, s.start_date, s.end_date, s.location
+         FROM registrations r
+         LEFT JOIN users u ON r.user_id = u.id
+         LEFT JOIN seminars s ON r.seminar_id = s.id
+         WHERE r.id = ?`,
+        [paymentId]
+      );
+      
+      if (payments.length > 0) {
+        const p = payments[0];
+        
+        // Use guest information if user_id is null, otherwise use user information
+        const userName = p.user_id 
+          ? `${formatTitle(p.title || '')} ${p.first_name || ''} ${p.surname || ''}`.trim() || 'Unknown User'
+          : p.guest_name || 'Unknown User';
+        
+        const userEmail = p.user_id ? p.email : p.guest_email;
+        const userMobile = p.user_id ? p.mobile : p.guest_mobile;
+        const userAddress = p.user_id ? p.address : p.guest_address;
+        
+        paymentData = {
+          type: 'Seminar Registration',
+          user_name: userName,
+          user_email: userEmail,
+          user_mobile: userMobile,
+          user_address: userAddress,
+          payment_for: p.seminar_name,
+          registration_no: p.registration_no,
+          amount: p.amount,
+          transaction_id: p.transaction_id,
+          payment_method: p.payment_method,
+          status: p.status,
+          date: p.payment_date || p.created_at,
+          details: {
+            seminar_location: p.location,
+            start_date: p.start_date,
+            end_date: p.end_date,
+            delegate_category: p.category_name || p.delegate_type
+          }
+        };
+      }
+    } else if (type === 'mem') {
+      // Get membership payment
+      const [payments] = await promisePool.query(
+        `SELECT mr.*, 
+                COALESCE(mr.amount, mc.price, 0) as payment_amount,
+                mc.category
          FROM membership_registrations mr
          LEFT JOIN membership_categories mc ON mr.membership_type = mc.title
          WHERE mr.id = ?`,
@@ -3093,19 +3490,19 @@ exports.downloadPaymentPDF = async (req, res) => {
         const p = payments[0];
         paymentData = {
           type: 'Membership Registration',
-          user_name: p.name,
+          user_name: p.name || 'Unknown User',
           user_email: p.email,
           user_mobile: p.mobile,
           user_address: p.address,
-          payment_for: `${p.membership_type} Membership`,
+          payment_for: `${p.membership_type || 'Standard'} Membership`,
           registration_no: 'N/A',
-          amount: p.price,
+          amount: parseFloat(p.payment_amount || 0),
           transaction_id: p.transaction_id,
           payment_method: 'Online',
-          status: p.payment_status,
+          status: p.payment_status === 'completed' ? 'COMPLETED' : (p.payment_status || 'PENDING').toUpperCase(),
           date: p.created_at,
           details: {
-            membership_type: p.membership_type,
+            membership_type: p.membership_type || 'Standard',
             category: p.category,
             qualification: p.qualification,
             institution: p.institution
@@ -3114,6 +3511,23 @@ exports.downloadPaymentPDF = async (req, res) => {
       }
     }
     
+    // Helper function to fetch image from URL
+    const fetchImage = (url) => {
+      return new Promise((resolve, reject) => {
+        const protocol = url.startsWith('https:') ? https : http;
+        protocol.get(url, (response) => {
+          if (response.statusCode !== 200) {
+            reject(new Error(`Failed to fetch image: ${response.statusCode}`));
+            return;
+          }
+          
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+        }).on('error', reject);
+      });
+    };
+
     if (!paymentData) {
       return res.status(404).json({ success: false, message: 'Payment not found' });
     }
@@ -3126,51 +3540,109 @@ exports.downloadPaymentPDF = async (req, res) => {
     
     doc.pipe(res);
 
-    // Header
-    doc.fontSize(20).text('Ophthalmic Association Of Bihar', { align: 'center' });
-    doc.fontSize(16).text('Payment Receipt', { align: 'center' });
+    // Add logo at top center
+    const centerX = doc.page.width / 2;
+    
+    try {
+      // Fetch and add the actual logo image
+      const logoUrl = 'https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png';
+      const logoBuffer = await fetchImage(logoUrl);
+      
+      // Add logo image at top center
+      doc.image(logoBuffer, centerX - 40, 30, { width: 80, height: 80 });
+      
+      // Add organization name below logo - centered
+      doc.fontSize(12)
+         .fillColor('#0B3C5D')
+         .font('Helvetica-Bold')
+         .text('Ophthalmic Association Of Bihar', centerX - 100, 120, { width: 200, align: 'center' });
+      
+      doc.moveDown(4);
+    } catch (logoError) {
+      console.error('Failed to load logo, using fallback:', logoError);
+      
+      // Fallback: Create a circular logo background with gradient effect
+      doc.circle(centerX, 70, 35)
+         .fillColor('#0B3C5D')
+         .fill();
+      
+      // Add inner circle for depth
+      doc.circle(centerX, 70, 30)
+         .fillColor('#088395')
+         .fill();
+      
+      // Add "BOA" text in the circle with better styling
+      doc.fontSize(18)
+         .fillColor('#FFFFFF')
+         .font('Helvetica-Bold')
+         .text('BOA', centerX - 22, 62, { width: 44, align: 'center' });
+      
+      // Add organization name below logo - centered
+      doc.fontSize(10)
+         .fillColor('#0B3C5D')
+         .font('Helvetica')
+         .text('Ophthalmic Association Of Bihar', centerX - 80, 110, { width: 160, align: 'center' });
+      
+      doc.moveDown(4);
+    }
+
+    // Header - LEFT ALIGNED
+    doc.fontSize(18).fillColor('#0B3C5D').font('Helvetica-Bold').text('Payment Receipt', 50, doc.y);
     doc.moveDown();
-    doc.fontSize(10).text(`Receipt Date: ${new Date().toLocaleDateString('en-GB')}`, { align: 'right' });
+    
+    // Add a line separator
+    doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke();
+    doc.moveDown();
+    
+    // Receipt date - RIGHT ALIGNED
+    doc.fontSize(10).fillColor('#666666').text(`Receipt Date: ${new Date().toLocaleDateString('en-GB')}`, doc.page.width - 150, doc.y);
     doc.moveDown(2);
 
-    // Payment Type
-    doc.fontSize(14).text(paymentData.type, { underline: true });
-    doc.moveDown();
+    // Payment Type - LEFT ALIGNED with better styling
+    doc.fontSize(14).fillColor('#0B3C5D').font('Helvetica-Bold').text(paymentData.type, 50, doc.y, { underline: true });
+    doc.fillColor('#000000').font('Helvetica');
+    doc.moveDown(1.5);
 
-    // User Details
-    doc.fontSize(12).text('User Details:', { underline: true });
-    doc.fontSize(10);
-    doc.text(`Name: ${paymentData.user_name}`);
-    doc.text(`Email: ${paymentData.user_email}`);
-    doc.text(`Mobile: ${paymentData.user_mobile}`);
+    // User Details - LEFT ALIGNED
+    doc.fontSize(12).fillColor('#0B3C5D').font('Helvetica-Bold').text('User Details:', 50, doc.y);
+    doc.fontSize(10).fillColor('#000000').font('Helvetica');
+    doc.text(`Name: ${paymentData.user_name || 'Unknown User'}`, 50, doc.y + 8);
+    doc.text(`Email: ${paymentData.user_email || 'N/A'}`, 50, doc.y + 5);
+    doc.text(`Mobile: ${paymentData.user_mobile || 'N/A'}`, 50, doc.y + 5);
     if (paymentData.user_address) {
-      doc.text(`Address: ${paymentData.user_address}`);
+      doc.text(`Address: ${paymentData.user_address}`, 50, doc.y + 5);
     }
-    doc.moveDown();
+    doc.moveDown(1.5);
 
-    // Payment Details
-    doc.fontSize(12).text('Payment Details:', { underline: true });
-    doc.fontSize(10);
-    doc.text(`Payment For: ${paymentData.payment_for}`);
+    // Payment Details - LEFT ALIGNED
+    doc.fontSize(12).fillColor('#0B3C5D').font('Helvetica-Bold').text('Payment Details:', 50, doc.y);
+    doc.fontSize(10).fillColor('#000000').font('Helvetica');
+    doc.text(`Payment For: ${paymentData.payment_for || 'N/A'}`, 50, doc.y + 8);
     if (paymentData.registration_no !== 'N/A') {
-      doc.text(`Registration No: ${paymentData.registration_no}`);
+      doc.text(`Registration No: ${paymentData.registration_no}`, 50, doc.y + 5);
     }
-    doc.text(`Amount: ₹${paymentData.amount}`);
-    doc.text(`Transaction ID: ${paymentData.transaction_id || 'N/A'}`);
-    doc.text(`Payment Method: ${paymentData.payment_method || 'N/A'}`);
-    doc.text(`Status: ${paymentData.status.toUpperCase()}`);
-    doc.text(`Date: ${new Date(paymentData.date).toLocaleString('en-GB')}`);
-    doc.moveDown();
+    doc.text(`Amount: ₹${parseFloat(paymentData.amount || 0).toLocaleString()}`, 50, doc.y + 5);
+    doc.text(`Transaction ID: ${paymentData.transaction_id || 'N/A'}`, 50, doc.y + 5);
+    doc.text(`Payment Method: ${paymentData.payment_method || 'Online'}`, 50, doc.y + 5);
+    doc.text(`Status: ${(paymentData.status || 'PENDING').toUpperCase()}`, 50, doc.y + 5);
+    doc.text(`Date: ${new Date(paymentData.date).toLocaleString('en-GB')}`, 50, doc.y + 5);
+    doc.moveDown(1.5);
 
-    // Additional Details
+    // Additional Details - LEFT ALIGNED
     if (paymentData.details) {
-      doc.fontSize(12).text('Additional Details:', { underline: true });
-      doc.fontSize(10);
+      doc.fontSize(12).fillColor('#0B3C5D').font('Helvetica-Bold').text('Additional Details:', 50, doc.y);
+      doc.fontSize(10).fillColor('#000000').font('Helvetica');
       
       if (paymentData.type === 'Seminar Registration') {
-        doc.text(`Location: ${paymentData.details.seminar_location || 'N/A'}`);
-        doc.text(`Start Date: ${new Date(paymentData.details.start_date).toLocaleDateString('en-GB')}`);
-        doc.text(`End Date: ${new Date(paymentData.details.end_date).toLocaleDateString('en-GB')}`);
+        if (paymentData.details.seminar_location) {
+          doc.text(`Location: ${paymentData.details.seminar_location}`, 50, doc.y + 8);
+        }
+        if (paymentData.details.start_date) {
+          doc.text(`Start Date: ${new Date(paymentData.details.start_date).toLocaleDateString('en-GB')}`, 50, doc.y + 5);
+        }
+        if (paymentData.details.end_date) {
+          doc.text(`End Date: ${new Date(paymentData.details.end_date).toLocaleDateString('en-GB')}`, 50, doc.y + 5);
+        }
         
         // Format delegate category for display
         const delegateCategory = paymentData.details.delegate_category || 'N/A';
@@ -3178,17 +3650,29 @@ exports.downloadPaymentPDF = async (req, res) => {
                                    delegateCategory === 'non-boa-member' ? 'Non BOA Member' :
                                    delegateCategory === 'accompanying-person' ? 'Accompanying Person' :
                                    delegateCategory;
-        doc.text(`Delegate Category: ${formattedCategory}`);
+        doc.text(`Delegate Category: ${formattedCategory}`, 50, doc.y + 5);
       } else if (paymentData.type === 'Membership Registration') {
-        doc.text(`Membership Type: ${paymentData.details.membership_type}`);
-        doc.text(`Category: ${paymentData.details.category}`);
-        doc.text(`Qualification: ${paymentData.details.qualification || 'N/A'}`);
-        doc.text(`Institution: ${paymentData.details.institution || 'N/A'}`);
+        doc.text(`Membership Type: ${paymentData.details.membership_type || 'Standard'}`, 50, doc.y + 8);
+        if (paymentData.details.category) {
+          doc.text(`Category: ${paymentData.details.category}`, 50, doc.y + 5);
+        }
+        if (paymentData.details.qualification) {
+          doc.text(`Qualification: ${paymentData.details.qualification}`, 50, doc.y + 5);
+        }
+        if (paymentData.details.institution) {
+          doc.text(`Institution: ${paymentData.details.institution}`, 50, doc.y + 5);
+        }
       }
     }
 
     doc.moveDown(3);
-    doc.fontSize(8).text('This is a computer-generated receipt and does not require a signature.', { align: 'center', italics: true });
+    
+    // Add a line separator before footer
+    doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke();
+    doc.moveDown();
+    
+    // Footer - CENTER ALIGNED
+    doc.fontSize(8).fillColor('#666666').text('This is a computer-generated receipt and does not require a signature.', { align: 'center', italics: true });
     
     doc.end();
   } catch (error) {
@@ -3201,6 +3685,9 @@ exports.downloadPaymentPDF = async (req, res) => {
   }
 };
 
+// Export the generateAndSendPDFReceipt function for use in payment routes
+exports.generateAndSendPDFReceipt = generateAndSendPDFReceipt;
+
 // Export all payments to Excel
 exports.exportAllPayments = async (req, res) => {
   try {
@@ -3211,8 +3698,9 @@ exports.exportAllPayments = async (req, res) => {
     
     // Get seminar payments
     const [seminarPayments] = await promisePool.query(
-      `SELECT r.registration_no, r.amount, r.status, r.payment_method, 
-              r.transaction_id, r.payment_date, r.created_at, r.delegate_type,
+      `SELECT r.registration_no, r.user_id, r.amount, r.status, r.payment_method, 
+              r.transaction_id, r.payment_date, r.created_at, r.delegate_type, r.category_name,
+              r.guest_name, r.guest_email, r.guest_mobile,
               u.title, u.first_name, u.surname, u.email, u.mobile,
               s.name as seminar_name
        FROM registrations r
@@ -3252,20 +3740,24 @@ exports.exportAllPayments = async (req, res) => {
       ];
       
       seminarSheet.addRows(seminarPayments.map(p => {
-        // Format delegate category for display
-        const delegateCategory = p.delegate_type || 'N/A';
-        const formattedCategory = delegateCategory === 'boa-member' ? 'BOA Member' :
-                                   delegateCategory === 'non-boa-member' ? 'Non BOA Member' :
-                                   delegateCategory === 'accompanying-person' ? 'Accompanying Person' :
-                                   delegateCategory;
+        // Use category_name for display, fallback to delegate_type if not available
+        const delegateCategory = p.category_name || p.delegate_type || 'N/A';
+        
+        // Use guest information if user_id is null, otherwise use user information
+        const userName = p.user_id 
+          ? `${formatTitle(p.title || '')} ${p.first_name || ''} ${p.surname || ''}`.trim() || 'Unknown User'
+          : p.guest_name || 'Unknown User';
+        
+        const userEmail = p.user_id ? p.email : p.guest_email;
+        const userMobile = p.user_id ? p.mobile : p.guest_mobile;
         
         return {
           reg_no: p.registration_no,
-          name: `${formatTitle(p.title)} ${p.first_name} ${p.surname}`,
-          email: p.email,
-          mobile: p.mobile,
+          name: userName,
+          email: userEmail,
+          mobile: userMobile,
           seminar: p.seminar_name,
-          category: formattedCategory,
+          category: delegateCategory,
           amount: p.amount,
           transaction_id: p.transaction_id || 'N/A',
           method: p.payment_method || 'N/A',
@@ -3982,6 +4474,191 @@ exports.toggleGalleryImageStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update gallery image status'
+    });
+  }
+};
+
+// ============ MEMBERSHIP-SPECIFIC OPERATIONS ============
+
+// Delete membership only (not the user account)
+exports.deleteMembership = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if this is a membership registration ID or user ID
+    let membershipId;
+    if (typeof id === 'string' && id.startsWith('mr_')) {
+      // This is a membership registration ID
+      membershipId = id.replace('mr_', '');
+    } else {
+      // This is a user ID, find the membership registration
+      const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
+      if (user.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const [membership] = await promisePool.query(
+        'SELECT id FROM membership_registrations WHERE email = ?',
+        [user[0].email]
+      );
+
+      if (membership.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No membership found for this user'
+        });
+      }
+
+      membershipId = membership[0].id;
+    }
+
+    // Delete only the membership registration, not the user account
+    await promisePool.query('DELETE FROM membership_registrations WHERE id = ?', [membershipId]);
+
+    res.json({
+      success: true,
+      message: 'Membership deleted successfully. User account remains active.'
+    });
+  } catch (error) {
+    console.error('Delete membership error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete membership',
+      error: error.message
+    });
+  }
+};
+
+// Toggle membership status (active/inactive)
+exports.toggleMembershipStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if this is a membership registration ID or user ID
+    let membershipId;
+    if (typeof id === 'string' && id.startsWith('mr_')) {
+      // This is a membership registration ID
+      membershipId = id.replace('mr_', '');
+    } else {
+      // This is a user ID, find the membership registration
+      const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
+      if (user.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const [membership] = await promisePool.query(
+        'SELECT id FROM membership_registrations WHERE email = ?',
+        [user[0].email]
+      );
+
+      if (membership.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No membership found for this user'
+        });
+      }
+
+      membershipId = membership[0].id;
+    }
+
+    // Toggle membership status
+    await promisePool.query(
+      `UPDATE membership_registrations 
+       SET membership_status = CASE 
+         WHEN membership_status = 'active' THEN 'inactive' 
+         ELSE 'active' 
+       END 
+       WHERE id = ?`,
+      [membershipId]
+    );
+
+    // Get the new status
+    const [updated] = await promisePool.query(
+      'SELECT membership_status FROM membership_registrations WHERE id = ?',
+      [membershipId]
+    );
+
+    res.json({
+      success: true,
+      message: `Membership status updated to ${updated[0].membership_status}`,
+      new_status: updated[0].membership_status
+    });
+  } catch (error) {
+    console.error('Toggle membership status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update membership status',
+      error: error.message
+    });
+  }
+};
+
+// Update membership status directly
+exports.updateMembershipStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['active', 'inactive'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be "active" or "inactive"'
+      });
+    }
+
+    // Check if this is a membership registration ID or user ID
+    let membershipId;
+    if (typeof id === 'string' && id.startsWith('mr_')) {
+      // This is a membership registration ID
+      membershipId = id.replace('mr_', '');
+    } else {
+      // This is a user ID, find the membership registration
+      const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
+      if (user.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const [membership] = await promisePool.query(
+        'SELECT id FROM membership_registrations WHERE email = ?',
+        [user[0].email]
+      );
+
+      if (membership.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No membership found for this user'
+        });
+      }
+
+      membershipId = membership[0].id;
+    }
+
+    // Update membership status
+    await promisePool.query(
+      'UPDATE membership_registrations SET membership_status = ? WHERE id = ?',
+      [status, membershipId]
+    );
+
+    res.json({
+      success: true,
+      message: `Membership status updated to ${status}`,
+      new_status: status
+    });
+  } catch (error) {
+    console.error('Update membership status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update membership status',
+      error: error.message
     });
   }
 };

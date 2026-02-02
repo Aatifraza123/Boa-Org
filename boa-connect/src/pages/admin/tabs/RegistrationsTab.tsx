@@ -12,6 +12,28 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import AddCertificateModal from '@/components/admin/AddCertificateModal';
 
+// Helper function to get user name (handles both user and guest registrations)
+const getUserName = (reg: any) => {
+  if (reg.user_id && reg.first_name) {
+    // User registration
+    return `${formatTitle(reg.title)} ${reg.first_name} ${reg.surname}`.trim();
+  } else if (reg.guest_name) {
+    // Guest registration
+    return reg.guest_name;
+  }
+  return 'Unknown User';
+};
+
+// Helper function to get user email
+const getUserEmail = (reg: any) => {
+  return reg.user_id ? reg.email : reg.guest_email || 'N/A';
+};
+
+// Helper function to get user mobile
+const getUserMobile = (reg: any) => {
+  return reg.user_id ? reg.mobile : reg.guest_mobile || 'N/A';
+};
+
 // Helper function to convert delegate_type to readable format
 const formatDelegateType = (delegateType: string, categoryName?: string) => {
   // If we have the original category name, use that
@@ -172,9 +194,9 @@ export default function RegistrationsTab() {
     y += 8;
     doc.setFontSize(10);
     const participantInfo = [
-      ['Name:', `${formatTitle(reg.title)} ${reg.first_name} ${reg.surname}`],
-      ['Email:', reg.email],
-      ['Mobile:', reg.mobile],
+      ['Name:', getUserName(reg)],
+      ['Email:', getUserEmail(reg)],
+      ['Mobile:', getUserMobile(reg)],
       ['Gender:', reg.gender],
       ['Membership No:', reg.membership_no || 'N/A'],
       ['Delegate Type:', formatDelegateType(reg.delegate_type, reg.category_name) || 'Self']
@@ -307,7 +329,7 @@ export default function RegistrationsTab() {
             {registrations.map((reg) => (
               <TableRow key={reg.id}>
                 <TableCell className="font-medium">{reg.registration_no}</TableCell>
-                <TableCell>{formatTitle(reg.title)} {reg.first_name} {reg.surname}</TableCell>
+                <TableCell>{getUserName(reg)}</TableCell>
                 <TableCell className="text-sm">{reg.seminar_name}</TableCell>
                 <TableCell className="text-sm">{reg.category_name}</TableCell>
                 <TableCell>
@@ -401,9 +423,9 @@ export default function RegistrationsTab() {
               <div className="bg-accent/30 rounded-lg p-4">
                 <h3 className="font-semibold text-lg mb-3">Participant Details</h3>
                 <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div><span className="font-semibold">Name:</span> {formatTitle(selectedRegistration.title)} {selectedRegistration.first_name} {selectedRegistration.surname}</div>
-                  <div><span className="font-semibold">Email:</span> {selectedRegistration.email}</div>
-                  <div><span className="font-semibold">Mobile:</span> {selectedRegistration.mobile}</div>
+                  <div><span className="font-semibold">Name:</span> {getUserName(selectedRegistration)}</div>
+                  <div><span className="font-semibold">Email:</span> {getUserEmail(selectedRegistration)}</div>
+                  <div><span className="font-semibold">Mobile:</span> {getUserMobile(selectedRegistration)}</div>
                   <div><span className="font-semibold">Gender:</span> {selectedRegistration.gender}</div>
                   <div><span className="font-semibold">Membership No:</span> {selectedRegistration.membership_no || 'N/A'}</div>
                   <div><span className="font-semibold">Delegate Type:</span> {formatDelegateType(selectedRegistration.delegate_type, selectedRegistration.category_name) || 'Self'}</div>

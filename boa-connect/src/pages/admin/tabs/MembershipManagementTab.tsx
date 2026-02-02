@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { adminAPI } from '@/lib/api';
-import { Search, Edit, Award, Calendar, User, Mail, Phone, Download, Upload, FileText, X, CheckCircle } from 'lucide-react';
+import { Search, Edit, Award, Calendar, User, Mail, Phone, Download, Upload, FileText, X, CheckCircle, Trash2 } from 'lucide-react';
 import { exportToCSV, formatMembershipForExport } from '@/lib/exportUtils';
 
 // Helper function to format title consistently
@@ -36,6 +36,9 @@ export default function MembershipManagementTab() {
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certificatePreview, setCertificatePreview] = useState<string | null>(null);
   const [certificateForm, setCertificateForm] = useState({
@@ -331,6 +334,46 @@ export default function MembershipManagementTab() {
     }
   };
 
+  const handleDeleteMembership = (member: any) => {
+    setMemberToDelete(member);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteMembership = async () => {
+    if (!memberToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await adminAPI.deleteMembership(memberToDelete.id);
+      toast({
+        title: 'Success',
+        description: `${memberToDelete.first_name} ${memberToDelete.surname}'s membership deleted successfully. User account remains active.`,
+        duration: 3000,
+      });
+      setIsDeleteDialogOpen(false);
+      setMemberToDelete(null);
+      loadMembers(); // Reload the members list
+    } catch (error: any) {
+      console.error('Delete membership error:', error);
+      
+      let errorMessage = 'Failed to delete membership';
+      if (error.response?.status === 404) {
+        errorMessage = 'Membership not found. It may have already been deleted.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+        duration: 4000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const exportMembersList = async () => {
     try {
       // This would trigger a download from the backend
@@ -358,10 +401,10 @@ export default function MembershipManagementTab() {
 
   return (
     <div className="space-y-6">
+
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Membership Management</h2>
-          <p className="text-muted-foreground">Manage member details and assign membership numbers</p>
+          <h2 className="text-2xl font-bold">Paid Members Only</h2>
         </div>
         <Button onClick={handleExportCSV} className="gradient-primary">
           <Download className="mr-2 h-4 w-4" />
@@ -443,11 +486,16 @@ export default function MembershipManagementTab() {
                 <TableCell>
                   <Badge className={`${
                     member.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
+                    member.status === 'inactive' ? 'bg-red-100 text-red-800 border-red-200' :
                     member.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                    member.status === 'expired' ? 'bg-red-100 text-red-800 border-red-200' :
+                    member.status === 'expired' ? 'bg-gray-100 text-gray-800 border-gray-200' :
                     'bg-gray-100 text-gray-800 border-gray-200'
                   }`}>
-                    {member.status || 'Active'}
+                    {member.status === 'active' ? 'Active' :
+                     member.status === 'inactive' ? 'Inactive' :
+                     member.status === 'pending' ? 'Pending' :
+                     member.status === 'expired' ? 'Expired' :
+                     'Unknown'}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -479,6 +527,15 @@ export default function MembershipManagementTab() {
                     >
                       <Award className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteMembership(member)}
+                      title="Delete Membership Only"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -487,10 +544,10 @@ export default function MembershipManagementTab() {
         </Table>
       </div>
 
-      {filteredMembers.length === 0 && (
-        <div className="text-center py-8">
-          <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No members found</p>
+      {filteredMembers.length === 0 && !isLoading && (
+        <div className="text-center py-12">
+          <Award className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Paid Members Found</h3>
         </div>
       )}
 
@@ -505,16 +562,6 @@ export default function MembershipManagementTab() {
           
           {selectedMember && (
             <div className="space-y-6">
-              {/* Member Info */}
-              <div className="bg-accent/30 rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Member Information</h3>
-                <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div><span className="font-medium">Name:</span> {formatTitle(selectedMember.title)} {selectedMember.first_name} {selectedMember.surname}</div>
-                  <div><span className="font-medium">Email:</span> {selectedMember.email}</div>
-                  <div><span className="font-medium">Mobile:</span> {selectedMember.mobile}</div>
-                  <div><span className="font-medium">Registered:</span> {new Date(selectedMember.created_at).toLocaleDateString()}</div>
-                </div>
-              </div>
 
               {/* Membership Details Form */}
               <div className="grid md:grid-cols-2 gap-4">
@@ -573,6 +620,7 @@ export default function MembershipManagementTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="expired">Expired</SelectItem>
                       <SelectItem value="suspended">Suspended</SelectItem>
@@ -632,17 +680,6 @@ export default function MembershipManagementTab() {
           
           {selectedMember && (
             <div className="space-y-6">
-              {/* Member Info */}
-              <div className="bg-accent/30 rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Member Information</h3>
-                <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div><span className="font-medium">Name:</span> {formatTitle(selectedMember.title)} {selectedMember.first_name} {selectedMember.surname}</div>
-                  <div><span className="font-medium">Email:</span> {selectedMember.email}</div>
-                  <div><span className="font-medium">Mobile:</span> {selectedMember.mobile}</div>
-                  <div><span className="font-medium">Membership No:</span> {selectedMember.membership_no || 'Not Assigned'}</div>
-                </div>
-              </div>
-
               {/* Success Message */}
               {uploadSuccess && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -870,6 +907,88 @@ export default function MembershipManagementTab() {
                     <>
                       <Upload className="mr-2 h-4 w-4" />
                       Upload Certificate
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Membership Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Membership</DialogTitle>
+          </DialogHeader>
+          
+          {memberToDelete && (
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <Trash2 className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-red-800">Confirm Membership Deletion</h3>
+                    <p className="text-red-700 text-sm mt-1">
+                      Are you sure you want to delete this membership? The user account will remain active but their membership will be removed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-2">Member Details:</h4>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <div><span className="font-medium">Name:</span> {formatTitle(memberToDelete.title)} {memberToDelete.first_name} {memberToDelete.surname}</div>
+                  <div><span className="font-medium">Email:</span> {memberToDelete.email}</div>
+                  <div><span className="font-medium">Mobile:</span> {memberToDelete.mobile}</div>
+                  {memberToDelete.membership_no && (
+                    <div><span className="font-medium">Membership No:</span> {memberToDelete.membership_no}</div>
+                  )}
+                  <div><span className="font-medium">Membership Type:</span> {memberToDelete.membership_type}</div>
+                  <div><span className="font-medium">Status:</span> {memberToDelete.status}</div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-blue-800 text-sm">
+                  <strong>Note:</strong> This will only delete the membership record. The user account will remain active and they can still:
+                </p>
+                <ul className="text-blue-700 text-sm mt-1 ml-4 list-disc">
+                  <li>Login to their account</li>
+                  <li>Register for seminars</li>
+                  <li>Apply for membership again</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsDeleteDialogOpen(false);
+                    setMemberToDelete(null);
+                  }}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={confirmDeleteMembership}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Membership Only
                     </>
                   )}
                 </Button>

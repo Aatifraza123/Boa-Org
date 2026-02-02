@@ -18,7 +18,7 @@ export function AboutSection() {
               About <span className="text-black">Ophthalmic Association</span> of Bihar
             </h2>
             
-            <p className="text-base sm:text-lg leading-relaxed text-gray-600">
+            <p className="text-base sm:text-lg leading-relaxed text-gray-600 text-left">
               The Ophthalmic Association of Bihar (BOA) stands as a premier professional organization dedicated to advancing the field of ophthalmic care and eye care across Bihar state. Registered under the Societies Registration Act 21, 1860, we have been serving the ophthalmic community for decades.
             </p>
 

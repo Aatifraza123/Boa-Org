@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Users, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowRight, ArrowLeft, CheckCircle, LogIn } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { seminarAPI } from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function SeminarDetail() {
   const { id } = useParams();
@@ -12,10 +13,27 @@ export default function SeminarDetail() {
   const [seminar, setSeminar] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     loadSeminar();
+    checkAuthentication();
   }, [id]);
+
+  const checkAuthentication = () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    setIsAuthenticated(!!(token && user));
+  };
+
+  const handleRegisterClick = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to register for seminars');
+      navigate('/login', { state: { from: `/seminar/${id}/register` } });
+      return;
+    }
+    navigate(`/seminar/${id}/register`);
+  };
 
   const loadSeminar = async () => {
     try {
@@ -359,13 +377,20 @@ export default function SeminarDetail() {
                 </div>
 
                 {seminar.status !== 'previous' && seminar.is_active && seminar.online_registration_enabled === 1 ? (
-                  <Link to={`/seminar/${seminar.id}/register`}>
-                    <Button className="w-full gradient-primary text-primary-foreground text-sm md:text-base" size="lg">
-                      <span className="hidden sm:inline">Register Now</span>
-                      <span className="sm:hidden">Register</span>
-                      <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={handleRegisterClick}
+                    className="w-full gradient-primary text-primary-foreground text-sm md:text-base" 
+                    size="lg"
+                  >
+                    {!isAuthenticated && <LogIn className="mr-2 h-4 w-4 md:h-5 md:w-5" />}
+                    <span className="hidden sm:inline">
+                      {isAuthenticated ? 'Register Now' : 'Login to Register'}
+                    </span>
+                    <span className="sm:hidden">
+                      {isAuthenticated ? 'Register' : 'Login'}
+                    </span>
+                    <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
                 ) : seminar.status === 'previous' ? (
                   <Button disabled className="w-full text-sm md:text-base" size="lg">
                     Event Completed
