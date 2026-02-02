@@ -21,7 +21,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
 
   // Get the redirect path from location state
-  const from = location.state?.from || '/dashboard';
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +34,19 @@ export default function Login() {
         response = await authAPI.login(email, password);
       } else {
         response = await authAPI.loginWithMembership(membershipNo, password);
+      }
+
+      console.log('Login response:', response);
+
+      // Check if response has token
+      if (!response.token) {
+        toast({
+          title: 'Login Error',
+          description: 'No authentication token received from server.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
       }
 
       // Check if user is admin - redirect to admin login
@@ -57,6 +70,7 @@ export default function Login() {
       // Verify token was saved
       const savedToken = localStorage.getItem('token');
       console.log('Token saved to localStorage:', savedToken ? 'Yes' : 'No');
+      console.log('Redirecting to:', from);
 
       // Show success message
       toast({
