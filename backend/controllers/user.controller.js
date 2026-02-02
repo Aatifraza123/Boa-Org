@@ -189,6 +189,14 @@ exports.changePassword = async (req, res) => {
 // Get user membership details
 exports.getMembershipDetails = async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Authentication required' 
+      });
+    }
+
     const userId = req.user.id;
 
     // Get user details with membership information and payment details

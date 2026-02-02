@@ -840,7 +840,7 @@ exports.getAllMembers = async (req, res) => {
 
     // JOIN with users table to get membership_no
     const [members] = await promisePool.query(`
-      SELECT mr.id, mr.name, mr.email, mr.membership_type, mr.membership_status, mr.created_at,
+      SELECT mr.id, mr.name, mr.email, mr.membership_type, mr.payment_status as membership_status, mr.created_at,
              u.membership_no, mr.valid_from, mr.valid_until, mr.notes
       FROM membership_registrations mr
       LEFT JOIN users u ON mr.email = u.email
