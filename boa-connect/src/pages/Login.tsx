@@ -50,9 +50,13 @@ export default function Login() {
         return;
       }
 
-      // Save token
+      // Save token and user data
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Verify token was saved
+      const savedToken = localStorage.getItem('token');
+      console.log('Token saved to localStorage:', savedToken ? 'Yes' : 'No');
 
       // Show success message
       toast({
@@ -60,10 +64,10 @@ export default function Login() {
         description: `Welcome back, ${response.user.first_name}!`,
       });
 
-      // Redirect to the intended page or dashboard
+      // Wait to ensure localStorage is written, then redirect
       setTimeout(() => {
         window.location.href = from;
-      }, 500);
+      }, 1000);
 
     } catch (error: any) {
       console.error('Login error:', error);
