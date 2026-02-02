@@ -268,7 +268,13 @@ try {
     }
   });
 
+<<<<<<< HEAD
   // Generate PDF from HTML template routes (PUBLIC - no auth required for blank forms)
+=======
+  // Generate PDF from HTML template routes (PUBLIC - no auth required)
+  const authMiddleware = require('./middleware/auth.middleware');
+  
+>>>>>>> 7d69e0ff69e911a8ae88233782760e7a9073016c
   app.get('/api/generate-membership-pdf', async (req, res) => {
     try {
       // Set cache control headers to prevent caching
