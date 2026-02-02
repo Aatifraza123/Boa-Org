@@ -202,7 +202,7 @@ exports.getMembershipDetails = async (req, res) => {
     // Get user details with membership information and payment details
     const [user] = await promisePool.query(`
       SELECT u.*, 
-             mr.membership_type, mr.membership_status as status, mr.valid_from, mr.valid_until, mr.notes,
+             mr.membership_type, mr.payment_status as status, mr.valid_from, mr.valid_until, mr.notes,
              mr.amount, mr.payment_status, mr.payment_method, mr.transaction_id,
              mr.razorpay_payment_id, mr.payment_date, mr.qualification, mr.year_passing,
              mr.institution, mr.working_place,
@@ -253,7 +253,7 @@ exports.verifyMembership = async (req, res) => {
     // Check in users table for BOA members
     const [users] = await promisePool.query(
       `SELECT u.id, u.first_name, u.surname, u.email, u.membership_no, u.is_boa_member, u.created_at,
-              mr.membership_status
+              mr.payment_status as membership_status
        FROM users u
        LEFT JOIN membership_registrations mr ON u.email = mr.email
        WHERE u.membership_no = ? AND u.is_boa_member = TRUE AND u.is_active = TRUE`,

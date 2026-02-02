@@ -59,15 +59,7 @@ export default function MembershipDetails() {
     }
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await loadMembershipDetails();
-    setIsRefreshing(false);
-    toast({
-      title: 'Refreshed',
-      description: 'Membership details updated',
-    });
-  };
+  
 
   const generateMembershipCard = () => {
     if (!membershipData) return;
@@ -341,16 +333,6 @@ export default function MembershipDetails() {
                 <h1 className="text-3xl font-bold text-foreground">
                   My Membership
                 </h1>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="ml-4"
-                >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
               </div>
             </div>
 
@@ -378,16 +360,6 @@ export default function MembershipDetails() {
               <h1 className="text-3xl font-bold text-foreground">
                 My Membership
               </h1>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="ml-4"
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
             </div>
           </div>
 

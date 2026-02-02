@@ -4570,9 +4570,9 @@ exports.toggleMembershipStatus = async (req, res) => {
     // Toggle membership status
     await promisePool.query(
       `UPDATE membership_registrations 
-       SET membership_status = CASE 
-         WHEN membership_status = 'active' THEN 'inactive' 
-         ELSE 'active' 
+       SET payment_status = CASE 
+         WHEN payment_status = 'completed' THEN 'pending' 
+         ELSE 'completed' 
        END 
        WHERE id = ?`,
       [membershipId]
@@ -4580,14 +4580,14 @@ exports.toggleMembershipStatus = async (req, res) => {
 
     // Get the new status
     const [updated] = await promisePool.query(
-      'SELECT membership_status FROM membership_registrations WHERE id = ?',
+      'SELECT payment_status FROM membership_registrations WHERE id = ?',
       [membershipId]
     );
 
     res.json({
       success: true,
-      message: `Membership status updated to ${updated[0].membership_status}`,
-      new_status: updated[0].membership_status
+      message: `Membership status updated to ${updated[0].payment_status}`,
+      new_status: updated[0].payment_status
     });
   } catch (error) {
     console.error('Toggle membership status error:', error);
@@ -4644,7 +4644,7 @@ exports.updateMembershipStatus = async (req, res) => {
 
     // Update membership status
     await promisePool.query(
-      'UPDATE membership_registrations SET membership_status = ? WHERE id = ?',
+      'UPDATE membership_registrations SET payment_status = ? WHERE id = ?',
       [status, membershipId]
     );
 
