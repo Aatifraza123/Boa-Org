@@ -12,8 +12,8 @@ router.put('/profile', auth, userController.updateProfile);
 // Change password
 router.put('/change-password', auth, userController.changePassword);
 
-// Get membership details (no auth required)
-router.get('/membership', userController.getMembershipDetails);
+// Get membership details (requires auth)
+router.get('/membership', auth, userController.getMembershipDetails);
 
 // Verify BOA membership number (public route - no auth required)
 router.post('/verify-membership', userController.verifyMembership);

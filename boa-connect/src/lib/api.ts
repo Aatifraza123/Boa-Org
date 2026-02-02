@@ -40,6 +40,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired, clear it
+      console.log('Token invalid or expired, clearing localStorage');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Add admin token to requests
 adminApi.interceptors.request.use((config) => {
   const adminToken = localStorage.getItem('adminToken');

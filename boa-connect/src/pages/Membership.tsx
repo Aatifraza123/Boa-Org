@@ -238,7 +238,7 @@ export default function Membership() {
       {/* Hero Section */}
       <section className="gradient-hero py-16">
         <div className="container text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-primary-foreground text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary backdrop-blur-sm text-primary-foreground text-sm font-medium mb-4">
             <Users className="h-4 w-4" />
             Join Members
           </div>

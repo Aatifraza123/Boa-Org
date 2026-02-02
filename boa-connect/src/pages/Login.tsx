@@ -21,7 +21,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
 
   // Get the redirect path from location state
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const from = typeof location.state?.from === 'string' 
+    ? location.state.from 
+    : location.state?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

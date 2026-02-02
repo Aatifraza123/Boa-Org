@@ -74,7 +74,7 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
 
   if (requireAuth && !isAuthenticated) {
     toast.error('Please login to access this page');
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return <>{children}</>;
