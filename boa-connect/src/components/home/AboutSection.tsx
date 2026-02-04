@@ -19,10 +19,10 @@ export function AboutSection() {
             </h2>
             
             <p className="text-base sm:text-lg leading-relaxed text-gray-600 text-left">
-              The Ophthalmic Association of Bihar (BOA) stands as a premier professional organization dedicated to advancing the field of ophthalmic care and eye care across Bihar state. Registered under the Societies Registration Act 21, 1860, we have been serving the ophthalmic community for decades.
+              The Ophthalmic Association of Bihar (OAB) is a registered ophthalmic association under the Societies Registration Act - 1860 of India. Its members work as qualified primary eye care professionals since 1976 in all over India.
             </p>
 
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="gov-card p-4 hover:shadow-md transition-shadow duration-300 border-l-4 border-[#09637E]">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#09637E]/10 flex-shrink-0">
@@ -30,7 +30,7 @@ export function AboutSection() {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1 text-base text-gray-900">Our Mission</h3>
-                    <p className="text-sm text-gray-600">Advancing eye care excellence through education and research</p>
+                    <p className="text-sm text-gray-600">Create a zero defect vision where ophthalmic professionals provide high-quality visual health and eye care, which are accessible and affordable to all peoples living in India.</p>
                   </div>
                 </div>
               </div>
@@ -42,7 +42,7 @@ export function AboutSection() {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1 text-base text-gray-900">Our Community</h3>
-                    <p className="text-sm text-gray-600">Connecting ophthalmologists across Bihar</p>
+                    <p className="text-sm text-gray-600">Impart a cumulative effort to achieve their fundamental right as first-line eye care providers as ophthalmic professionals in Ophthalmic Science Council of India under National Commission of Allied Health Professional Act - 2020 of Government of India. Their strong advocacy for primary eye care practitioners.</p>
                   </div>
                 </div>
               </div>

@@ -85,11 +85,11 @@ export default function About() {
 
         {/* BOA Details Section */}
         <section className="py-16 bg-white">
-          <div className="container mx-auto px-4 max-w-5xl">
-            <div className="section-enter">
-              <h2 className="p-2 bg-[#0B3C5D] text-white text-3xl font-bold text-gray-900 mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
-                About BOA
-              </h2>
+          <div className="section-enter">
+            <h2 className="p-4 mx-4 bg-[#0B3C5D] text-white text-2xl sm:text-3xl font-bold mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+              About BOA
+            </h2>
+            <div className="container mx-auto px-4 max-w-5xl">
               <div className="prose prose-lg max-w-none">
                 <p className="text-gray-700 leading-relaxed mb-6 text-lg">
                   The Ophthalmic Association Of Bihar (BOA) was established in 2021 as a professional medical association
@@ -115,13 +115,12 @@ export default function About() {
 
         {/* Certification Section */}
         <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4 max-w-5xl">
-            <div className="text-center mb-12 ">
-              <h2 className="p-2 bg-[#0B3C5D] text-white text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
-                Certification & Registration
-              </h2>
-              <div className="h-1 w-24 bg-blue-600 mx-auto rounded-full"></div>
-            </div>
+          <div className="section-enter">
+            <h2 className="p-4 mx-4 bg-[#0B3C5D] text-white text-2xl sm:text-3xl font-bold mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+              Certification & Registration
+            </h2>
+            <div className="container mx-auto px-4 max-w-5xl">
+              <div className="h-1 w-24 bg-blue-600 mx-auto rounded-full mb-12"></div>
 
             {certification ? (
               <div className="bg-white rounded-xl shadow-lg  border border-gray-200 overflow-hidden">
@@ -215,18 +214,92 @@ export default function About() {
               </div>
             )}
           </div>
+        </div>
+        </section>
+
+        {/* NPCB-VI Section */}
+        <section className="py-16 bg-gradient-to-br from-blue-50 to-white">
+          <div className="section-enter">
+            <h2 className="p-4 mx-4 bg-[#0B3C5D] text-white text-2xl sm:text-3xl font-bold mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+              National Programme for Control of Blindness and Visual Impairment (NPCB-VI)
+            </h2>
+            
+            <div className="container mx-auto px-4 max-w-5xl">
+              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                <p className="text-gray-700 leading-relaxed mb-6 text-lg">
+                  The National Programme for Control of Blindness and Visual Impairment (NPCB-VI) is run by the Government of India, 
+                  in association with the National Ophthalmic Association (NOA).
+                </p>
+
+                {/* Objective */}
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-[#0B3C5D] mb-3 flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Objective
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed text-lg pl-7">
+                    To achieve the goal of the NPCB-VI program, working to curb blindness across India.
+                  </p>
+                </div>
+
+                {/* Vision */}
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-[#0B3C5D] mb-3 flex items-center gap-2">
+                    <Scale className="h-5 w-5" />
+                    Vision
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed text-lg pl-7">
+                    "Peoples of India remains free from avoidable blindness and ensure a good quality of life both 
+                    irreversible blindness & in society & others."
+                  </p>
+                </div>
+
+                {/* Mission */}
+                <div>
+                  <h3 className="text-xl font-bold text-[#0B3C5D] mb-3 flex items-center gap-2">
+                    <Building className="h-5 w-5" />
+                    Mission
+                  </h3>
+                  <ul className="space-y-3 pl-7">
+                    <li className="text-gray-700 leading-relaxed text-lg flex items-start gap-2">
+                      <span className="text-[#0B3C5D] font-bold mt-1">•</span>
+                      <span>Minimize health care burden on secondary and tertiary levels by providing quality and quantity measures.</span>
+                    </li>
+                    <li className="text-gray-700 leading-relaxed text-lg flex items-start gap-2">
+                      <span className="text-[#0B3C5D] font-bold mt-1">•</span>
+                      <span>Generate awareness at the last level of community for eye & health care.</span>
+                    </li>
+                    <li className="text-gray-700 leading-relaxed text-lg flex items-start gap-2">
+                      <span className="text-[#0B3C5D] font-bold mt-1">•</span>
+                      <span>Provide quality basic eye examination including refraction and diagnosis of vision-threatening diseases.</span>
+                    </li>
+                    <li className="text-gray-700 leading-relaxed text-lg flex items-start gap-2">
+                      <span className="text-[#0B3C5D] font-bold mt-1">•</span>
+                      <span>Identify and manage newly diagnosed vision threatening diseases like Glaucoma at higher level with prompt management.</span>
+                    </li>
+                    <li className="text-gray-700 leading-relaxed text-lg flex items-start gap-2">
+                      <span className="text-[#0B3C5D] font-bold mt-1">•</span>
+                      <span>Screening of asymptomatic vision disorders with trained non-medical personnel and community health workers.</span>
+                    </li>
+                    <li className="text-gray-700 leading-relaxed text-lg flex items-start gap-2">
+                      <span className="text-[#0B3C5D] font-bold mt-1">•</span>
+                      <span>Co-ordinating care with primary care physicians for patients with special needs.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Committee Members Section */}
         <section className="py-16 bg-white">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="section-enter">
-              <div className="text-center mb-12">
-                <h2 className="p-2 bg-[#0B3C5D] text-white text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
-                  Executive Committee Members
-                </h2>
-                <div className="h-1 w-24 bg-blue-600 mx-auto rounded-full"></div>
-              </div>
+          <div className="section-enter">
+            <h2 className="p-4 mx-4 bg-[#0B3C5D] text-white text-2xl sm:text-3xl font-bold mb-8 text-center" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+              Executive Committee Members
+            </h2>
+            <div className="container mx-auto px-4 max-w-6xl">
+              <div className="h-1 w-24 bg-blue-600 mx-auto rounded-full mb-12"></div>
 
               {committeeMembers.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
