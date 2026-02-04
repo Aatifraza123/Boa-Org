@@ -10,9 +10,27 @@ exports.getAllStats = async (req, res) => {
        ORDER BY display_order ASC`
     );
 
+    // Update active members count dynamically from paid memberships
+    const [memberCount] = await promisePool.query(
+      `SELECT COUNT(*) as count 
+       FROM membership_registrations 
+       WHERE payment_status = 'completed'`
+    );
+
+    // Update the total_members stat with real count
+    const updatedStats = stats.map(stat => {
+      if (stat.stat_key === 'total_members') {
+        return {
+          ...stat,
+          stat_value: memberCount[0].count.toString()
+        };
+      }
+      return stat;
+    });
+
     res.json({
       success: true,
-      stats: stats
+      stats: updatedStats
     });
   } catch (error) {
     console.error('Get stats error:', error);

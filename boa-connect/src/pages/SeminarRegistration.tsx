@@ -269,14 +269,15 @@ export default function SeminarRegistration() {
       // In development, use relative URL to go through Vite proxy
       const isDevelopment = import.meta.env.DEV;
       const url = isDevelopment 
-        ? '/api/committee-members'
-        : `${API_BASE_URL}/api/committee-members`;
+        ? '/api/committee-members?page_type=seminar'
+        : `${API_BASE_URL}/api/committee-members?page_type=seminar`;
         
       const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
-        // Remove duplicates based on member name
-        const uniqueMembers = data.members.filter((member: any, index: number, self: any[]) =>
+        // Filter only seminar page members and remove duplicates based on member name
+        const seminarMembers = data.members.filter((member: any) => member.page_type === 'seminar');
+        const uniqueMembers = seminarMembers.filter((member: any, index: number, self: any[]) =>
           index === self.findIndex((m: any) => m.name === member.name)
         );
         setCommitteeMembers(uniqueMembers);

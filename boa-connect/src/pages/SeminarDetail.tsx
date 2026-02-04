@@ -288,7 +288,10 @@ export default function SeminarDetail() {
                       </div>
                     </div>
                   )}
-
+                    <div className="bg-accent/30 rounded-lg p-2 sm:p-3 md:p-4 text-xs sm:text-sm text-muted-foreground">
+                    <h3><b>Early 25 Register Delegate Accomodation Free</b>
+                    </h3>
+                  </div>
                   <div className="bg-accent/30 rounded-lg p-2 sm:p-3 md:p-4 text-xs sm:text-sm text-muted-foreground">
                     <p className="font-semibold mb-1 sm:mb-2">Note:</p>
                     <ul className="list-disc list-inside space-y-0.5 sm:space-y-1 text-[11px] sm:text-xs md:text-sm">

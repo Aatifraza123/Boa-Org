@@ -226,6 +226,7 @@ export default function CommitteeMembersTab() {
                 >
                   <option value="about">About Page</option>
                   <option value="home">Home Page</option>
+                  <option value="seminar">Seminar Registration Page</option>
                 </select>
                 <p className="text-xs text-muted-foreground mt-1">Choose where to display this member</p>
               </div>
@@ -265,8 +266,12 @@ export default function CommitteeMembersTab() {
                 <TableCell className="font-medium">{member.name}</TableCell>
                 <TableCell>{member.profession}</TableCell>
                 <TableCell>
-                  <span className={`text-xs px-2 py-1 rounded ${member.page_type === 'home' ? 'bg-primary text-white' : 'bg-primary text-white'}`}>
-                    {member.page_type === 'home' ? 'Home' : 'About'}
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    member.page_type === 'home' ? 'bg-blue-500 text-white' : 
+                    member.page_type === 'seminar' ? 'bg-green-500 text-white' : 
+                    'bg-gray-500 text-white'
+                  }`}>
+                    {member.page_type === 'home' ? 'Home' : member.page_type === 'seminar' ? 'Seminar' : 'About'}
                   </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
