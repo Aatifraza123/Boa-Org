@@ -585,49 +585,11 @@ export default function Dashboard() {
                         <DialogTitle>Edit Profile</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleUpdateProfile} className="space-y-4" noValidate>
-                        {/* Read-only Information Section */}
-                        <div className="bg-accent/30 rounded-lg p-4 mb-4">
-                          <h3 className="font-semibold mb-2 text-foreground">Account Information (Read-Only)</h3>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            These details are managed by BOA administrators and cannot be changed by users.
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            {membershipData?.membership_type && (
-                              <div>
-                                <Label className="text-muted-foreground">Membership Type</Label>
-                                <div className="mt-1 p-2 bg-muted rounded border">
-                                  <Badge variant="outline" className="capitalize">
-                                    {membershipData.membership_type}
-                                  </Badge>
-                                </div>
-                              </div>
-                            )}
-                            {membershipData?.payment_type && (
-                              <div>
-                                <Label className="text-muted-foreground">Payment Type</Label>
-                                <div className="mt-1 p-2 bg-muted rounded border">
-                                  <Badge variant="outline" className="capitalize">
-                                    {membershipData.payment_type}
-                                  </Badge>
-                                </div>
-                              </div>
-                            )}
-                            {user.membership_no && membershipData?.membership_type && (
-                              <div>
-                                <Label className="text-muted-foreground">Membership Number</Label>
-                                <div className="mt-1 p-2 bg-muted rounded border">
-                                  <Badge className="bg-yellow-400 text-black border-0">
-                                    {user.membership_no}
-                                  </Badge>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        
 
                         {/* Editable Information Section */}
                         <div>
-                          <h3 className="font-semibold mb-3 text-foreground">Personal Information (Editable)</h3>
+                          <h3 className="font-semibold mb-3 text-foreground">Personal Information</h3>
                         </div>
                         
                         <div className="space-y-2">
