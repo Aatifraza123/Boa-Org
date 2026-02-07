@@ -486,6 +486,93 @@ exports.updateSubmissionStatus = async (req, res) => {
   }
 };
 
+// Update submission details (Admin only)
+exports.updateSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      position,
+      name,
+      life_membership_no,
+      designation,
+      qualification,
+      working_place,
+      age,
+      sex,
+      mobile,
+      address,
+      email,
+      status
+    } = req.body;
+    
+    const updates = [];
+    const values = [];
+    
+    if (position !== undefined) { updates.push('position = ?'); values.push(position); }
+    if (name !== undefined) { updates.push('name = ?'); values.push(name); }
+    if (life_membership_no !== undefined) { updates.push('life_membership_no = ?'); values.push(life_membership_no); }
+    if (designation !== undefined) { updates.push('designation = ?'); values.push(designation); }
+    if (qualification !== undefined) { updates.push('qualification = ?'); values.push(qualification); }
+    if (working_place !== undefined) { updates.push('working_place = ?'); values.push(working_place); }
+    if (age !== undefined) { updates.push('age = ?'); values.push(age); }
+    if (sex !== undefined) { updates.push('sex = ?'); values.push(sex); }
+    if (mobile !== undefined) { updates.push('mobile = ?'); values.push(mobile); }
+    if (address !== undefined) { updates.push('address = ?'); values.push(address); }
+    if (email !== undefined) { updates.push('email = ?'); values.push(email); }
+    if (status !== undefined) { updates.push('status = ?'); values.push(status); }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields to update'
+      });
+    }
+    
+    values.push(id);
+    
+    await promisePool.query(
+      `UPDATE election_submissions SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+    
+    res.json({
+      success: true,
+      message: 'Submission updated successfully'
+    });
+  } catch (error) {
+    console.error('Update submission error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update submission',
+      error: error.message
+    });
+  }
+};
+
+// Delete submission (Admin only)
+exports.deleteSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await promisePool.query(
+      'DELETE FROM election_submissions WHERE id = ?',
+      [id]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Submission deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete submission error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete submission',
+      error: error.message
+    });
+  }
+};
+
 
 // Generate PDF for existing election (Admin only)
 exports.generateElectionPdf = async (req, res) => {

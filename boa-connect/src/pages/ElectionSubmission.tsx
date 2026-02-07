@@ -163,14 +163,50 @@ export default function ElectionSubmission() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.position) {
-      toast.error('Please select a position');
+    // Comprehensive Validation
+    const requiredFields = [
+      { field: 'position', label: 'Position' },
+      { field: 'name', label: 'Name' },
+      { field: 'mobile', label: 'Mobile Number' },
+      { field: 'email', label: 'Email' },
+      { field: 'designation', label: 'Designation' },
+      { field: 'qualification', label: 'Qualification' },
+      { field: 'working_place', label: 'Working Place' },
+      { field: 'age', label: 'Age' },
+      { field: 'sex', label: 'Gender' },
+      { field: 'address', label: 'Address' }
+    ];
+
+    // Check for empty fields
+    for (const { field, label } of requiredFields) {
+      if (!formData[field as keyof typeof formData] || formData[field as keyof typeof formData].toString().trim() === '') {
+        toast.error(`Please fill ${label}`);
+        // Focus on the first empty field
+        const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+        if (element) {
+          element.focus();
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    }
+
+    // Validate mobile number (10 digits)
+    if (!/^\d{10}$/.test(formData.mobile)) {
+      toast.error('Please enter a valid 10-digit mobile number');
       return;
     }
-    
-    if (!formData.name || !formData.mobile) {
-      toast.error('Please fill all required fields');
+
+    // Validate email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // Validate age
+    const age = parseInt(formData.age);
+    if (isNaN(age) || age < 18 || age > 100) {
+      toast.error('Please enter a valid age (18-100)');
       return;
     }
 

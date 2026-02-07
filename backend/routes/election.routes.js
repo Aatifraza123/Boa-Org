@@ -21,5 +21,7 @@ router.delete('/:id', adminAuth, electionController.deleteElection);
 router.post('/:id/generate-pdf', adminAuth, electionController.generateElectionPdf);
 router.get('/:election_id/submissions', adminAuth, electionController.getElectionSubmissions);
 router.put('/submissions/:id/status', adminAuth, electionController.updateSubmissionStatus);
+router.put('/submissions/:id', adminAuth, electionController.updateSubmission);
+router.delete('/submissions/:id', adminAuth, electionController.deleteSubmission);
 
 module.exports = router;

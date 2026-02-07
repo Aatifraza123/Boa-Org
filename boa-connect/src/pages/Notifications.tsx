@@ -229,9 +229,13 @@ export default function Notifications() {
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Clock className="h-4 w-4" />
                             <span>
-                              {notification.start_date 
-                                ? formatDateRange(notification.start_date, notification.end_date)
-                                : formatDate(notification.created_at)
+                              {notification.type === 'election' 
+                                ? (notification.election_voting_date 
+                                    ? `Voting: ${formatDate(notification.election_voting_date)}` 
+                                    : `Deadline: ${formatDate(notification.election_deadline)}`)
+                                : (notification.start_date 
+                                    ? formatDateRange(notification.start_date, notification.end_date)
+                                    : formatDate(notification.created_at))
                               }
                             </span>
                             <Badge className="bg-green-100 text-green-700 border-green-200">
@@ -292,6 +296,14 @@ export default function Notifications() {
                     {/* Election Actions */}
                     {notification.type === 'election' && (
                       <div className="flex flex-col sm:flex-row gap-3">
+                        <Link to={`/elections/${notification.election_id || notification.link?.split('/').pop()}/submit`}>
+                          <Button 
+                            className="w-full sm:w-auto h-12 text-base px-6 sm:h-11 sm:text-sm sm:px-5 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            Submit Nomination
+                          </Button>
+                        </Link>
                         <Button 
                           variant="outline"
                           className="w-full sm:w-auto h-12 text-base px-6 sm:h-11 sm:text-sm sm:px-5"
@@ -339,14 +351,7 @@ export default function Notifications() {
                           <Download className="mr-2 h-4 w-4" />
                           Download Form
                         </Button>
-                        <Link to={`/elections/${notification.election_id || notification.link?.split('/').pop()}/submit`}>
-                          <Button 
-                            className="w-full sm:w-auto h-12 text-base px-6 sm:h-11 sm:text-sm sm:px-5 bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <ArrowRight className="mr-2 h-4 w-4" />
-                            Submit Nomination
-                          </Button>
-                        </Link>
+                        
                       </div>
                     )}
                   </div>

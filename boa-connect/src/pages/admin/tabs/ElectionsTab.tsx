@@ -241,6 +241,23 @@ export default function ElectionsTab() {
     }
   };
 
+  const handleDeleteSubmission = async (submissionId: number) => {
+    if (!confirm('Are you sure you want to delete this submission?')) {
+      return;
+    }
+
+    try {
+      await adminAPI.delete(`/elections/submissions/${submissionId}`);
+      toast.success('Submission deleted successfully');
+      if (selectedElection) {
+        loadSubmissions(selectedElection.id);
+      }
+    } catch (error) {
+      console.error('Failed to delete submission:', error);
+      toast.error('Failed to delete submission');
+    }
+  };
+
   const resetForm = () => {
     setSelectedElection(null);
     setFormData({
@@ -740,6 +757,13 @@ export default function ElectionsTab() {
                           disabled={submission.status === 'rejected'}
                         >
                           Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteSubmission(submission.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
