@@ -154,11 +154,8 @@ exports.deleteCertificate = async (req, res) => {
 // Upload certificate for member (admin only)
 exports.uploadMemberCertificate = async (req, res) => {
   try {
-
     const { user_id, title, description, issue_date, expiry_date, certificate_type } = req.body;
     const adminId = req.admin?.id || null;
-
-   
 
     if (!user_id || !title) {
       return res.status(400).json({
@@ -169,29 +166,59 @@ exports.uploadMemberCertificate = async (req, res) => {
 
     // Check if file was uploaded
     if (!req.file) {
-      console.log('No file uploaded');
       return res.status(400).json({
         success: false,
         message: 'Certificate file is required'
       });
     }
 
-    console.log('Uploading to Cloudinary...');
+    // Check if user_id is from membership_registrations (starts with 'mr_')
+    let actualUserId = user_id;
+    
+    if (typeof user_id === 'string' && user_id.startsWith('mr_')) {
+      // Extract membership registration ID
+      const membershipId = user_id.replace('mr_', '');
+      
+      // Find user_id from membership_registrations table via email
+      const [membershipData] = await promisePool.query(
+        'SELECT email FROM membership_registrations WHERE id = ?',
+        [membershipId]
+      );
+      
+      if (membershipData.length > 0) {
+        // Find user by email
+        const [userData] = await promisePool.query(
+          'SELECT id FROM users WHERE email = ?',
+          [membershipData[0].email]
+        );
+        
+        if (userData.length > 0) {
+          actualUserId = userData[0].id;
+        } else {
+          // User doesn't exist in users table, use NULL
+          actualUserId = null;
+        }
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Membership registration not found'
+        });
+      }
+    }
+
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'certificates',
+      folder: 'boa-certificates',
       resource_type: 'auto'
     });
-   
 
-    console.log('Inserting into database...');
     // Insert certificate record
     const [insertResult] = await promisePool.query(
       `INSERT INTO user_certificates 
        (user_id, certificate_name, certificate_url, issued_date, expiry_date, description, certificate_type, uploaded_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
-        user_id, 
+        actualUserId, 
         title, 
         result.secure_url, 
         issue_date || null, 
@@ -201,9 +228,7 @@ exports.uploadMemberCertificate = async (req, res) => {
         adminId
       ]
     );
-   
 
-    console.log('Creating notification...');
     // Create global notification about certificate upload
     await promisePool.query(
       `INSERT INTO notifications (title, message, type, is_active, created_at)
@@ -214,7 +239,6 @@ exports.uploadMemberCertificate = async (req, res) => {
         'certificate'
       ]
     );
-    console.log('Notification created');
 
     res.json({
       success: true,
