@@ -45,8 +45,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token is invalid or expired, clear it
-      console.log('Token invalid or expired, clearing localStorage');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
@@ -247,6 +245,14 @@ export const notificationAPI = {
   },
 };
 
+// Election APIs
+export const electionAPI = {
+  getMySubmissions: async () => {
+    const response = await api.get('/elections/my-submissions');
+    return response.data;
+  },
+};
+
 // Admin APIs
 export const adminAPI = {
   // Generic methods for admin routes
@@ -391,7 +397,6 @@ export const adminAPI = {
 
   // Membership Management - ONLY MEMBERSHIP REGISTRATIONS
   getAllMembers: async () => {
-    console.log('🔍 [API] Calling GET /admin/members');
     // Add timestamp to prevent caching
     const timestamp = Date.now();
     const response = await adminApi.get(`/admin/members?_t=${timestamp}`);
@@ -431,6 +436,16 @@ export const adminAPI = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+
+  getUserCertificates: async (userId: string) => {
+    const response = await adminApi.get(`/certificates/user/${userId}`);
+    return response.data;
+  },
+
+  deleteCertificate: async (certificateId: number) => {
+    const response = await adminApi.delete(`/certificates/${certificateId}`);
     return response.data;
   },
 };

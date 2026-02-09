@@ -906,3 +906,48 @@ exports.generateElectionPdfPublic = async (req, res) => {
     });
   }
 };
+
+
+// Get user's election submissions (User route - protected)
+exports.getMySubmissions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+    
+    
+    
+    // First, let's check all submissions in the database
+    const [allSubmissions] = await promisePool.query(
+      'SELECT id, email, name, position FROM election_submissions'
+    );
+    
+    // Get submissions by email (case-insensitive match)
+    const [submissions] = await promisePool.query(
+      `SELECT es.*, e.title as election_title, e.deadline, e.voting_date
+       FROM election_submissions es
+       INNER JOIN elections e ON es.election_id = e.id
+       WHERE LOWER(es.email) = LOWER(?)
+       ORDER BY es.submitted_at DESC`,
+      [userEmail]
+    );
+    
+    
+    
+    res.json({
+      success: true,
+      submissions,
+      debug: {
+        userEmail,
+        totalSubmissions: allSubmissions.length,
+        userSubmissions: submissions.length
+      }
+    });
+  } catch (error) {
+    console.error('Get my submissions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your submissions',
+      error: error.message
+    });
+  }
+};

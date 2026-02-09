@@ -35,6 +35,8 @@ export default function MembershipManagementTab() {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCertificateOpen, setIsCertificateOpen] = useState(false);
+  const [isCertificateMenuOpen, setIsCertificateMenuOpen] = useState(false);
+  const [certificateViewMode, setCertificateViewMode] = useState<'list' | 'upload'>('list');
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -76,6 +78,9 @@ export default function MembershipManagementTab() {
     expiry_date: '',
     certificate_type: 'membership'
   });
+  const [memberCertificates, setMemberCertificates] = useState<any[]>([]);
+  const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
+  const [isDeletingCertificate, setIsDeletingCertificate] = useState(false);
   const [editForm, setEditForm] = useState({
     membership_no: '',
     membership_type: '',
@@ -248,7 +253,65 @@ export default function MembershipManagementTab() {
     setCertificateFile(null);
     setCertificatePreview(null);
     setUploadSuccess(false);
-    setIsCertificateOpen(true);
+    // Load existing certificates for this member
+    loadMemberCertificates(member.id);
+    // Show menu to choose between view and upload
+    setIsCertificateMenuOpen(true);
+  };
+
+  const loadMemberCertificates = async (memberId: string) => {
+    setIsLoadingCertificates(true);
+    try {
+      // Extract actual user ID from membership registration
+      // memberId can be 'mr_32' format, we need to get user_id from email
+      const member = members.find(m => m.id === memberId);
+      if (!member || !member.email) {
+        setMemberCertificates([]);
+        return;
+      }
+      
+      // Get user_id from email
+      const userResponse = await adminAPI.get(`/admin/users?email=${encodeURIComponent(member.email)}`);
+      if (userResponse.users && userResponse.users.length > 0) {
+        const userId = userResponse.users[0].id;
+        const response = await adminAPI.getUserCertificates(userId);
+        setMemberCertificates(response.certificates || []);
+      } else {
+        setMemberCertificates([]);
+      }
+    } catch (error) {
+      console.error('Failed to load certificates:', error);
+      setMemberCertificates([]);
+    } finally {
+      setIsLoadingCertificates(false);
+    }
+  };
+
+  const handleDeleteCertificate = async (certificateId: number) => {
+    if (!confirm('Are you sure you want to delete this certificate?')) {
+      return;
+    }
+
+    setIsDeletingCertificate(true);
+    try {
+      await adminAPI.deleteCertificate(certificateId);
+      toast({
+        title: 'Success',
+        description: 'Certificate deleted successfully',
+      });
+      // Reload certificates
+      if (selectedMember) {
+        loadMemberCertificates(selectedMember.id);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to delete certificate',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingCertificate(false);
+    }
   };
 
   const handleCertificateFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,6 +404,11 @@ export default function MembershipManagementTab() {
       
       // Set success state but DON'T reset form - keep it visible
       setUploadSuccess(true);
+      
+      // Reload certificates list
+      if (selectedMember) {
+        loadMemberCertificates(selectedMember.id);
+      }
       
     } catch (error: any) {
       console.error('Certificate upload error:', error);
@@ -815,18 +883,176 @@ export default function MembershipManagementTab() {
         </DialogContent>
       </Dialog>
 
+      {/* Certificate Menu Dialog - Choose View or Upload */}
+      <Dialog open={isCertificateMenuOpen} onOpenChange={setIsCertificateMenuOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Certificate Management - {selectedMember && `${formatTitle(selectedMember.title)} ${selectedMember.first_name} ${selectedMember.surname}`}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Choose an action for managing certificates:
+            </p>
+            
+            <div className="grid gap-3">
+              <Button
+                variant="outline"
+                className="h-auto py-4 justify-start"
+                onClick={() => {
+                  setCertificateViewMode('list');
+                  setIsCertificateMenuOpen(false);
+                  setIsCertificateOpen(true);
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <FileText className="h-5 w-5 mt-0.5 text-primary" />
+                  <div className="text-left">
+                    <div className="font-semibold">View Certificates</div>
+                    <div className="text-xs text-muted-foreground">
+                      View and manage existing certificates
+                      {memberCertificates.length > 0 && ` (${memberCertificates.length} certificate${memberCertificates.length > 1 ? 's' : ''})`}
+                    </div>
+                  </div>
+                </div>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-auto py-4 justify-start"
+                onClick={() => {
+                  setCertificateViewMode('upload');
+                  setIsCertificateMenuOpen(false);
+                  setIsCertificateOpen(true);
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <Upload className="h-5 w-5 mt-0.5 text-primary" />
+                  <div className="text-left">
+                    <div className="font-semibold">Upload New Certificate</div>
+                    <div className="text-xs text-muted-foreground">
+                      Add a new certificate for this member
+                    </div>
+                  </div>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add Certificate Dialog */}
       <Dialog open={isCertificateOpen} onOpenChange={setIsCertificateOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Add Certificate - {selectedMember && `${formatTitle(selectedMember.title)} ${selectedMember.first_name} ${selectedMember.surname}`}
+              {certificateViewMode === 'list' ? 'View Certificates' : 'Upload Certificate'} - {selectedMember && `${formatTitle(selectedMember.title)} ${selectedMember.first_name} ${selectedMember.surname}`}
             </DialogTitle>
           </DialogHeader>
           
           {selectedMember && (
             <div className="space-y-6">
-              {/* Success Message */}
+              {certificateViewMode === 'list' ? (
+                /* View Certificates Mode */
+                <div className="space-y-4">
+                  {isLoadingCertificates ? (
+                    <div className="flex justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : memberCertificates.length > 0 ? (
+                    <div className="space-y-3">
+                      {memberCertificates.map((cert) => (
+                        <div key={cert.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Award className="h-5 w-5 text-primary" />
+                              <span className="font-semibold">{cert.certificate_name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {cert.certificate_type || 'membership'}
+                              </Badge>
+                            </div>
+                            {cert.description && (
+                              <p className="text-sm text-gray-600 ml-7 mb-2">{cert.description}</p>
+                            )}
+                            <div className="flex items-center gap-4 ml-7 text-xs text-gray-500">
+                              {cert.issued_date && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Issued: {new Date(cert.issued_date).toLocaleDateString()}
+                                </span>
+                              )}
+                              {cert.expiry_date && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Expires: {new Date(cert.expiry_date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(cert.certificate_url, '_blank')}
+                              title="View Certificate"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteCertificate(cert.id)}
+                              disabled={isDeletingCertificate}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Delete Certificate"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Award className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Certificates Found</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        This member doesn't have any certificates yet.
+                      </p>
+                      <Button
+                        onClick={() => setCertificateViewMode('upload')}
+                        className="gradient-primary"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload First Certificate
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {memberCertificates.length > 0 && (
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsCertificateOpen(false)}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        onClick={() => setCertificateViewMode('upload')}
+                        className="gradient-primary"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload New Certificate
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Upload Certificate Mode */
+                <div className="space-y-6">
+                  {/* Success Message */}
               {uploadSuccess && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 text-green-800">
@@ -1013,50 +1239,62 @@ export default function MembershipManagementTab() {
               <div className="flex justify-end gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => setIsCertificateOpen(false)}
+                  onClick={() => {
+                    if (certificateViewMode === 'upload' && memberCertificates.length > 0) {
+                      setCertificateViewMode('list');
+                    } else {
+                      setIsCertificateOpen(false);
+                    }
+                  }}
                   disabled={isUploadingCertificate}
                 >
-                  Close
+                  {certificateViewMode === 'upload' && memberCertificates.length > 0 ? 'Back to List' : 'Close'}
                 </Button>
-                {uploadSuccess && (
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setUploadSuccess(false);
-                      // Reset form for another upload
-                      setCertificateForm({
-                        title: '',
-                        description: '',
-                        issue_date: new Date().toISOString().split('T')[0],
-                        expiry_date: '',
-                        certificate_type: 'membership'
-                      });
-                      setCertificateFile(null);
-                      setCertificatePreview(null);
-                    }}
-                    disabled={isUploadingCertificate}
-                  >
-                    Clear Form
-                  </Button>
+                {certificateViewMode === 'upload' && (
+                  <>
+                    {uploadSuccess && (
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setUploadSuccess(false);
+                          // Reset form for another upload
+                          setCertificateForm({
+                            title: '',
+                            description: '',
+                            issue_date: new Date().toISOString().split('T')[0],
+                            expiry_date: '',
+                            certificate_type: 'membership'
+                          });
+                          setCertificateFile(null);
+                          setCertificatePreview(null);
+                        }}
+                        disabled={isUploadingCertificate}
+                      >
+                        Clear Form
+                      </Button>
+                    )}
+                    <Button 
+                      onClick={handleUploadCertificate}
+                      className="gradient-primary"
+                      disabled={!certificateFile || !certificateForm.title || !certificateForm.issue_date || isUploadingCertificate}
+                    >
+                      {isUploadingCertificate ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Certificate
+                        </>
+                      )}
+                    </Button>
+                  </>
                 )}
-                <Button 
-                  onClick={handleUploadCertificate}
-                  className="gradient-primary"
-                  disabled={!certificateFile || !certificateForm.title || !certificateForm.issue_date || isUploadingCertificate}
-                >
-                  {isUploadingCertificate ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Certificate
-                    </>
-                  )}
-                </Button>
               </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

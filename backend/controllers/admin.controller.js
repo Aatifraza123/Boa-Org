@@ -282,11 +282,41 @@ exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Get user email for membership deletion
+    const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
+    
+    if (user.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const userEmail = user[0].email;
+
+    // Delete all user-related data in order
+    
+    // 1. Delete user's certificates
+    await promisePool.query('DELETE FROM user_certificates WHERE user_id = ?', [id]);
+    
+    // 2. Delete membership registrations (by email)
+    await promisePool.query('DELETE FROM membership_registrations WHERE email = ?', [userEmail]);
+    
+    // 3. Delete seminar registrations
+    await promisePool.query('DELETE FROM registrations WHERE user_id = ?', [id]);
+    
+    // 4. Delete election submissions
+    await promisePool.query('DELETE FROM election_submissions WHERE email = ?', [userEmail]);
+    
+    // 5. Delete user-specific notifications (if any)
+    // Note: Global notifications are not deleted
+    
+    // 6. Finally delete the user
     await promisePool.query('DELETE FROM users WHERE id = ?', [id]);
 
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User and all associated data (certificates, memberships, registrations, nominations) deleted successfully'
     });
   } catch (error) {
     console.error('Delete user error:', error);
@@ -4251,6 +4281,27 @@ exports.deletePayment = async (req, res) => {
       }
 
     } else if (type === 'mem') {
+      // Get user_id from membership registration email before deleting
+      const [membership] = await connection.query(
+        'SELECT email FROM membership_registrations WHERE id = ?',
+        [paymentId]
+      );
+      
+      if (membership.length > 0) {
+        const [user] = await connection.query(
+          'SELECT id FROM users WHERE email = ?',
+          [membership[0].email]
+        );
+        
+        // Delete user's certificates if user exists
+        if (user.length > 0) {
+          await connection.query(
+            'DELETE FROM user_certificates WHERE user_id = ?',
+            [user[0].id]
+          );
+        }
+      }
+      
       // Delete membership registration payment
       const [result] = await connection.query(
         'DELETE FROM membership_registrations WHERE id = ?',
@@ -4637,11 +4688,30 @@ exports.deleteMembership = async (req, res) => {
 
     // Check if this is a membership registration ID or user ID
     let membershipId;
+    let userId = null;
+    
     if (typeof id === 'string' && id.startsWith('mr_')) {
       // This is a membership registration ID
       membershipId = id.replace('mr_', '');
+      
+      // Get user_id from membership registration email
+      const [membership] = await promisePool.query(
+        'SELECT email FROM membership_registrations WHERE id = ?',
+        [membershipId]
+      );
+      
+      if (membership.length > 0) {
+        const [user] = await promisePool.query(
+          'SELECT id FROM users WHERE email = ?',
+          [membership[0].email]
+        );
+        if (user.length > 0) {
+          userId = user[0].id;
+        }
+      }
     } else {
       // This is a user ID, find the membership registration
+      userId = id;
       const [user] = await promisePool.query('SELECT email FROM users WHERE id = ?', [id]);
       if (user.length === 0) {
         return res.status(404).json({
@@ -4665,12 +4735,17 @@ exports.deleteMembership = async (req, res) => {
       membershipId = membership[0].id;
     }
 
+    // Delete user's certificates if user exists
+    if (userId) {
+      await promisePool.query('DELETE FROM user_certificates WHERE user_id = ?', [userId]);
+    }
+
     // Delete only the membership registration, not the user account
     await promisePool.query('DELETE FROM membership_registrations WHERE id = ?', [membershipId]);
 
     res.json({
       success: true,
-      message: 'Membership deleted successfully. User account remains active.'
+      message: 'Membership and associated certificates deleted successfully. User account remains active.'
     });
   } catch (error) {
     console.error('Delete membership error:', error);

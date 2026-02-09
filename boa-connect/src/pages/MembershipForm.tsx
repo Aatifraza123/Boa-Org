@@ -15,6 +15,7 @@ import { API_BASE_URL } from '@/lib/utils';
 export default function MembershipForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -236,6 +237,9 @@ export default function MembershipForm() {
         return;
       }
 
+      // Show processing modal
+      setIsProcessingPayment(true);
+
       // Construct membership_type with subcategory
       let membershipType = selectedCategory?.title || 'Standard';
       if (formData.payment_type === 'student') {
@@ -251,24 +255,12 @@ export default function MembershipForm() {
       });
 
       if (paymentResult.success) {
-        toast.success('Payment successful! Membership form submitted.');
+        toast.success('Payment successful! Redirecting to dashboard...');
         
-        setFormData({
-          name: '',
-          father_name: '',
-          qualification: '',
-          year_passing: '',
-          dob: '',
-          institution: '',
-          working_place: '',
-          sex: '',
-          age: '',
-          address: '',
-          mobile: '',
-          email: '',
-          membership_duration: '',
-          payment_type: ''
-        });
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
       }
 
     } catch (error: any) {
@@ -278,6 +270,7 @@ export default function MembershipForm() {
         toast.error(error.message || 'Payment failed. Please try again.');
       }
     } finally {
+      setIsProcessingPayment(false);
       setLoading(false);
     }
   };
@@ -569,6 +562,24 @@ export default function MembershipForm() {
           </div>
         </div>
       </div>
+      
+      {/* Payment Processing Modal */}
+      {isProcessingPayment && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
+            <div className="mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto"></div>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Processing Payment</h3>
+            <p className="text-gray-600 text-sm">
+              Please wait while we process your payment securely...
+            </p>
+            <p className="text-gray-500 text-xs mt-4">
+              Do not close this window or press back button
+            </p>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

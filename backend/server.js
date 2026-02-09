@@ -96,10 +96,11 @@ app.get('/api/server-info', (req, res) => {
   });
 });
 
-// API Routes
+
 try {
   const authRoutes = require('./routes/auth.routes');
   app.use('/api/auth', authRoutes);
+  console.log('✅ Auth routes loaded');
 
   const forgotPasswordRoutes = require('./routes/forgot-password.routes');
   app.use('/api/auth/forgot-password', forgotPasswordRoutes);
@@ -121,14 +122,17 @@ try {
 
   const adminRoutes = require('./routes/admin.routes');
   app.use('/api/admin', adminRoutes);
+  console.log('✅ Admin routes loaded');
 
   // Payment routes
   const paymentRoutes = require('./routes/payment.routes');
   app.use('/api/payment', paymentRoutes);
+  console.log('✅ Payment routes loaded');
 
   // Certificate routes
   const certificateRoutes = require('./routes/certificate.routes');
   app.use('/api/certificates', certificateRoutes);
+  console.log('✅ Certificate routes loaded');
 
   // Contact routes
   const contactRoutes = require('./routes/contact.routes');
@@ -149,6 +153,7 @@ try {
   // Election routes
   const electionRoutes = require('./routes/election.routes');
   app.use('/api/elections', electionRoutes);
+  console.log('✅ All route files loaded');
 
   // Public committee members route
   app.get('/api/committee-members', async (req, res) => {
@@ -790,6 +795,8 @@ try {
     }
   });
   
+  console.log('✅ All routes loaded successfully!');
+  
 } catch (error) {
   // Error loading routes - server will continue with basic functionality
 }
@@ -831,7 +838,6 @@ const startServer = async () => {
   try {
     await testConnection();
     app.listen(PORT, () => {
-      
       // Start BOA Member Sync Service
       boaSyncService.start();
     });

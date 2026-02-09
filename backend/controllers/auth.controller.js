@@ -5,8 +5,8 @@ const { promisePool } = require('../config/database');
 const { ACTIVITY_TYPES, createActivityNotification } = require('../utils/activity-logger');
 
 // Generate JWT Token
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const generateToken = (userId, userEmail) => {
+  return jwt.sign({ id: userId, email: userEmail }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE
   });
 };
@@ -64,7 +64,7 @@ exports.register = async (req, res) => {
     );
 
     // Generate token
-    const token = generateToken(userId);
+    const token = generateToken(userId, email);
 
     // Create activity notification for admin
     await createActivityNotification(ACTIVITY_TYPES.NEW_USER, {
@@ -132,7 +132,7 @@ exports.login = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.email);
 
     res.json({
       success: true,
@@ -195,7 +195,7 @@ exports.loginWithMembership = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.email);
 
     res.json({
       success: true,

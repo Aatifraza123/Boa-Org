@@ -45,10 +45,21 @@ export default function ElectionSubmission() {
       const userStr = localStorage.getItem('user');
       if (!userStr) return;
       
-      // Simply try to submit and catch the duplicate error
-      // Or we can add a dedicated check endpoint
-      // For now, we'll rely on backend validation during submit
+      const userData = JSON.parse(userStr);
+      const userEmail = userData.email;
       
+      // Check if user has already submitted for this election
+      const response = await api.get('/elections/my-submissions');
+      if (response.data.success && response.data.submissions) {
+        const alreadySubmittedForThisElection = response.data.submissions.some(
+          (submission: any) => submission.election_id === parseInt(id || '0')
+        );
+        
+        if (alreadySubmittedForThisElection) {
+          setAlreadySubmitted(true);
+          toast.error('You have already submitted a nomination for this election');
+        }
+      }
     } catch (error) {
       console.error('Failed to check submission status:', error);
     }
@@ -57,82 +68,55 @@ export default function ElectionSubmission() {
   // Load logged-in user's data
   const loadUserData = async () => {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        console.log('Logged in user:', userData);
-        
-        // Check if user has membership
-        const membershipNo = userData.membership_no || userData.life_membership_no || '';
-        if (!membershipNo) {
-          setHasMembership(false);
-          toast.error('You must have a membership to submit nomination');
-          return;
-        }
-        
-        setHasMembership(true);
-        
-        // Capitalize title (dr -> Dr, prof -> Prof, etc.)
-        const capitalizedTitle = userData.title 
-          ? userData.title.charAt(0).toUpperCase() + userData.title.slice(1).toLowerCase()
-          : '';
-        
-        // Construct full name from title, first_name and surname
-        const fullName = [capitalizedTitle, userData.first_name, userData.surname]
-          .filter(Boolean)
-          .join(' ');
-        
-        // Pre-fill form with user data
-        setFormData(prev => ({
-          ...prev,
-          name: fullName || userData.name || '',
-          email: userData.email || '',
-          mobile: userData.mobile || userData.phone || '',
-          life_membership_no: membershipNo
-        }));
-        
-        console.log('Form pre-filled with:', {
-          name: fullName,
-          email: userData.email,
-          mobile: userData.mobile,
-          life_membership_no: membershipNo
-        });
-      } else {
+      // Fetch fresh user data from API instead of localStorage
+      const response = await api.get('/users/profile');
+      const userData = response.data.user;
+      
+      
+      // Check if user has membership
+      const membershipNo = userData.membership_no || userData.life_membership_no || '';
+      if (!membershipNo) {
         setHasMembership(false);
+        toast.error('You must have a membership to submit nomination');
+        return;
       }
+      
+      setHasMembership(true);
+      
+      // Capitalize title (dr -> Dr, prof -> Prof, etc.)
+      const capitalizedTitle = userData.title 
+        ? userData.title.charAt(0).toUpperCase() + userData.title.slice(1).toLowerCase()
+        : '';
+      
+      // Construct full name from title, first_name and surname
+      const fullName = [capitalizedTitle, userData.first_name, userData.surname]
+        .filter(Boolean)
+        .join(' ');
+      
+      // Pre-fill form with user data
+      setFormData(prev => ({
+        ...prev,
+        name: fullName || userData.name || '',
+        email: userData.email || '',
+        mobile: userData.mobile || userData.phone || '',
+        life_membership_no: membershipNo
+      }));
+      
     } catch (error) {
       console.error('Failed to load user data:', error);
       setHasMembership(false);
+      toast.error('Failed to load user profile');
     }
   };
 
-  // Debug: Log election state whenever it changes
-  useEffect(() => {
-    if (election) {
-      console.log('=== ELECTION STATE UPDATED ===');
-      console.log('Election:', election);
-      console.log('Positions:', election.positions);
-      console.log('Positions type:', typeof election.positions);
-      console.log('Is array?:', Array.isArray(election.positions));
-      if (Array.isArray(election.positions)) {
-        console.log('Positions length:', election.positions.length);
-        console.log('Positions items:', election.positions);
-      }
-      console.log('=== END DEBUG ===');
-    }
-  }, [election]);
+  
 
   const loadElection = async () => {
     try {
-      console.log('Loading election with ID:', id);
       const response = await api.get(`/elections/${id}`);
-      console.log('Raw API response:', response.data);
       
       if (response.data.success) {
         const electionData = response.data.election;
-        console.log('Election data before parsing:', electionData);
-        console.log('Positions type:', typeof electionData.positions);
-        console.log('Positions value:', electionData.positions);
         
         // Parse positions if they come as JSON string
         if (electionData.positions) {
@@ -140,9 +124,6 @@ export default function ElectionSubmission() {
             electionData.positions = typeof electionData.positions === 'string' 
               ? JSON.parse(electionData.positions) 
               : electionData.positions;
-            console.log('Positions after parsing:', electionData.positions);
-            console.log('Is array?', Array.isArray(electionData.positions));
-            console.log('Length:', electionData.positions.length);
           } catch (e) {
             console.error('Failed to parse positions:', e);
             electionData.positions = [];
@@ -152,7 +133,6 @@ export default function ElectionSubmission() {
           electionData.positions = [];
         }
         
-        console.log('Final election data:', electionData);
         setElection(electionData);
       }
     } catch (error) {
@@ -224,17 +204,12 @@ export default function ElectionSubmission() {
     setLoading(true);
 
     try {
-      console.log('Submitting nomination with data:', {
-        election_id: id,
-        ...formData
-      });
       
       const response = await api.post('/elections/submit', {
         election_id: id,
         ...formData
       });
 
-      console.log('Submission response:', response.data);
 
       if (response.data.success) {
         toast.success('Nomination submitted successfully!');

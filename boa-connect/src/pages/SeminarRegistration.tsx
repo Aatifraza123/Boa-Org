@@ -48,6 +48,7 @@ export default function SeminarRegistration() {
   const [surname, setSurname] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [house, setHouse] = useState('');
@@ -846,6 +847,9 @@ export default function SeminarRegistration() {
 
   const handlePayment = async () => {
     try {
+      // Show processing modal
+      setIsProcessingPayment(true);
+      
       // Get logged-in user info
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
@@ -912,16 +916,16 @@ export default function SeminarRegistration() {
       if (paymentResult && paymentResult.success) {
         setPaymentComplete(true);
         
-        // Force a small delay to ensure state updates
-        setTimeout(() => {
-          toast({
-            title: 'Payment Successful!',
-            description: 'Your registration has been confirmed. You will receive a confirmation email shortly.',
-          });
-        }, 100);
+        // Show success message
+        toast({
+          title: 'Payment Successful!',
+          description: 'Your registration has been confirmed. Redirecting to dashboard...',
+        });
         
-        // Scroll to top to show success message
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
       } else {
         console.error('Payment result indicates failure:', paymentResult);
         throw new Error(paymentResult?.message || 'Payment processing failed');
@@ -943,6 +947,9 @@ export default function SeminarRegistration() {
           variant: 'destructive',
         });
       }
+    } finally {
+      // Hide processing modal
+      setIsProcessingPayment(false);
     }
   };
 
@@ -1861,6 +1868,24 @@ export default function SeminarRegistration() {
         </div>
       </div>
       <Footer />
+      
+      {/* Payment Processing Modal */}
+      {isProcessingPayment && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
+            <div className="mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto"></div>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Processing Payment</h3>
+            <p className="text-gray-600 text-sm">
+              Please wait while we process your payment securely...
+            </p>
+            <p className="text-gray-500 text-xs mt-4">
+              Do not close this window or press back button
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

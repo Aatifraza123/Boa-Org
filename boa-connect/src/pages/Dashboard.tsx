@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { userAPI, registrationAPI, seminarAPI } from '@/lib/api';
+import { userAPI, registrationAPI, seminarAPI, electionAPI } from '@/lib/api';
 import { titleOptions, genderOptions, indianStates } from '@/lib/mockData';
 
 export default function Dashboard() {
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [membershipData, setMembershipData] = useState<any>(null);
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [electionSubmissions, setElectionSubmissions] = useState<any[]>([]);
   const [activeSeminar, setActiveSeminar] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -63,9 +64,12 @@ export default function Dashboard() {
       // Check if user is logged in
       const token = localStorage.getItem('token');
       if (!token) {
+        console.log('No token found, redirecting to login');
         navigate('/login');
         return;
       }
+
+      console.log('Token found, loading user data...');
 
       // Load user profile
       const profileResponse = await userAPI.getProfile();
@@ -74,8 +78,6 @@ export default function Dashboard() {
       // Load membership details
       try {
         const membershipResponse = await userAPI.getMembershipDetails();
-        console.log('Membership response:', membershipResponse);
-        console.log('Membership type:', membershipResponse.membership?.membership_type);
         setMembershipData(membershipResponse.membership);
       } catch (error) {
         console.error('No membership data found',error);
@@ -103,6 +105,22 @@ export default function Dashboard() {
           description: 'Failed to load registrations: ' + (regError.response?.data?.message || regError.message),
           variant: 'destructive'
         });
+      }
+
+      // Load election submissions
+      try {
+        const electionResponse = await electionAPI.getMySubmissions();
+        
+        if (electionResponse.submissions && Array.isArray(electionResponse.submissions)) {
+          setElectionSubmissions(electionResponse.submissions);
+        } else {
+          console.log('No election submissions or invalid format');
+          setElectionSubmissions([]);
+        }
+      } catch (electionError: any) {
+        console.error('Failed to load election submissions:', electionError);
+        console.error('Error details:', electionError.response?.data);
+        setElectionSubmissions([]);
       }
 
       // Load active seminar
@@ -797,7 +815,7 @@ export default function Dashboard() {
                       <Calendar className="h-5 w-5 text-primary-foreground" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{registrations.length}</p>
+                      <p className="text-2xl font-bold text-foreground">{registrations.length + electionSubmissions.length}</p>
                       <p className="text-sm text-muted-foreground">Registrations</p>
                     </div>
                   </div>
@@ -831,10 +849,13 @@ export default function Dashboard() {
               {/* Registrations */}
               <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
                 <div className="p-6 border-b border-border">
-                  <h3 className="text-lg font-semibold text-foreground">Your Registrations</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Your Registrations & Submissions</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Seminars: {registrations.length} | Elections: {electionSubmissions.length}
+                  </p>
                 </div>
 
-                {registrations.length > 0 ? (
+                {registrations.length > 0 || electionSubmissions.length > 0 ? (
                   <div className="divide-y divide-border">
                     {registrations.map((reg) => (
                       <div key={reg.id} className="p-6 hover:bg-muted/50 transition-colors">
@@ -869,6 +890,34 @@ export default function Dashboard() {
                             <Download className="mr-2 h-4 w-4" />
                             Download PDF
                           </Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Election Submissions */}
+                    {electionSubmissions.map((submission) => (
+                      <div key={`election-${submission.id}`} className="p-6 hover:bg-muted/50 transition-colors">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-foreground">{submission.election_title}</h4>
+                              <Badge
+                                className={submission.status === 'approved' 
+                                  ? 'bg-green-100 text-green-800 border-green-200'
+                                  : submission.status === 'rejected'
+                                  ? 'bg-red-100 text-red-800 border-red-200'
+                                  : 'bg-yellow-100 text-yellow-800 border-yellow-200'}
+                              >
+                                {submission.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Position: {submission.position} • Submitted: {new Date(submission.submitted_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Membership No: {submission.life_membership_no}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))}

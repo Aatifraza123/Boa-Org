@@ -85,7 +85,42 @@ exports.addCertificate = async (req, res) => {
 // Get certificates for a specific user (admin only)
 exports.getUserCertificatesAdmin = async (req, res) => {
   try {
-    const { userId } = req.params;
+    let { userId } = req.params;
+    
+    // Check if userId is from membership_registrations (starts with 'mr_')
+    if (typeof userId === 'string' && userId.startsWith('mr_')) {
+      // Extract membership registration ID
+      const membershipId = userId.replace('mr_', '');
+      
+      // Find user_id from membership_registrations table via email
+      const [membershipData] = await promisePool.query(
+        'SELECT email FROM membership_registrations WHERE id = ?',
+        [membershipId]
+      );
+      
+      if (membershipData.length > 0) {
+        // Find user by email
+        const [userData] = await promisePool.query(
+          'SELECT id FROM users WHERE email = ?',
+          [membershipData[0].email]
+        );
+        
+        if (userData.length > 0) {
+          userId = userData[0].id;
+        } else {
+          // User doesn't exist in users table, return empty certificates
+          return res.json({
+            success: true,
+            certificates: []
+          });
+        }
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Membership registration not found'
+        });
+      }
+    }
 
     const [certificates] = await promisePool.query(
       `SELECT c.*, s.name as seminar_name, u.first_name, u.surname

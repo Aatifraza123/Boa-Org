@@ -10,6 +10,7 @@ router.get('/my-certificates', auth, certificateController.getUserCertificates);
 
 // Admin routes (protected)
 router.post('/add', adminAuth, upload.single('certificate'), certificateController.addCertificate);
+router.post('/upload', adminAuth, upload.single('certificate'), certificateController.uploadMemberCertificate);
 router.get('/user/:userId', adminAuth, certificateController.getUserCertificatesAdmin);
 router.delete('/:id', adminAuth, certificateController.deleteCertificate);
 

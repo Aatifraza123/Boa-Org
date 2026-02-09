@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const electionController = require('../controllers/election.controller');
 const adminAuth = require('../middleware/admin-auth.middleware');
+const auth = require('../middleware/auth.middleware');
 
 // Public routes
 router.get('/', electionController.getAllElections);
 router.post('/submit', electionController.submitNomination);
+
+// User routes (protected)
+router.get('/my-submissions', auth, electionController.getMySubmissions);
 
 // Public PDF generation (no auth required for downloading forms)
 // MUST be before /:id route to avoid conflict
