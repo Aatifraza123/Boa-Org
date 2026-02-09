@@ -277,6 +277,9 @@ exports.verifyMembership = async (req, res) => {
   try {
     const { membershipNo } = req.body;
 
+    console.log('=== VERIFY MEMBERSHIP REQUEST ===');
+    console.log('Membership No:', membershipNo);
+
     if (!membershipNo) {
       return res.status(400).json({
         success: false,
@@ -284,44 +287,59 @@ exports.verifyMembership = async (req, res) => {
       });
     }
 
-    // Check in users table for BOA members
-    const [users] = await promisePool.query(
-      `SELECT u.id, u.first_name, u.surname, u.email, u.membership_no, u.is_boa_member, u.created_at,
-              mr.payment_status as membership_status
-       FROM users u
-       LEFT JOIN membership_registrations mr ON u.email = mr.email
-       WHERE u.membership_no = ? AND u.is_boa_member = TRUE AND u.is_active = TRUE`,
+    // Check in membership_registrations table for active memberships
+    const [memberships] = await promisePool.query(
+      `SELECT id, name, email, membership_no, membership_type, payment_status, 
+              valid_from, valid_until, created_at
+       FROM membership_registrations
+       WHERE membership_no = ? AND payment_status IN ('active', 'paid', 'completed')`,
       [membershipNo]
     );
 
-    if (users.length === 0) {
+    console.log('Query result:', memberships);
+    console.log('Found memberships:', memberships.length);
+
+    if (memberships.length === 0) {
+      console.log('No active membership found for:', membershipNo);
       return res.status(404).json({
         success: false,
-        message: 'Invalid membership number or user is not an active BOA member',
+        message: 'Invalid membership number or membership is not active',
         verified: false
       });
     }
 
-    const user = users[0];
+    const membership = memberships[0];
+    console.log('Membership found:', membership);
 
-    // Check if membership is active
-    if (user.membership_status && user.membership_status !== 'active') {
-      return res.status(400).json({
-        success: false,
-        message: 'No active membership found. Please contact admin for membership activation.',
-        verified: false
-      });
+    // Check if membership is expired (if valid_until is set)
+    if (membership.valid_until) {
+      const validUntil = new Date(membership.valid_until);
+      const today = new Date();
+      
+      console.log('Checking expiry - Valid until:', validUntil, 'Today:', today);
+      
+      if (today > validUntil) {
+        console.log('Membership expired');
+        return res.status(400).json({
+          success: false,
+          message: 'Membership has expired. Please renew your membership.',
+          verified: false
+        });
+      }
     }
 
+    console.log('Membership verified successfully');
     res.json({
       success: true,
       message: 'Membership verified successfully',
       verified: true,
       membership: {
         membershipNo: membershipNo,
-        name: `${user.first_name} ${user.surname}`,
-        email: user.email,
-        memberSince: user.created_at
+        name: membership.name,
+        email: membership.email,
+        membershipType: membership.membership_type,
+        memberSince: membership.created_at,
+        validUntil: membership.valid_until
       }
     });
 

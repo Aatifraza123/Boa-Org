@@ -475,7 +475,7 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="min-h-[calc(100vh-4rem)] py-6 sm:py-8 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto ">
           {/* Header - Responsive */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div>
@@ -488,7 +488,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3  gap-6 sm:gap-8">
             {/* Sidebar - Full width on mobile */}
             <div className="lg:col-span-1 space-y-4 sm:space-y-6">
               {/* Profile Card - Responsive */}
@@ -540,7 +540,7 @@ export default function Dashboard() {
                           <span className="text-muted-foreground">Payment Status</span>
                           <Badge className={`${membershipData.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
                             membershipData.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                              'bg-gray-100 text-gray-800 border-gray-200'
+                              'bg-green-300 text-black border-gray-200'
                             }`}>
                             {membershipData.payment_status}
                           </Badge>

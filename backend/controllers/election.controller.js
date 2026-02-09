@@ -186,9 +186,7 @@ exports.createElection = async (req, res) => {
     
     // Create notification for users
     try {
-      const notificationMessage = pdf_url 
-        ? `New Election: ${title}. Download form and submit your nomination before ${new Date(deadline).toLocaleDateString()}.`
-        : `New Election: ${title}. Submit your nomination before ${new Date(deadline).toLocaleDateString()}.`;
+      const notificationMessage = `Submit your nomination before ${new Date(deadline).toLocaleDateString('en-GB')}.`;
       
       await promisePool.query(
         `INSERT INTO notifications (type, title, message, link, election_id, created_at)
@@ -274,12 +272,25 @@ exports.updateElection = async (req, res) => {
       values
     );
     
-    // Update notification title if election title was updated
-    if (title !== undefined) {
-      const [updateResult] = await promisePool.query(
-        `UPDATE notifications SET title = ? WHERE election_id = ? AND type = 'election'`,
-        [title, id]
+    // Update notification title and message if election title or deadline was updated
+    if (title !== undefined || deadline !== undefined) {
+      // Get current election data to build notification message
+      const [electionData] = await promisePool.query(
+        'SELECT title, deadline FROM elections WHERE id = ?',
+        [id]
       );
+      
+      if (electionData.length > 0) {
+        const election = electionData[0];
+        const notificationMessage = `Submit your nomination before ${new Date(election.deadline).toLocaleDateString('en-GB')}.`;
+        
+        await promisePool.query(
+          `UPDATE notifications 
+           SET title = ?, message = ? 
+           WHERE election_id = ? AND type = 'election'`,
+          [election.title, notificationMessage, id]
+        );
+      }
     }
     
     res.json({

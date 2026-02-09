@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, FileText, ExternalLink, Clock } from 'lucide-react';
+import { Calendar, MapPin, FileText, ExternalLink, Clock, Vote, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/utils';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface TimeLeft {
   days: number;
@@ -132,6 +139,33 @@ export function UpcomingEventsCarousel() {
     );
   };
 
+  const getEventTypeInfo = (eventType: string) => {
+    const types = {
+      seminar: { 
+        icon: Calendar, 
+        label: 'Seminar', 
+        color: 'bg-blue-100 text-blue-800 border-blue-200' 
+      },
+      election: { 
+        icon: Vote, 
+        label: 'Election', 
+        color: 'bg-purple-100 text-purple-800 border-purple-200' 
+      },
+      job: { 
+        icon: Briefcase, 
+        label: 'Job Opening', 
+        color: 'bg-green-100 text-green-800 border-green-200' 
+      },
+      event: { 
+        icon: Calendar, 
+        label: 'Event', 
+        color: 'bg-orange-100 text-orange-800 border-orange-200' 
+      }
+    };
+
+    return types[eventType as keyof typeof types] || types.event;
+  };
+
   const handleEventAction = (event: any, actionType: 'details' | 'download') => {
     
     const token = localStorage.getItem('token');
@@ -151,9 +185,12 @@ export function UpcomingEventsCarousel() {
     }
 
     if (actionType === 'details') {
-      
-      // Navigate to seminar detail page
-      if (event.seminar_id) {
+      // Navigate based on event type
+      if (event.event_type === 'seminar') {
+        navigate(`/seminar/${event.seminar_id || event.id}`);
+      } else if (event.event_type === 'election') {
+        navigate(`/election-submission/${event.election_id || event.id}`);
+      } else if (event.seminar_id) {
         navigate(`/seminar/${event.seminar_id}`);
       } else if (event.id) {
         navigate(`/seminar/${event.id}`);
@@ -164,7 +201,6 @@ export function UpcomingEventsCarousel() {
           navigate(event.link_url);
         }
       } else {
-        
         toast({
           title: 'Navigation Issue',
           description: `Event: ${event.title || 'Unknown'} - Missing navigation data`,

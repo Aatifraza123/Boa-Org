@@ -65,39 +65,40 @@ export default function MembershipDetails() {
     if (!membershipData) return;
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
     
     // Add logo at top center
-    const logoUrl = '/favicon.ico'; // You can replace this with your actual logo URL
+    const logoUrl = 'https://res.cloudinary.com/derzj7d4u/image/upload/v1768477374/boa-certificates/pjm2se9296raotekzmrc.png';
     const logoImg = new Image();
     logoImg.crossOrigin = 'anonymous';
     
     logoImg.onload = () => {
-      // Add logo at top center (x: 95, y: 5, width: 20, height: 20)
-      doc.addImage(logoImg, 'PNG', 95, 5, 20, 20);
+      // Add logo at top center
+      try {
+        doc.addImage(logoImg, 'PNG', (pageWidth - 30) / 2, 10, 30, 30);
+      } catch (error) {
+        console.error('Error adding logo:', error);
+      }
       
-      // Header with BOA branding (moved down to accommodate logo)
-      doc.setFillColor(11, 60, 93); // #0B3C5D
-      doc.rect(0, 30, 210, 35, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(20);
+      // Header with BOA branding
+      doc.setTextColor(11, 60, 93);
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('Ophthalmic Association Of Bihar', 105, 45, { align: 'center' });
+      doc.text('Ophthalmic Association Of Bihar', pageWidth / 2, 48, { align: 'center' });
       
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text('Membership Certificate', 105, 55, { align: 'center' });
-      doc.text('Ved Vani, East Shivpuri, Chitkohara Bypass Road, Po-Anishabad, Patna - 800002', 105, 62, { align: 'center' });
+      doc.text('Membership Certificate', pageWidth / 2, 56, { align: 'center' });
       
-      // Membership Card Title
+      // Divider line
+      doc.setDrawColor(11, 60, 93);
+      doc.setLineWidth(0.5);
+      doc.line(20, 62, pageWidth - 20, 62);
+      
+      // Member Details - Simple Format
+      let y = 75;
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('MEMBERSHIP CARD', 105, 80, { align: 'center' });
-      
-      // Member Details
-      let y = 100;
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       
       const memberDetails = [
@@ -108,80 +109,29 @@ export default function MembershipDetails() {
         ['Membership Type:', membershipData.membership_type || 'Standard'],
         ['Payment Type:', membershipData.payment_type || 'N/A'],
         ['Status:', membershipData.status || 'Active'],
-        ['Valid From:', membershipData.valid_from ? new Date(membershipData.valid_from).toLocaleDateString() : 'N/A'],
-        ['Valid Until:', membershipData.valid_until ? new Date(membershipData.valid_until).toLocaleDateString() : 'Lifetime'],
-        ['Registration Date:', new Date(membershipData.membership_created_at || membershipData.created_at).toLocaleDateString()]
+        ['Member Since:', membershipData.valid_from ? new Date(membershipData.valid_from).toLocaleDateString('en-GB') : 'N/A'],
+        ['Valid Until:', membershipData.valid_until ? new Date(membershipData.valid_until).toLocaleDateString('en-GB') : 'Lifetime']
       ];
 
-      // Add payment information if available
-      if (membershipData.payment_status) {
-        memberDetails.push(['Payment Status:', membershipData.payment_status]);
-        if (membershipData.amount) {
-          memberDetails.push(['Amount Paid:', `₹${parseFloat(membershipData.amount).toLocaleString()}`]);
-        }
-        if (membershipData.transaction_id) {
-          memberDetails.push(['Transaction ID:', membershipData.transaction_id]);
-        }
-        if (membershipData.payment_date) {
-          memberDetails.push(['Payment Date:', new Date(membershipData.payment_date).toLocaleDateString()]);
-        }
-      }
-
-      // Add qualification information if available
-      if (membershipData.qualification) {
-        memberDetails.push(['Qualification:', membershipData.qualification]);
-      }
-      if (membershipData.year_passing) {
-        memberDetails.push(['Year of Passing:', membershipData.year_passing]);
-      }
-      if (membershipData.institution) {
-        memberDetails.push(['Institution:', membershipData.institution]);
-      }
-      if (membershipData.working_place) {
-        memberDetails.push(['Working Place:', membershipData.working_place]);
-      }
-      
       memberDetails.forEach(([label, value]) => {
         doc.setFont('helvetica', 'bold');
-        doc.text(label, 20, y);
+        doc.text(label, 25, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(String(value), 70, y);
+        doc.text(String(value), 80, y);
         y += 8;
-      });
-      
-      // Benefits Section
-      y += 10;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text('Membership Benefits:', 20, y);
-      
-      y += 10;
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const benefits = [
-        '• Access to all BOA seminars and conferences',
-        '• Discounted registration fees for events',
-        '• CME credit points for professional development',
-        '• Access to BOA digital library and resources',
-        '• Networking opportunities with fellow ophthalmologists',
-        '• Priority booking for workshops and training programs'
-      ];
-      
-      benefits.forEach(benefit => {
-        doc.text(benefit, 25, y);
-        y += 6;
       });
       
       // Footer
       const pageHeight = doc.internal.pageSize.height;
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(128, 128, 128);
-      doc.text('This is a computer-generated membership card. No signature required.', 105, pageHeight - 15, { align: 'center' });
-      doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, pageHeight - 10, { align: 'center' });
+      doc.text('Ved Vani, East Shivpuri, Chitkohara Bypass Road, Po-Anishabad, Patna - 800002', pageWidth / 2, pageHeight - 20, { align: 'center' });
+      doc.text('This is a computer-generated membership card. No signature required.', pageWidth / 2, pageHeight - 14, { align: 'center' });
+      doc.text(`Generated on: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
       
       // Save PDF
-      doc.save(`BOA_Membership_Card_${membershipData.membership_no || 'Pending'}.pdf`);
+      doc.save(`BOA_Membership_${membershipData.membership_no || 'Card'}.pdf`);
       
       toast({
         title: 'Membership Card Downloaded',
@@ -199,30 +149,27 @@ export default function MembershipDetails() {
 
   const generatePDFWithoutLogo = () => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
     
     // Header with BOA branding
-    doc.setFillColor(11, 60, 93); // #0B3C5D
-    doc.rect(0, 0, 210, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setTextColor(11, 60, 93);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Ophthalmic Association Of Bihar', 105, 15, { align: 'center' });
+    doc.text('Ophthalmic Association Of Bihar', pageWidth / 2, 20, { align: 'center' });
     
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text('Membership Certificate', 105, 25, { align: 'center' });
-    doc.text('Ved Vani, East Shivpuri, Chitkohara Bypass Road, Po-Anishabad, Patna - 800002', 105, 32, { align: 'center' });
+    doc.text('Membership Certificate', pageWidth / 2, 28, { align: 'center' });
     
-    // Membership Card Title
+    // Divider line
+    doc.setDrawColor(11, 60, 93);
+    doc.setLineWidth(0.5);
+    doc.line(20, 34, pageWidth - 20, 34);
+    
+    // Member Details - Simple Format
+    let y = 47;
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MEMBERSHIP CARD', 105, 55, { align: 'center' });
-    
-    // Member Details
-    let y = 75;
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     
     const memberDetails = [
@@ -233,80 +180,29 @@ export default function MembershipDetails() {
       ['Membership Type:', membershipData.membership_type || 'Standard'],
       ['Payment Type:', membershipData.payment_type || 'N/A'],
       ['Status:', membershipData.status || 'Active'],
-      ['Valid From:', membershipData.valid_from ? new Date(membershipData.valid_from).toLocaleDateString() : 'N/A'],
-      ['Valid Until:', membershipData.valid_until ? new Date(membershipData.valid_until).toLocaleDateString() : 'Lifetime'],
-      ['Registration Date:', new Date(membershipData.membership_created_at || membershipData.created_at).toLocaleDateString()]
+      ['Member Since:', membershipData.valid_from ? new Date(membershipData.valid_from).toLocaleDateString('en-GB') : 'N/A'],
+      ['Valid Until:', membershipData.valid_until ? new Date(membershipData.valid_until).toLocaleDateString('en-GB') : 'Lifetime']
     ];
-
-    // Add payment information if available
-    if (membershipData.payment_status) {
-      memberDetails.push(['Payment Status:', membershipData.payment_status]);
-      if (membershipData.amount) {
-        memberDetails.push(['Amount Paid:', `₹${parseFloat(membershipData.amount).toLocaleString()}`]);
-      }
-      if (membershipData.transaction_id) {
-        memberDetails.push(['Transaction ID:', membershipData.transaction_id]);
-      }
-      if (membershipData.payment_date) {
-        memberDetails.push(['Payment Date:', new Date(membershipData.payment_date).toLocaleDateString()]);
-      }
-    }
-
-    // Add qualification information if available
-    if (membershipData.qualification) {
-      memberDetails.push(['Qualification:', membershipData.qualification]);
-    }
-    if (membershipData.year_passing) {
-      memberDetails.push(['Year of Passing:', membershipData.year_passing]);
-    }
-    if (membershipData.institution) {
-      memberDetails.push(['Institution:', membershipData.institution]);
-    }
-    if (membershipData.working_place) {
-      memberDetails.push(['Working Place:', membershipData.working_place]);
-    }
     
     memberDetails.forEach(([label, value]) => {
       doc.setFont('helvetica', 'bold');
-      doc.text(label, 20, y);
+      doc.text(label, 25, y);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(value), 70, y);
+      doc.text(String(value), 80, y);
       y += 8;
-    });
-    
-    // Benefits Section
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('Membership Benefits:', 20, y);
-    
-    y += 10;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const benefits = [
-      '• Access to all BOA seminars and conferences',
-      '• Discounted registration fees for events',
-      '• CME credit points for professional development',
-      '• Access to BOA digital library and resources',
-      '• Networking opportunities with fellow ophthalmologists',
-      '• Priority booking for workshops and training programs'
-    ];
-    
-    benefits.forEach(benefit => {
-      doc.text(benefit, 25, y);
-      y += 6;
     });
     
     // Footer
     const pageHeight = doc.internal.pageSize.height;
-    doc.setFontSize(8);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(128, 128, 128);
-    doc.text('This is a computer-generated membership card. No signature required.', 105, pageHeight - 15, { align: 'center' });
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, pageHeight - 10, { align: 'center' });
+    doc.text('Ved Vani, East Shivpuri, Chitkohara Bypass Road, Po-Anishabad, Patna - 800002', pageWidth / 2, pageHeight - 20, { align: 'center' });
+    doc.text('This is a computer-generated membership card. No signature required.', pageWidth / 2, pageHeight - 14, { align: 'center' });
+    doc.text(`Generated on: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
     
     // Save PDF
-    doc.save(`BOA_Membership_Card_${membershipData.membership_no || 'Pending'}.pdf`);
+    doc.save(`BOA_Membership_${membershipData.membership_no || 'Card'}.pdf`);
     
     toast({
       title: 'Membership Card Downloaded',
@@ -389,8 +285,8 @@ export default function MembershipDetails() {
                   {/* Membership Number */}
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-sm font-medium text-muted-foreground mb-2">Membership Number</div>
-                    <div className="text-2xl font-bold">
-                      {membershipData.membership_no || (
+                    <div className="text-2xl bg-[gold] font-bold">
+                  {membershipData.membership_no|| (
                         <span className="text-orange-600">Pending Assignment</span>
                       )}
                     </div>

@@ -7,9 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Calendar, MapPin, Clock, Phone, Send, Download } from 'lucide-react';
+import { Calendar, MapPin, Clock, Send, Download, AlertCircle } from 'lucide-react';
 import api from '@/lib/api';
 import { API_BASE_URL } from '@/lib/utils';
 
@@ -19,6 +18,7 @@ export default function ElectionSubmission() {
   const [election, setElection] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [hasMembership, setHasMembership] = useState(false);
   const [formData, setFormData] = useState({
     position: '',
     name: '',
@@ -45,8 +45,6 @@ export default function ElectionSubmission() {
       const userStr = localStorage.getItem('user');
       if (!userStr) return;
       
-      const user = JSON.parse(userStr);
-      
       // Simply try to submit and catch the duplicate error
       // Or we can add a dedicated check endpoint
       // For now, we'll rely on backend validation during submit
@@ -61,37 +59,50 @@ export default function ElectionSubmission() {
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
-        const user = JSON.parse(userStr);
-        console.log('Logged in user:', user);
+        const userData = JSON.parse(userStr);
+        console.log('Logged in user:', userData);
+        
+        // Check if user has membership
+        const membershipNo = userData.membership_no || userData.life_membership_no || '';
+        if (!membershipNo) {
+          setHasMembership(false);
+          toast.error('You must have a membership to submit nomination');
+          return;
+        }
+        
+        setHasMembership(true);
         
         // Capitalize title (dr -> Dr, prof -> Prof, etc.)
-        const capitalizedTitle = user.title 
-          ? user.title.charAt(0).toUpperCase() + user.title.slice(1).toLowerCase()
+        const capitalizedTitle = userData.title 
+          ? userData.title.charAt(0).toUpperCase() + userData.title.slice(1).toLowerCase()
           : '';
         
         // Construct full name from title, first_name and surname
-        const fullName = [capitalizedTitle, user.first_name, user.surname]
+        const fullName = [capitalizedTitle, userData.first_name, userData.surname]
           .filter(Boolean)
           .join(' ');
         
         // Pre-fill form with user data
         setFormData(prev => ({
           ...prev,
-          name: fullName || user.name || '',
-          email: user.email || '',
-          mobile: user.mobile || user.phone || '',
-          life_membership_no: user.membership_no || user.life_membership_no || ''
+          name: fullName || userData.name || '',
+          email: userData.email || '',
+          mobile: userData.mobile || userData.phone || '',
+          life_membership_no: membershipNo
         }));
         
         console.log('Form pre-filled with:', {
           name: fullName,
-          email: user.email,
-          mobile: user.mobile,
-          life_membership_no: user.membership_no
+          email: userData.email,
+          mobile: userData.mobile,
+          life_membership_no: membershipNo
         });
+      } else {
+        setHasMembership(false);
       }
     } catch (error) {
       console.error('Failed to load user data:', error);
+      setHasMembership(false);
     }
   };
 
@@ -314,11 +325,41 @@ export default function ElectionSubmission() {
             <CardHeader>
               <CardTitle>Submit Nomination</CardTitle>
               <CardDescription>
-                Only for {election.eligible_members}. Please fill all required fields.
+                Only for {election.eligible_members}. Submit your nomination before{' '}
+                <span className="font-semibold text-gray-900">
+                  {new Date(election.deadline).toLocaleDateString('en-GB')}
+                </span>
+                . Please fill all required fields.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {alreadySubmitted ? (
+              {!hasMembership ? (
+                /* No Membership Message */
+                <div className="text-center py-12">
+                  <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Membership Required
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    You must have an active membership to submit a nomination for this election.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/notifications')}
+                    >
+                      Back to Notifications
+                    </Button>
+                    <Button
+                      onClick={() => navigate('/membership')}
+                    >
+                      Get Membership
+                    </Button>
+                  </div>
+                </div>
+              ) : alreadySubmitted ? (
                 /* Already Submitted Message */
                 <div className="text-center py-12">
                   <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -350,7 +391,7 @@ export default function ElectionSubmission() {
                     onValueChange={(value) => setFormData({ ...formData, position: value })}
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger name="position">
                       <SelectValue placeholder="Select position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -379,74 +420,93 @@ export default function ElectionSubmission() {
                       <Label htmlFor="name">Name *</Label>
                       <Input
                         id="name"
+                        name="name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        disabled
+                        className="bg-gray-100 cursor-not-allowed"
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Auto-filled from your profile
+                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="life_membership_no">Life Membership No</Label>
+                      <Label htmlFor="life_membership_no">Life Membership No *</Label>
                       <Input
                         id="life_membership_no"
+                        name="life_membership_no"
                         value={formData.life_membership_no}
                         onChange={(e) => setFormData({ ...formData, life_membership_no: e.target.value })}
-                        className="bg-gray-50"
-                        placeholder="Auto-filled from your profile"
+                        disabled
+                        className="bg-gray-100 cursor-not-allowed"
+                        required
                       />
                       <p className="text-xs text-muted-foreground">
-                        Auto-filled from your profile. Update if needed.
+                        Auto-filled from your profile
                       </p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="designation">Designation</Label>
+                      <Label htmlFor="designation">Designation *</Label>
                       <Input
                         id="designation"
+                        name="designation"
                         value={formData.designation}
                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                        required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="qualification">Qualification</Label>
+                      <Label htmlFor="qualification">Qualification *</Label>
                       <Input
                         id="qualification"
+                        name="qualification"
                         value={formData.qualification}
                         onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                        required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="working_place">Working Place</Label>
+                    <Label htmlFor="working_place">Working Place *</Label>
                     <Input
                       id="working_place"
+                      name="working_place"
                       value={formData.working_place}
                       onChange={(e) => setFormData({ ...formData, working_place: e.target.value })}
+                      required
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="age">Age</Label>
+                      <Label htmlFor="age">Age *</Label>
                       <Input
                         id="age"
+                        name="age"
                         type="number"
+                        min="18"
+                        max="100"
                         value={formData.age}
                         onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                        required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="sex">Sex</Label>
+                      <Label htmlFor="sex">Sex *</Label>
                       <Select
                         value={formData.sex}
                         onValueChange={(value) => setFormData({ ...formData, sex: value })}
+                        required
                       >
-                        <SelectTrigger>
+                        <SelectTrigger name="sex">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -468,31 +528,47 @@ export default function ElectionSubmission() {
                       <Label htmlFor="mobile">Mobile No *</Label>
                       <Input
                         id="mobile"
+                        name="mobile"
                         type="tel"
+                        pattern="[0-9]{10}"
                         value={formData.mobile}
                         onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                        disabled
+                        className="bg-gray-100 cursor-not-allowed"
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Auto-filled from your profile
+                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
                         id="email"
+                        name="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        disabled
+                        className="bg-gray-100 cursor-not-allowed"
+                        required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Auto-filled from your profile
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">Address *</Label>
                     <Textarea
                       id="address"
+                      name="address"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       rows={3}
+                      required
                     />
                   </div>
                 </div>

@@ -188,11 +188,45 @@ try {
   app.get('/api/upcoming-events', async (req, res) => {
     try {
       const { promisePool } = require('./config/database');
-      const [events] = await promisePool.query(
-        'SELECT * FROM upcoming_events WHERE is_active = TRUE ORDER BY display_order, id'
+      
+      // Get upcoming events from upcoming_events table
+      const [upcomingEvents] = await promisePool.query(
+        'SELECT *, "event" as event_type FROM upcoming_events WHERE is_active = TRUE ORDER BY display_order, id'
       );
-      res.json({ success: true, events });
+      
+      // Get upcoming seminars (future seminars only)
+      const [seminars] = await promisePool.query(
+        `SELECT id, name as title, description, location, start_date, end_date, 
+                image_url, "seminar" as event_type, id as seminar_id
+         FROM seminars 
+         WHERE start_date >= CURDATE() 
+         ORDER BY start_date ASC 
+         LIMIT 5`
+      );
+      
+      // Get active elections (where deadline hasn't passed)
+      const [elections] = await promisePool.query(
+        `SELECT id, title, description, deadline as start_date, voting_date as end_date,
+                image_url, "election" as event_type, id as election_id
+         FROM elections 
+         WHERE deadline >= CURDATE() 
+         ORDER BY deadline ASC 
+         LIMIT 5`
+      );
+      
+      // Combine all events
+      const allEvents = [...upcomingEvents, ...seminars, ...elections];
+      
+      // Sort by start_date
+      allEvents.sort((a, b) => {
+        const dateA = new Date(a.start_date || '9999-12-31');
+        const dateB = new Date(b.start_date || '9999-12-31');
+        return dateA - dateB;
+      });
+      
+      res.json({ success: true, events: allEvents });
     } catch (error) {
+      console.error('Upcoming events error:', error);
       res.status(500).json({ success: false, message: 'Failed to fetch upcoming events' });
     }
   });

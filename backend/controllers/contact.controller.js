@@ -29,9 +29,11 @@ async function verifyRecaptcha(token) {
 
 // Send contact form email
 exports.sendContactForm = async (req, res) => {
+  console.log('=== CONTACT FORM REQUEST ===');
   
   try {
     let { firstName, lastName, email, phone, subject, message, recaptchaToken } = req.body;
+
 
 
     // Verify reCAPTCHA (with detailed logging)
@@ -40,6 +42,7 @@ exports.sendContactForm = async (req, res) => {
         const isValid = await verifyRecaptcha(recaptchaToken);
         
         if (!isValid) {
+          console.log('reCAPTCHA validation failed, but continuing...');
           // Don't block the request, just log the warning
         }
       } catch (recaptchaError) {
@@ -47,6 +50,7 @@ exports.sendContactForm = async (req, res) => {
         // Don't block the request on reCAPTCHA errors
       }
     } else {
+      console.log('No reCAPTCHA token provided');
     }
 
     // Trim all fields
@@ -59,6 +63,7 @@ exports.sendContactForm = async (req, res) => {
 
     // Validation
     if (!firstName || !lastName || !email || !subject || !message) {
+      console.log('Validation failed: Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Please fill in all required fields'
@@ -68,6 +73,7 @@ exports.sendContactForm = async (req, res) => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('Validation failed: Invalid email format');
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid email address (e.g., name@example.com)'
@@ -76,6 +82,7 @@ exports.sendContactForm = async (req, res) => {
 
     // Send email
     try {
+      console.log('Attempting to send contact email to admin...');
       // Send email to admin
       await sendContactEmail({
         firstName,
@@ -85,15 +92,18 @@ exports.sendContactForm = async (req, res) => {
         subject,
         message
       });
+      console.log('Contact email sent successfully to admin');
 
       // Send confirmation email to user
       try {
+        console.log('Attempting to send confirmation email to user...');
         await sendContactConfirmationEmail({
           firstName,
           lastName,
           email,
           subject
         });
+        console.log('Confirmation email sent successfully to user');
       } catch (confirmationError) {
         console.error('Failed to send confirmation email to user:', confirmationError.message);
         // Don't fail the main request if confirmation email fails
@@ -104,7 +114,10 @@ exports.sendContactForm = async (req, res) => {
         message: 'Thank you for contacting us! We will get back to you soon.'
       });
     } catch (emailError) {
-      console.error('Failed to send contact email:', emailError);
+      console.error('=== EMAIL SENDING ERROR ===');
+      console.error('Error message:', emailError.message);
+      console.error('Error stack:', emailError.stack);
+      console.error('========================');
       
       res.status(500).json({
         success: false,
@@ -113,7 +126,12 @@ exports.sendContactForm = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Contact form error:', error);
+    console.error('=== CONTACT FORM ERROR ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('========================');
+    
     res.status(500).json({
       success: false,
       message: 'Failed to process contact form',

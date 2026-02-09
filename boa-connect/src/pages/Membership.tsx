@@ -224,7 +224,7 @@ export default function Membership() {
   const faqs = [
     {
       question: 'Who can become a member of BOA?',
-      answer: 'Any qualified DOA registered with Medical Council of India or ophthalmic residents can apply for BOA membership.'
+      answer: 'A person holding certificate of Diploma in Para-Ophthalmology/Diploma in Ophthalmic Assistant/Bachelor of Ophthalmic Technology or any higher degree course in Ophthalmic science from government, Semi government or non government college/institute recognized by the law of government and fit for recruitment at post of ophthalmic Assistant. To get membership of Association, they have to submit a full filled form.'
     },
     {
       question: 'How long does the approval process take?',
