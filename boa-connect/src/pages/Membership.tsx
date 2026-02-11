@@ -236,7 +236,7 @@ export default function Membership() {
     },
     {
       question: 'What documents are required?',
-      answer: 'Medical Registration to Replace Original Certificate Photography.'
+      answer: 'You need to submit your original certificate photocopy, qualification certificates, and a recent passport-size photograph'
     }
   ];
 
