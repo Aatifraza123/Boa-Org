@@ -298,104 +298,51 @@ export default function StatisticsTab() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Payment Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_registrations || 0}</div>
+            <div className="text-2xl font-bold">{paymentStats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">Number of transactions</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{getStatusCount('completed')}</div>
+            <div className="text-2xl font-bold text-green-600">₹{paymentStats.totalAmount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">All payments combined</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium">Seminar Payments</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{getStatusCount('pending')}</div>
+            <div className="text-2xl font-bold text-blue-600">₹{paymentStats.seminarAmount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">Registration fees</p>
           </CardContent>
         </Card>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Registration Status Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {stats?.by_status?.map((item: any) => (
-              <div key={item.status} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {item.status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
-                  {item.status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
-                  {item.status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
-                  <span className="capitalize">{item.status}</span>
-                </div>
-                <span className="font-semibold">{item.count}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Payment Statistics */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-bold">Payment Statistics</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{paymentStats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{paymentStats.totalAmount.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Seminar Payments</CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">₹{paymentStats.seminarAmount.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Membership Payments</CardTitle>
-              <DollarSign className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">₹{paymentStats.membershipAmount.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Membership Payments</CardTitle>
+            <DollarSign className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">₹{paymentStats.membershipAmount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">Membership fees</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* All Payments Section */}
@@ -451,6 +398,7 @@ export default function StatisticsTab() {
             <table className="w-full">
               <thead className="bg-muted">
                 <tr>
+                  <th className="text-left p-4 font-semibold w-12">#</th>
                   <th className="text-left p-4 font-semibold">User</th>
                   <th className="text-left p-4 font-semibold">Payment For</th>
                   <th className="text-left p-4 font-semibold">Type</th>
@@ -464,14 +412,17 @@ export default function StatisticsTab() {
               <tbody>
                 {filteredPayments.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={9} className="text-center py-12 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       <p>No payments found</p>
                     </td>
                   </tr>
                 ) : (
-                  filteredPayments.map((payment) => (
+                  filteredPayments.map((payment, index) => (
                     <tr key={payment.id} className="border-t hover:bg-muted/50">
+                      <td className="p-4 font-medium text-muted-foreground">
+                        {index + 1}.
+                      </td>
                       <td className="p-4">
                         <div>
                           <p className="font-medium">{payment.user_name || 'Unknown User'}</p>

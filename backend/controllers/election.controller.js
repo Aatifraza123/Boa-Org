@@ -447,7 +447,7 @@ exports.getElectionSubmissions = async (req, res) => {
       params.push(status);
     }
     
-    query += ' ORDER BY submitted_at DESC';
+    query += ' ORDER BY submitted_at ASC';
     
     const [submissions] = await promisePool.query(query, params);
     
@@ -947,6 +947,118 @@ exports.getMySubmissions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch your submissions',
+      error: error.message
+    });
+  }
+};
+
+
+// Export election data with all submissions (Admin only)
+exports.exportElectionData = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ExcelJS = require('exceljs');
+
+    // Get election details
+    const [elections] = await promisePool.query(
+      'SELECT * FROM elections WHERE id = ?',
+      [id]
+    );
+
+    if (elections.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Election not found'
+      });
+    }
+
+    const election = elections[0];
+
+    // Parse positions if JSON string
+    if (election.positions) {
+      try {
+        election.positions = JSON.parse(election.positions);
+      } catch (e) {
+        election.positions = [];
+      }
+    }
+
+    // Get all submissions for this election
+    const [submissions] = await promisePool.query(
+      'SELECT * FROM election_submissions WHERE election_id = ? ORDER BY submitted_at ASC',
+      [id]
+    );
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    
+    // Election Info Sheet
+    const infoSheet = workbook.addWorksheet('Election Info');
+    infoSheet.columns = [
+      { header: 'Field', key: 'field', width: 25 },
+      { header: 'Value', key: 'value', width: 50 }
+    ];
+    infoSheet.addRows([
+      { field: 'Title', value: election.title },
+      { field: 'Description', value: election.description || 'N/A' },
+      { field: 'Eligible Members', value: election.eligible_members },
+      { field: 'Deadline', value: election.deadline ? new Date(election.deadline).toLocaleString() : 'N/A' },
+      { field: 'Voting Date', value: election.voting_date ? new Date(election.voting_date).toLocaleDateString() : 'N/A' },
+      { field: 'Voting Time', value: election.voting_time || 'N/A' },
+      { field: 'Voting Venue', value: election.voting_venue || 'N/A' },
+      { field: 'Contact Mobile', value: election.contact_mobile || 'N/A' },
+      { field: 'Positions', value: Array.isArray(election.positions) ? election.positions.join(', ') : 'N/A' },
+      { field: 'Status', value: election.status },
+      { field: 'Total Submissions', value: submissions.length }
+    ]);
+
+    // Submissions Sheet
+    if (submissions.length > 0) {
+      const submissionsSheet = workbook.addWorksheet('Submissions');
+      submissionsSheet.columns = [
+        { header: '#', key: 'serial', width: 8 },
+        { header: 'Name', key: 'name', width: 25 },
+        { header: 'Email', key: 'email', width: 30 },
+        { header: 'Mobile', key: 'mobile', width: 15 },
+        { header: 'Position', key: 'position', width: 20 },
+        { header: 'Life Membership No', key: 'life_membership_no', width: 20 },
+        { header: 'Status', key: 'status', width: 12 },
+        { header: 'Submitted At', key: 'submitted_at', width: 20 },
+        { header: 'File URL', key: 'file_url', width: 50 }
+      ];
+
+      submissionsSheet.addRows(submissions.map((sub, index) => ({
+        serial: index + 1,
+        name: sub.name,
+        email: sub.email,
+        mobile: sub.mobile,
+        position: sub.position,
+        life_membership_no: sub.life_membership_no || 'N/A',
+        status: sub.status || 'pending',
+        submitted_at: sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : 'N/A',
+        file_url: sub.file_url || 'N/A'
+      })));
+
+      // Style header row
+      submissionsSheet.getRow(1).font = { bold: true };
+      submissionsSheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
+    }
+
+    // Send file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${election.title.replace(/[^a-zA-Z0-9]/g, '_')}_Complete_Data.xlsx`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export election data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export election data',
       error: error.message
     });
   }

@@ -194,7 +194,6 @@ export function AdminLayout({ children, activeTab = 'statistics', onTabChange }:
         { id: 'news', label: 'News', icon: FileText },
         { id: 'upcoming', label: 'Upcoming Events', icon: Image },
         { id: 'elections', label: 'Elections', icon: Vote },
-        { id: 'gallery', label: 'Gallery', icon: Image },
         { id: 'gallery-management', label: 'Gallery Management', icon: Image },
         { id: 'testimonials', label: 'Testimonials', icon: Award },
         { id: 'committee', label: 'Committee', icon: User },

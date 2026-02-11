@@ -87,8 +87,9 @@ export default function RegisterSimple() {
         description: 'Your account has been created successfully.',
       });
       
+      // Force page reload to update navbar state
       setTimeout(() => {
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       }, 1000);
       
     } catch (error: any) {

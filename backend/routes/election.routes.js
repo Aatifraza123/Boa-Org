@@ -24,6 +24,7 @@ router.put('/:id', adminAuth, electionController.updateElection);
 router.delete('/:id', adminAuth, electionController.deleteElection);
 router.post('/:id/generate-pdf', adminAuth, electionController.generateElectionPdf);
 router.get('/:election_id/submissions', adminAuth, electionController.getElectionSubmissions);
+router.get('/:id/export', adminAuth, electionController.exportElectionData);
 router.put('/submissions/:id/status', adminAuth, electionController.updateSubmissionStatus);
 router.put('/submissions/:id', adminAuth, electionController.updateSubmission);
 router.delete('/submissions/:id', adminAuth, electionController.deleteSubmission);

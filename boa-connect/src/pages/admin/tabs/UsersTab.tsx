@@ -214,6 +214,7 @@ export default function UsersTab() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">#</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Mobile</TableHead>
@@ -226,13 +227,16 @@ export default function UsersTab() {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
+              filteredUsers.map((user, index) => (
                 <TableRow key={user.id}>
+                  <TableCell className="font-medium text-muted-foreground">
+                    {index + 1}.
+                  </TableCell>
                   <TableCell className="font-medium">
                     {formatTitle(user.title)} {user.first_name} {user.surname}
                   </TableCell>

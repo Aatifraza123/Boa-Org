@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import './MembershipManagementTab.css';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { adminAPI } from '@/lib/api';
-import { Search, Edit, Award, Calendar, User, Mail, Phone, Download, Upload, FileText, X, CheckCircle, Trash2 } from 'lucide-react';
+import { Search, Edit, Award, Calendar, User, Mail, Phone, Download, Upload, FileText, X, CheckCircle, Trash2, DollarSign } from 'lucide-react';
 import { exportToCSV, formatMembershipForExport } from '@/lib/exportUtils';
 
 // Helper function to format title consistently
@@ -632,9 +633,7 @@ export default function MembershipManagementTab() {
     <div className="space-y-6">
 
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Paid Members Only</h2>
-        </div>
+        <h2 className="text-2xl font-bold">Paid Members Only</h2>
         <div className="flex gap-2">
           <Button onClick={() => setIsAddOfflineOpen(true)} variant="outline">
             <Upload className="mr-2 h-4 w-4" />
@@ -645,6 +644,59 @@ export default function MembershipManagementTab() {
             Export CSV
           </Button>
         </div>
+      </div>
+
+      {/* Membership Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{members.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Paid memberships</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Payment</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              ₹{members.reduce((sum, m) => sum + parseFloat(m.amount || 0), 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Total collected</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Online Payments</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {members.filter(m => m.transaction_id).length}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">With transaction ID</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Offline Payments</CardTitle>
+            <DollarSign className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {members.filter(m => !m.transaction_id).length}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Without transaction ID</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search and Filters */}
@@ -668,6 +720,7 @@ export default function MembershipManagementTab() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">#</TableHead>
               <TableHead>Member Details</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Membership No.</TableHead>
@@ -678,8 +731,11 @@ export default function MembershipManagementTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredMembers.map((member) => (
+            {filteredMembers.map((member, index) => (
               <TableRow key={member.id}>
+                <TableCell className="font-medium text-muted-foreground">
+                  {index + 1}.
+                </TableCell>
                 <TableCell>
                   <div>
                     <div className="font-medium">

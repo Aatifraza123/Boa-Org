@@ -9,17 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Users, Calendar, MapPin, Phone, Download, FileText, X, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Calendar, MapPin, Phone, Download, FileText, X, Upload, CheckCircle } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
 
 export default function ElectionsTab() {
   const [elections, setElections] = useState<any[]>([]);
   const [selectedElection, setSelectedElection] = useState<any>(null);
-  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<{ [key: number]: any[] }>({});
+  const [expandedElections, setExpandedElections] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -75,14 +75,40 @@ export default function ElectionsTab() {
       setLoading(true);
       const response = await adminAPI.get(`/elections/${electionId}/submissions`);
       if (response.success) {
-        setSubmissions(response.submissions);
-        setSubmissionsDialogOpen(true);
+        setSubmissions(prev => ({
+          ...prev,
+          [electionId]: response.submissions
+        }));
+        // Toggle expansion only when user clicks the button
+        setExpandedElections(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(electionId)) {
+            newSet.delete(electionId);
+          } else {
+            newSet.add(electionId);
+          }
+          return newSet;
+        });
       }
     } catch (error) {
       console.error('Failed to load submissions:', error);
       toast.error('Failed to load submissions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const reloadSubmissions = async (electionId: number) => {
+    try {
+      const response = await adminAPI.get(`/elections/${electionId}/submissions`);
+      if (response.success) {
+        setSubmissions(prev => ({
+          ...prev,
+          [electionId]: response.submissions
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to reload submissions:', error);
     }
   };
 
@@ -228,30 +254,31 @@ export default function ElectionsTab() {
     setDialogOpen(true);
   };
 
-  const handleUpdateSubmissionStatus = async (submissionId: number, status: string) => {
+  const handleUpdateSubmissionStatus = async (submissionId: number, electionId: number, status: string) => {
     try {
       await adminAPI.put(`/elections/submissions/${submissionId}/status`, { status });
-      toast.success('Submission status updated');
-      if (selectedElection) {
-        loadSubmissions(selectedElection.id);
-      }
+      toast.success(`Submission ${status} successfully`);
+      // Reload submissions without toggling expansion
+      reloadSubmissions(electionId);
     } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error('Failed to update status');
+      console.error('Failed to update submission status:', error);
+      toast.error('Failed to update submission status');
     }
   };
 
-  const handleDeleteSubmission = async (submissionId: number) => {
-    if (!confirm('Are you sure you want to delete this submission?')) {
-      return;
-    }
+  const handleEditSubmission = (submission: any) => {
+    // TODO: Implement edit submission dialog
+    toast.info('Edit submission feature coming soon');
+  };
+
+  const handleDeleteSubmission = async (submissionId: number, electionId: number) => {
+    if (!confirm('Are you sure you want to delete this submission?')) return;
 
     try {
       await adminAPI.delete(`/elections/submissions/${submissionId}`);
       toast.success('Submission deleted successfully');
-      if (selectedElection) {
-        loadSubmissions(selectedElection.id);
-      }
+      // Reload submissions without toggling expansion
+      reloadSubmissions(electionId);
     } catch (error) {
       console.error('Failed to delete submission:', error);
       toast.error('Failed to delete submission');
@@ -628,9 +655,51 @@ export default function ElectionsTab() {
               </div>
 
               <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      // Download all election data including submissions
+                      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/elections/${election.id}/export`, {
+                        headers: {
+                          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                        }
+                      });
+                      
+                      if (!response.ok) {
+                        throw new Error('Failed to export election data');
+                      }
+
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `${election.title.replace(/[^a-zA-Z0-9]/g, '_')}_Complete_Data.xlsx`;
+                      document.body.appendChild(link);
+                      link.click();
+                      
+                      setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      }, 100);
+                      
+                      toast.success('Election data exported successfully!');
+                    } catch (error: any) {
+                      console.error('Failed to export election data:', error);
+                      toast.error('Failed to export election data');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download All Data
+                </Button>
                 {election.html_content && (
                   <Button
-                    variant="default"
+                    variant="outline"
                     size="sm"
                     onClick={async () => {
                       try {
@@ -667,7 +736,7 @@ export default function ElectionsTab() {
                     }}
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download PDF
+                    Download Form PDF
                   </Button>
                 )}
                 <Button
@@ -679,7 +748,7 @@ export default function ElectionsTab() {
                   }}
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  View Submissions
+                  {expandedElections.has(election.id) ? 'Hide' : 'View'} Submissions ({submissions[election.id]?.length || 0})
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEdit(election)}>
                   <Edit className="h-4 w-4 mr-2" />
@@ -694,86 +763,115 @@ export default function ElectionsTab() {
                   Delete
                 </Button>
               </div>
+
+              {/* Submissions Section - Show under election when expanded */}
+              {expandedElections.has(election.id) && submissions[election.id] && (
+                <div className="mt-6 pt-6 border-t">
+                  <h3 className="text-lg font-semibold mb-4">Submissions ({submissions[election.id]?.length || 0})</h3>
+                  {!submissions[election.id] || submissions[election.id].length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No submissions yet</p>
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">#</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Mobile</TableHead>
+                            <TableHead>Position</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Submitted</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {submissions[election.id]?.map((submission: any, index: number) => (
+                            <TableRow key={submission.id}>
+                              <TableCell className="font-medium text-muted-foreground">
+                                {index + 1}.
+                              </TableCell>
+                              <TableCell className="font-medium">{submission.name}</TableCell>
+                              <TableCell>{submission.email}</TableCell>
+                              <TableCell>{submission.mobile}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{submission.position}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    submission.status === 'approved'
+                                      ? 'default'
+                                      : submission.status === 'rejected'
+                                      ? 'destructive'
+                                      : 'secondary'
+                                  }
+                                  className={
+                                    submission.status === 'approved'
+                                      ? 'bg-green-100 text-green-700'
+                                      : submission.status === 'rejected'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-yellow-100 text-yellow-700'
+                                  }
+                                >
+                                  {submission.status || 'pending'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {new Date(submission.created_at).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateSubmissionStatus(submission.id, election.id, 'approved')}
+                                    disabled={submission.status === 'approved'}
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateSubmissionStatus(submission.id, election.id, 'rejected')}
+                                    disabled={submission.status === 'rejected'}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                  >
+                                    <X className="h-4 w-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteSubmission(submission.id, election.id)}
+                                    title="Delete"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {/* Submissions Dialog */}
-      <Dialog open={submissionsDialogOpen} onOpenChange={setSubmissionsDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Election Submissions - {selectedElection?.title}</DialogTitle>
-            <DialogDescription>
-              Total submissions: {submissions.length}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Membership No</TableHead>
-                  <TableHead>Mobile</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {submissions.map((submission) => (
-                  <TableRow key={submission.id}>
-                    <TableCell>{submission.position}</TableCell>
-                    <TableCell>{submission.name}</TableCell>
-                    <TableCell>{submission.life_membership_no || 'N/A'}</TableCell>
-                    <TableCell>{submission.mobile}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          submission.status === 'approved'
-                            ? 'default'
-                            : submission.status === 'rejected'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {submission.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleUpdateSubmissionStatus(submission.id, 'approved')}
-                          disabled={submission.status === 'approved'}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleUpdateSubmissionStatus(submission.id, 'rejected')}
-                          disabled={submission.status === 'rejected'}
-                        >
-                          Reject
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeleteSubmission(submission.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

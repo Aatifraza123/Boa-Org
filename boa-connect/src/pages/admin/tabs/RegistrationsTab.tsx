@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { adminAPI } from '@/lib/api';
-import { Trash2, Eye, Download, Award, Upload, FileText, X } from 'lucide-react';
+import { Trash2, Eye, Download, Award, Upload, FileText, X, DollarSign } from 'lucide-react';
 import { exportToCSV, formatRegistrationForExport } from '@/lib/exportUtils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -526,10 +527,39 @@ export default function RegistrationsTab() {
           Export CSV
         </Button>
       </div>
+
+      {/* Payment Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{registrations.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Number of registrations</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Payment</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              ₹{registrations.reduce((sum, r) => sum + parseFloat(r.amount || 0), 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Total amount collected</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">#</TableHead>
               <TableHead>Reg No</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Seminar</TableHead>
@@ -542,8 +572,11 @@ export default function RegistrationsTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {registrations.map((reg) => (
+            {registrations.map((reg, index) => (
               <TableRow key={reg.id}>
+                <TableCell className="font-medium text-muted-foreground">
+                  {index + 1}.
+                </TableCell>
                 <TableCell className="font-medium">{reg.registration_no}</TableCell>
                 <TableCell>{getUserName(reg)}</TableCell>
                 <TableCell className="text-sm">{reg.seminar_name}</TableCell>

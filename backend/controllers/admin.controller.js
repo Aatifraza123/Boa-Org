@@ -257,7 +257,7 @@ exports.getAllUsers = async (req, res) => {
       `SELECT u.*, a.house, a.street, a.city, a.state, a.country, a.pin_code
        FROM users u
        LEFT JOIN addresses a ON u.id = a.user_id
-       ORDER BY u.created_at DESC`
+       ORDER BY u.created_at ASC`
     );
 
     // Remove passwords
@@ -660,7 +660,7 @@ exports.getAllRegistrations = async (req, res) => {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY r.created_at DESC';
+    query += ' ORDER BY r.created_at ASC';
 
     const [registrations] = await promisePool.query(query, params);
 
@@ -882,10 +882,10 @@ exports.getAllMembers = async (req, res) => {
     // JOIN with users table to get membership_no
     const [members] = await promisePool.query(`
       SELECT mr.id, mr.name, mr.email, mr.membership_type, mr.payment_type, mr.payment_status as membership_status, mr.created_at,
-             u.membership_no, mr.valid_from, mr.valid_until, mr.notes
+             u.membership_no, mr.valid_from, mr.valid_until, mr.notes, mr.amount, mr.transaction_id
       FROM membership_registrations mr
       LEFT JOIN users u ON mr.email = u.email
-      ORDER BY mr.created_at DESC
+      ORDER BY mr.created_at ASC
     `);
 
     
@@ -905,6 +905,8 @@ exports.getAllMembers = async (req, res) => {
       valid_from: member.valid_from,
       valid_until: member.valid_until,
       notes: member.notes,
+      amount: member.amount || 0,
+      transaction_id: member.transaction_id || null,
       created_at: member.created_at
     }));
 

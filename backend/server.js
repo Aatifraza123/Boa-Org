@@ -21,7 +21,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://boabihar.org',
   'https://www.boabihar.org',
-  'http://localhost:8080'
+  'http://localhost:8080',
+  'https://api.boabihar.org'
 ].filter(Boolean); // Remove any undefined values
 
 // CORS configuration
