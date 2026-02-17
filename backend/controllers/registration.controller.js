@@ -167,6 +167,33 @@ exports.createRegistration = async (req, res) => {
       .replace('b-o-a', 'boa')
       .replace('non-boa', 'non-boa');
 
+    // VALIDATION: Life Member must have valid Lifetime membership
+    if (normalizedDelegateType === 'life-member') {
+      const [userEmail] = await connection.query(
+        'SELECT email FROM users WHERE id = ?',
+        [userId]
+      );
+
+      if (userEmail.length > 0) {
+        const [membershipCheck] = await connection.query(
+          `SELECT mr.id, mr.membership_no, mr.payment_status, mr.membership_type
+           FROM membership_registrations mr 
+           WHERE mr.email = ? 
+           AND mr.payment_status IN ('active', 'paid', 'completed')
+           AND mr.membership_type = 'Lifetime'`,
+          [userEmail[0].email]
+        );
+
+        if (membershipCheck.length === 0) {
+          await connection.rollback();
+          return res.status(400).json({
+            success: false,
+            message: 'Life Member registration requires valid Lifetime membership. Please purchase Lifetime membership first or select a different delegate category.'
+          });
+        }
+      }
+    }
+
     // Generate registration number
     const registration_no = generateRegistrationNo();
     // Calculate total amount

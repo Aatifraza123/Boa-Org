@@ -7,10 +7,10 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.hostinger.com',
   port: parseInt(process.env.EMAIL_PORT) || 465,
-  secure: process.env.EMAIL_SECURE === 'true', // true for 465 (SSL), false for 587 (TLS)
+  secure: true, // Use SSL for port 465
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+    pass: process.env.EMAIL_PASS
   },
   pool: true, // Use pooled connections
   maxConnections: 1, // Limit to 1 connection to avoid spam detection
