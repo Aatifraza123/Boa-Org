@@ -1467,3 +1467,432 @@ button[role="switch"] path,
   background-size: 200% 200%;
   animation: gradient-xy 15s ease infinite;
 }
+
+/* ==================== ENHANCED HERO SECTION ANIMATIONS ==================== */
+
+/* Floating animation for achievement cards */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Slow spin animation for background elements */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhanced hero animations */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 6s ease-in-out infinite 1s;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-text {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* Enhanced button hover effects */
+.group:hover .group-hover\:translate-x-1 {
+  transform: translateX(0.25rem);
+}
+
+/* Backdrop blur support */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+/* Enhanced shadow utilities */
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Responsive text sizing for enhanced hero */
+@media (min-width: 1280px) {
+  .xl\:text-7xl {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+}
+
+/* Enhanced card styles */
+.glass-card-enhanced {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Smooth transitions for all enhanced elements */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Enhanced hover scale */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+/* Enhanced shadow on hover */
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Pulse animation for indicators */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Enhanced gradient backgrounds */
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+/* Enhanced border radius */
+.rounded-2xl {
+  border-radius: 1rem;
+}
+
+.rounded-3xl {
+  border-radius: 1.5rem;
+}
+
+/* Enhanced spacing */
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 2rem;
+}
+
+/* Enhanced aspect ratios */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+/* Enhanced z-index utilities */
+.z-10 {
+  z-index: 10;
+}
+
+/* Enhanced opacity utilities */
+.opacity-20 {
+  opacity: 0.2;
+}
+
+/* Enhanced transform utilities */
+.transform {
+  transform: var(--tw-transform);
+}
+
+.-translate-x-1\/2 {
+  transform: translateX(-50%);
+}
+
+.-translate-y-1\/2 {
+  transform: translateY(-50%);
+}
+
+/* Enhanced positioning */
+.absolute {
+  position: absolute;
+}
+
+.relative {
+  position: relative;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Enhanced flex utilities */
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* Enhanced text utilities */
+.text-transparent {
+  color: transparent;
+}
+
+.bg-clip-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* Enhanced overflow utilities */
+.overflow-hidden {
+  overflow: hidden;
+}
+
+/* Enhanced pointer events */
+.pointer-events-none {
+  pointer-events: none;
+}
+
+/* Enhanced blur utilities */
+.blur-3xl {
+  filter: blur(64px);
+}
+
+/* Enhanced min-height utilities */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Enhanced max-width utilities */
+.max-w-2xl {
+  max-width: 42rem;
+}
+
+/* Enhanced leading utilities */
+.leading-tight {
+  line-height: 1.25;
+}
+
+.leading-relaxed {
+  line-height: 1.625;
+}
+
+/* Enhanced font weight utilities */
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* Enhanced color utilities for enhanced hero */
+.text-blue-600 {
+  color: rgb(37 99 235);
+}
+
+.text-purple-600 {
+  color: rgb(147 51 234);
+}
+
+.text-indigo-600 {
+  color: rgb(79 70 229);
+}
+
+.text-gray-900 {
+  color: rgb(17 24 39);
+}
+
+.text-gray-700 {
+  color: rgb(55 65 81);
+}
+
+.text-gray-600 {
+  color: rgb(75 85 99);
+}
+
+.text-green-500 {
+  color: rgb(34 197 94);
+}
+
+/* Enhanced background color utilities */
+.bg-blue-100 {
+  background-color: rgb(219 234 254);
+}
+
+.bg-indigo-100 {
+  background-color: rgb(224 231 255);
+}
+
+.bg-white {
+  background-color: rgb(255 255 255);
+}
+
+/* Enhanced border utilities */
+.border-2 {
+  border-width: 2px;
+}
+
+.border-gray-200 {
+  border-color: rgb(229 231 235);
+}
+
+.border-blue-300 {
+  border-color: rgb(147 197 253);
+}
+
+.border-indigo-300 {
+  border-color: rgb(165 180 252);
+}
+
+/* Enhanced hover utilities */
+.hover\:border-blue-300:hover {
+  border-color: rgb(147 197 253);
+}
+
+.hover\:border-indigo-300:hover {
+  border-color: rgb(165 180 252);
+}
+
+.hover\:text-blue-600:hover {
+  color: rgb(37 99 235);
+}
+
+.hover\:text-indigo-600:hover {
+  color: rgb(79 70 229);
+}
+
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced gradient stops */
+.from-blue-50 {
+  --tw-gradient-from: rgb(239 246 255);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(239, 246, 255, 0));
+}
+
+.via-white {
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(255 255 255), var(--tw-gradient-to, rgba(255, 255, 255, 0));
+}
+
+.to-indigo-50 {
+  --tw-gradient-to: rgb(238 242 255);
+}
+
+.from-blue-600 {
+  --tw-gradient-from: rgb(37 99 235);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(37, 99, 235, 0));
+}
+
+.to-indigo-600 {
+  --tw-gradient-to: rgb(79 70 229);
+}
+
+.from-indigo-600 {
+  --tw-gradient-from: rgb(79 70 229);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(79, 70, 229, 0));
+}
+
+.to-blue-600 {
+  --tw-gradient-to: rgb(37 99 235);
+}
+
+/* Enhanced responsive utilities */
+@media (min-width: 640px) {
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .sm\:flex-row {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .lg\:text-left {
+    text-align: left;
+  }
+  
+  .lg\:justify-start {
+    justify-content: flex-start;
+  }
+  
+  .lg\:block {
+    display: block;
+  }
+}
+
+/* Enhanced container utilities */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1536px;
+  }
+}
