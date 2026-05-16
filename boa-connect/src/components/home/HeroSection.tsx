@@ -1,18 +1,40 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar, Users, Award, MapPin } from "lucide-react";
+import { ArrowRight, Calendar, Heart, Stethoscope } from "lucide-react";
 import { seminarAPI } from "@/lib/api";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { HeroStatsSection } from "./HeroStatsSection";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { API_BASE_URL } from "@/lib/utils";
+import Autoplay from "embla-carousel-autoplay";
 
 export function HeroSection() {
   const [activeSeminar, setActiveSeminar] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const { config } = useSiteConfig();
 
   useEffect(() => {
     loadActiveSeminar();
+    loadGalleryImages();
   }, []);
+
+  const loadGalleryImages = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/gallery-images?limit=10`);
+      const data = await response.json();
+      if (data.success && data.images) {
+        const images = data.images.map((image: any) => ({
+          url: image.image_url,
+          type: 'image',
+          title: image.title
+        }));
+        setGalleryImages(images);
+      }
+    } catch (error) {
+      console.error('Failed to load gallery images:', error);
+    }
+  };
 
   const loadActiveSeminar = async () => {
     try {
@@ -27,151 +49,136 @@ export function HeroSection() {
 
   if (isLoading) {
     return (
-      <section className="relative overflow-hidden gradient-hero">
-        <div className="container py-20 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+      <section className="min-h-[50vh] flex justify-center items-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#09637E]"></div>
       </section>
     );
   }
 
-  if (!activeSeminar) {
-    return (
-      <section className="mt-5 relative overflow-hidden" style={{ background: '#F9FAFB' }}>
-        <div className="container py-20">
-          <div className="max-w-3xl px-4 sm:px-0">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-4" style={{ color: '#1F2933' }}>
-              Ophthalmic Association Of Bihar
-            </h1>
-            <p className="text-lg md:text-xl mb-8" style={{ color: '#616E7C' }}>
-              Advancing eye care excellence through education, research, and collaboration since 2021.
-            </p>
-            <Link to="/seminars">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 h-12 text-base px-6">
-                View All Seminars
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const defaultImage = config.hero_circle_image_url || "https://images.unsplash.com/photo-1576091160550-2173ff9e5e3c?auto=format&fit=crop&q=80";
 
   return (
-    <section className="relative overflow-hidden -mt-4 sm:-mt-6 md:-mt-8" style={{ background: '#F9FAFB' }}>
-      {/* Background Eye Image for Mobile */}
-      <div className="absolute inset-0 lg:hidden opacity-30 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F9FAFB]" />
-        <img
-          src="https://i.pinimg.com/736x/26/20/70/262070dec8e03eb4457722061d18ddf6.jpg"
-          alt=""
-          className="w-full h-full object-cover object-center"
+    <section className="relative py-16 lg:py-24 overflow-hidden">
+      {/* Full Width Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src={defaultImage} 
+          alt="Background" 
+          className="w-full h-full object-cover"
         />
+        {/* Light overlay with blur to keep the layout simple, clean, and readable */}
+        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10" />
       </div>
 
-      <div className="container relative pt-0 mt-10 pb-1 sm:pb-2 md:pb-4 lg:pb-6">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Content */}
-          <div className="space-y-4 lg:space-y-6 text-left px-2 sm:px-0">
-            {activeSeminar && activeSeminar.online_registration_enabled === 1 && (
-              <div className="gov-badge-accent inline-flex mt-2">
-                <span className="w-2 h-2 rounded-full mr-2 inline-block bg-green-500" />
-                <span className="text-black text-sm"><b>{activeSeminar.name} - Registration Open</b></span>
-              </div>
-            )}
-
-            <div className="space-y-2 lg:space-y-3">
-              <h1 className="leading-[1] text-5xl sm:text-6xl md:text-6xl lg:text-6xl font-semibold leading-tight px-2 sm:px-0 text-left" style={{ color: '#000' }}>
-                Ophthalmic Association Of Bihar
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl max-w-lg px-2 sm:px-0 text-left" style={{ color: '#474849ff' }}>
-                <b>Advancing eye care excellence through education, research, and collaboration since 2021.</b>
-              </p>
+      <div className="container relative z-20 mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          
+          {/* Left Column: Text Content */}
+          <div className="flex flex-col text-center lg:text-left">
+            {/* Badge */}
+            <div className="mb-6 flex justify-center lg:justify-start">
+              {activeSeminar && activeSeminar.online_registration_enabled === 1 ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse" />
+                  Registration Open: {activeSeminar.name}
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-[#09637E] text-sm font-semibold">
+                  <Stethoscope className="w-4 h-4 mr-2" />
+                  Leading Eye Care Association
+                </span>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 px-2 sm:px-0">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-6">
+              Ophthalmic
+              <span className="block text-[#09637E] mt-2">Association</span>
+              <span className="block text-gray-800 mt-2">Of Bihar</span>
+            </h1>
+            
+            <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
+              Advancing eye care excellence through education, research, and collaboration since 2021. Join our mission to preserve vision.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
               {activeSeminar && activeSeminar.online_registration_enabled === 1 ? (
                 <>
                   <Link to={`/seminar/${activeSeminar.id}/register`} className="w-full sm:w-auto">
-                    <button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 h-11 text-sm px-5">
-                      Register for {activeSeminar.name}
-                      <ArrowRight className="h-4 w-4" />
+                    <button className="w-full px-6 py-3 bg-[#09637E] hover:bg-[#088395] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                      <span>Register Now</span>
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </Link>
                   <Link to="/seminars" className="w-full sm:w-auto">
-                    <button className="w-full sm:w-auto bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold rounded-lg transition-colors h-11 text-sm px-5">
-                      View All Seminars
+                    <button className="w-full px-6 py-3 bg-white border border-gray-300 hover:border-[#09637E] text-gray-700 hover:text-[#09637E] font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>View Seminars</span>
                     </button>
                   </Link>
                 </>
               ) : (
-                <Link to="/seminars" className="w-full sm:w-auto">
-                  <button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 h-11 text-sm px-5">
-                    View All Seminars
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </Link>
+                <>
+                  <Link to="/seminars" className="w-full sm:w-auto">
+                    <button className="w-full px-6 py-3 bg-[#09637E] hover:bg-[#088395] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                      <span>Explore Seminars</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                  <Link to="/membership" className="w-full sm:w-auto">
+                    <button className="w-full px-6 py-3 bg-white border border-gray-300 hover:border-[#09637E] text-gray-700 hover:text-[#09637E] font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                      <Heart className="w-4 h-4" />
+                      <span>Join Community</span>
+                    </button>
+                  </Link>
+                </>
               )}
             </div>
 
-            {/* Small Stats Display */}
-            <HeroStatsSection />
-          </div>
-
-          {/* Hero Visual */}
-          <div className="relative hidden lg:block">
-            <div className="relative w-full max-w-[80vh] mx-auto" style={{ aspectRatio: '1/1' }}>
-              {/* Main Circle with Image - Smaller design */}
-              <div className="absolute inset-6 rounded-full" style={{ background: '#E3F2FD' }} />
-              <div className="absolute inset-12 rounded-full bg-white overflow-hidden border-3" style={{ borderColor: '#0B3C5D' }}>
-                {config.hero_circle_image_url && (
-                  <img
-                    src={config.hero_circle_image_url}
-                    alt="Hero"
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-
-              {/* Smaller Info Cards */}
-              <div className="absolute top-8 left-0 gov-card p-2 animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded flex items-center justify-center" style={{ background: '#0B3C5D' }}>
-                    <Calendar className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium" style={{ color: '#1F2933' }}>Best Conference</p>
-                    <p className="text-xs" style={{ color: '#616E7C' }}>Feel Free Here</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute bottom-16 right-0 gov-card p-2 animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded flex items-center justify-center" style={{ background: '#C9A227' }}>
-                    <Award className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium" style={{ color: '#1F2933' }}>CME Points</p>
-                    <p className="text-xs" style={{ color: '#616E7C' }}>Certified Programs</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute bottom-6 left-8 gov-card p-2 animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded flex items-center justify-center" style={{ background: '#E8F5E9' }}>
-                    <Users className="h-4 w-4" style={{ color: '#2E7D32' }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium" style={{ color: '#1F2933' }}>Register Now</p>
-                    <p className="text-xs" style={{ color: '#616E7C' }}>Limited Seats</p>
-                  </div>
-                </div>
-              </div>
+            {/* Stats */}
+            <div className="pt-8 border-t border-gray-200">
+              <HeroStatsSection />
             </div>
           </div>
+
+          {/* Right Column: Clean Carousel */}
+          <div className="w-full rounded-2xl overflow-hidden shadow-lg border border-gray-100 bg-white">
+            <Carousel
+              opts={{ align: "start", loop: true }}
+              plugins={[Autoplay({ delay: 3500 })]}
+              className="w-full"
+            >
+              <CarouselContent className="ml-0">
+                {galleryImages.length > 0 ? (
+                  galleryImages.map((image, index) => (
+                    <CarouselItem key={index} className="pl-0 basis-full">
+                      <div className="aspect-[4/3] w-full">
+                        <img
+                          src={image.url}
+                          alt={`Slide ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = defaultImage;
+                          }}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))
+                ) : (
+                  <CarouselItem className="pl-0 basis-full">
+                    <div className="aspect-[4/3] w-full">
+                      <img
+                        src={defaultImage}
+                        alt="Hero Default"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </CarouselItem>
+                )}
+              </CarouselContent>
+            </Carousel>
+          </div>
+
         </div>
       </div>
     </section>
