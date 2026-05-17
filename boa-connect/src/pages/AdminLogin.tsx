@@ -54,9 +54,9 @@ export default function AdminLogin() {
         description: `Welcome back, ${response.admin.full_name || response.admin.username}!`,
       });
       
-      // Reload and redirect to admin panel
+      // Use React Router navigate instead of window.location.href
       setTimeout(() => {
-        window.location.href = '/admin';
+        navigate('/admin', { replace: true });
       }, 500);
       
     } catch (error: any) {

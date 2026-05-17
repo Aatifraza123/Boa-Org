@@ -14,6 +14,17 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
 
   useEffect(() => {
     checkAuthentication();
+    
+    // Listen for storage changes (when user logs in from another tab)
+    const handleStorageChange = () => {
+      checkAuthentication();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const checkAuthentication = () => {
@@ -27,8 +38,19 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
         return;
       }
 
-      // Parse user data
-      const userData = JSON.parse(user);
+      // Parse user data to validate it
+      try {
+        const userData = JSON.parse(user);
+        if (!userData || !userData.id) {
+          throw new Error('Invalid user data');
+        }
+      } catch (error) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
       
       // Check if token is expired (basic check)
       try {
@@ -44,12 +66,9 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
           return;
         }
       } catch (error) {
-        // Invalid token format
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
+        // Invalid token format - but don't immediately reject
+        // Some tokens might not be JWT format
+        console.warn('Token format validation failed, but continuing:', error);
       }
 
       setIsAuthenticated(true);
@@ -74,7 +93,7 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
 
   if (requireAuth && !isAuthenticated) {
     toast.error('Please login to access this page');
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

@@ -68,19 +68,17 @@ export default function Login() {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       
-      // Verify token was saved
-      const savedToken = localStorage.getItem('token');
-
       // Show success message
       toast({
         title: 'Login Successful!',
         description: `Welcome back, ${response.user.first_name}!`,
       });
 
-      // Wait to ensure localStorage is written, then redirect
+      // Use React Router navigate instead of window.location.href
+      // This prevents the 404 error and double refresh issue
       setTimeout(() => {
-        window.location.href = from;
-      }, 1000);
+        navigate(from, { replace: true });
+      }, 500);
 
     } catch (error: any) {
       console.error('Login error:', error);

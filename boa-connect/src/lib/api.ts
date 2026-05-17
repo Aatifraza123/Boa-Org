@@ -51,7 +51,13 @@ api.interceptors.response.use(
       
       // Only redirect if not already on login page
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        // Use React Router if available, otherwise fallback to window.location
+        if (window.history && window.history.pushState) {
+          window.history.pushState(null, '', '/login');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } else {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
@@ -78,9 +84,14 @@ api.interceptors.response.use(
       // Clear invalid token
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Redirect to login
+      // Redirect to login using React Router if possible
       if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-        window.location.href = '/login';
+        if (window.history && window.history.pushState) {
+          window.history.pushState(null, '', '/login');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } else {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
@@ -96,9 +107,14 @@ adminApi.interceptors.response.use(
       // Clear invalid token
       localStorage.removeItem('adminToken');
       localStorage.removeItem('admin');
-      // Redirect to login
+      // Redirect to admin login using React Router if possible
       if (window.location.pathname !== '/admin-login') {
-        window.location.href = '/admin-login';
+        if (window.history && window.history.pushState) {
+          window.history.pushState(null, '', '/admin-login');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } else {
+          window.location.href = '/admin-login';
+        }
       }
     }
     return Promise.reject(error);
