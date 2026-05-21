@@ -15,7 +15,6 @@ const Index = () => {
         <div className="section-enter animate-delay-100 px-4 sm:px-6 lg:px-10">
           <AboutSection />
         </div>
-        <hr />
         <div className="section-enter animate-delay-300 px-4 sm:px-6 lg:px-10">
           <UpcomingEventsCarousel />
         </div>

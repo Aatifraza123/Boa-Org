@@ -4401,10 +4401,38 @@ exports.createNews = async (req, res) => {
     // Handle image upload
     if (req.file) {
       const cloudinary = require('../config/cloudinary');
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'boa-news',
-        resource_type: 'image'
-      });
+      
+      let result;
+      if (process.env.NODE_ENV === 'production') {
+        // In production, upload from memory buffer to Cloudinary
+        result = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            {
+              folder: 'boa-news',
+              resource_type: 'image',
+              transformation: [
+                { width: 800, height: 600, crop: 'limit' },
+                { quality: 'auto:good' }
+              ]
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          ).end(req.file.buffer);
+        });
+      } else {
+        // In development, upload from file path
+        result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'boa-news',
+          resource_type: 'image',
+          transformation: [
+            { width: 800, height: 600, crop: 'limit' },
+            { quality: 'auto:good' }
+          ]
+        });
+      }
+      
       image_url = result.secure_url;
     }
 
@@ -4423,7 +4451,8 @@ exports.createNews = async (req, res) => {
     console.error('Create news error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create news'
+      message: 'Failed to create news',
+      error: error.message
     });
   }
 };
@@ -4444,14 +4473,43 @@ exports.updateNews = async (req, res) => {
       );
 
       const cloudinary = require('../config/cloudinary');
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'boa-news',
-        resource_type: 'image'
-      });
+      
+      let result;
+      if (process.env.NODE_ENV === 'production') {
+        // In production, upload from memory buffer to Cloudinary
+        result = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            {
+              folder: 'boa-news',
+              resource_type: 'image',
+              transformation: [
+                { width: 800, height: 600, crop: 'limit' },
+                { quality: 'auto:good' }
+              ]
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          ).end(req.file.buffer);
+        });
+      } else {
+        // In development, upload from file path
+        result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'boa-news',
+          resource_type: 'image',
+          transformation: [
+            { width: 800, height: 600, crop: 'limit' },
+            { quality: 'auto:good' }
+          ]
+        });
+      }
+      
       image_url = result.secure_url;
 
       // Delete old image from Cloudinary (non-blocking)
       if (oldNews.length > 0 && oldNews[0].image_url) {
+        const { deleteFromCloudinary } = require('../utils/cloudinary-helper');
         deleteFromCloudinary(oldNews[0].image_url).catch(err => {
           console.error('Old image deletion error (non-critical):', err);
         });
@@ -4479,7 +4537,8 @@ exports.updateNews = async (req, res) => {
     console.error('Update news error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update news'
+      message: 'Failed to update news',
+      error: error.message
     });
   }
 };
@@ -4583,10 +4642,38 @@ exports.createGalleryImage = async (req, res) => {
     }
 
     const cloudinary = require('../config/cloudinary');
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'boa-gallery',
-      resource_type: 'image'
-    });
+    
+    let result;
+    if (process.env.NODE_ENV === 'production') {
+      // In production, upload from memory buffer to Cloudinary
+      result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            folder: 'boa-gallery',
+            resource_type: 'image',
+            transformation: [
+              { width: 1200, height: 900, crop: 'limit' },
+              { quality: 'auto:good' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+    } else {
+      // In development, upload from file path
+      result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'boa-gallery',
+        resource_type: 'image',
+        transformation: [
+          { width: 1200, height: 900, crop: 'limit' },
+          { quality: 'auto:good' }
+        ]
+      });
+    }
+    
     image_url = result.secure_url;
 
     const [result_db] = await promisePool.query(
@@ -4604,7 +4691,8 @@ exports.createGalleryImage = async (req, res) => {
     console.error('Create gallery image error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to add gallery image'
+      message: 'Failed to add gallery image',
+      error: error.message
     });
   }
 };
@@ -4625,14 +4713,43 @@ exports.updateGalleryImage = async (req, res) => {
       );
 
       const cloudinary = require('../config/cloudinary');
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'boa-gallery',
-        resource_type: 'image'
-      });
+      
+      let result;
+      if (process.env.NODE_ENV === 'production') {
+        // In production, upload from memory buffer to Cloudinary
+        result = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            {
+              folder: 'boa-gallery',
+              resource_type: 'image',
+              transformation: [
+                { width: 1200, height: 900, crop: 'limit' },
+                { quality: 'auto:good' }
+              ]
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          ).end(req.file.buffer);
+        });
+      } else {
+        // In development, upload from file path
+        result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'boa-gallery',
+          resource_type: 'image',
+          transformation: [
+            { width: 1200, height: 900, crop: 'limit' },
+            { quality: 'auto:good' }
+          ]
+        });
+      }
+      
       image_url = result.secure_url;
 
       // Delete old image from Cloudinary (non-blocking)
       if (oldImages.length > 0 && oldImages[0].image_url) {
+        const { deleteFromCloudinary } = require('../utils/cloudinary-helper');
         deleteFromCloudinary(oldImages[0].image_url).catch(err => {
           console.error('Old image deletion error (non-critical):', err);
         });
@@ -4660,7 +4777,9 @@ exports.updateGalleryImage = async (req, res) => {
     console.error('Update gallery image error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update gallery image'
+      success: false,
+      message: 'Failed to update gallery image',
+      error: error.message
     });
   }
 };
@@ -4736,10 +4855,38 @@ exports.uploadImageOnly = async (req, res) => {
     }
 
     const cloudinary = require('../config/cloudinary');
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'boa-elections',
-      resource_type: 'image'
-    });
+    
+    let result;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production, upload from memory buffer to Cloudinary
+      result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            folder: 'boa-seminars',
+            resource_type: 'image',
+            transformation: [
+              { width: 1200, height: 800, crop: 'limit' },
+              { quality: 'auto:good' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+    } else {
+      // In development, upload from file path
+      result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'boa-seminars',
+        resource_type: 'image',
+        transformation: [
+          { width: 1200, height: 800, crop: 'limit' },
+          { quality: 'auto:good' }
+        ]
+      });
+    }
 
     res.json({
       success: true,
@@ -4750,7 +4897,8 @@ exports.uploadImageOnly = async (req, res) => {
     console.error('Upload image error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to upload image'
+      message: 'Failed to upload image',
+      error: error.message
     });
   }
 };

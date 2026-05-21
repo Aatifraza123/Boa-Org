@@ -27,11 +27,20 @@ export function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [contactInfo, setContactInfo] = useState<any>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const { config } = useSiteConfig();
 
   // Update favicon with logo
   useFavicon(config.logo_url);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     loadNotifications();
@@ -203,197 +212,181 @@ export function Navbar() {
   ];
 
   return (
-    <>
+    <div className="flex flex-col w-full z-50 sticky top-0">
       {/* Top Contact Bar */}
-      <div className="bg-gray-800 text-gray-300 py-1.5 sm:py-2 gov-fade-in hidden sm:block" style={{ opacity: 1, visibility: 'visible' }}>
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center text-xs sm:text-sm">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <div className="flex items-center gap-2">
-                <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+      <div className={`bg-slate-800 text-white hidden sm:block overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-12 py-1.5 sm:py-2 opacity-100'}`}>
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex justify-between items-center text-xs sm:text-sm font-medium">
+            <div className="flex items-center gap-4 sm:gap-8">
+              <div className="flex items-center gap-2 group">
+                <Mail className="h-3.5 w-3.5 text-blue-400 group-hover:text-blue-300 transition-colors" />
                 <a
                   href={`mailto:${contactInfo?.email || 'info@boabihar.org'}`}
-                  className="gov-transition-colors hover:text-white"
+                  className="hover:text-gray-200 transition-colors"
                 >
                   {contactInfo?.email || 'info@boabihar.org'}
                 </a>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+              <div className="flex items-center gap-2 group">
+                <Phone className="h-3.5 w-3.5 text-green-400 group-hover:text-green-300 transition-colors" />
                 <a
                   href={`tel:${contactInfo?.mobile || '+91-9771019937'}`}
-                  className="gov-transition-colors hover:text-white"
+                  className="hover:text-gray-200 transition-colors"
                 >
                   {contactInfo?.mobile || '+91 9771019937'}
                 </a>
               </div>
             </div>
-            <div className="text-xs text-gray-300 hidden lg:block">
-              Government Recognized Medical Association | Est. 2021
+            <div className="text-gray-200 hidden lg:flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-white border-white/30 bg-white/10 px-2 py-0.5 font-bold">Est. 1976</Badge>
+              Government Recognized Medical Association
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Navbar */}
-      <header className="sticky top-0 z-50 w-full bg-blue-900 border-b border-blue-800 shadow-sm navbar-sticky">
-        <div className="container mx-auto px-4">
-          <div className="flex h-14 sm:h-16 items-center justify-between">
+      <header className="w-full bg-[#09637E] border-b border-[#088395] shadow-md transition-all duration-300">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex h-16 sm:h-20 items-center justify-between">
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 sm:gap-3">
+            <Link to="/" className="flex items-center gap-3 sm:gap-4 group">
               {config.logo_url ? (
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <img
-                    src={config.logo_url}
-                    alt="BOA Logo"
-                    className="h-8 sm:h-10 w-auto object-contain"
-                  />
-                  <div className="hidden sm:flex flex-col">
-                    <span className="text-base sm:text-lg font-semibold text-white leading-tight">
-                      Ophthalmic Association Of Bihar
-                    </span>
-                    <span className="text-xs text-blue-200 hidden md:block">
-                      Government Recognized Medical Association
-                    </span>
-                  </div>
-                </div>
+                <img
+                  src={config.logo_url}
+                  alt="BOA Logo"
+                  className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+                />
               ) : (
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-md bg-blue-800 border-2 border-blue-700">
-                    <Eye className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
-                  </div>
-                  <div className="hidden sm:flex flex-col">
-                    <span className="text-base sm:text-lg font-semibold text-white leading-tight">
-                      Ophthalmic Association Of Bihar
-                    </span>
-                    <span className="text-xs text-blue-200 hidden md:block">
-                      Government Recognized Medical Association
-                    </span>
-                  </div>
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-white shadow-sm transition-transform group-hover:scale-105">
+                  <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-[#09637E]" />
                 </div>
               )}
+              <div className="hidden sm:flex flex-col">
+                <span className="text-lg sm:text-xl font-bold text-white leading-tight tracking-tight">
+                  Ophthalmic Association
+                </span>
+                <span className="text-sm font-medium text-teal-100">
+                  Of Bihar
+                </span>
+              </div>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center">
+            <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
               {navigationItems.filter(item => item.path !== '/notifications').map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`navbar-link px-3 xl:px-4 py-2 text-sm font-medium border-b-2 border-transparent gov-transition-colors ${isActive(item.path)
-                      ? 'text-white border-blue-300 active'
-                      : 'text-blue-100 hover:text-blue-200'
+                  className={`relative px-3 xl:px-4 py-2 text-sm font-semibold transition-colors rounded-lg hover:bg-white/10 ${isActive(item.path)
+                      ? 'text-white'
+                      : 'text-teal-50 hover:text-white'
                     }`}
                 >
                   {item.label}
+                  {isActive(item.path) && (
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white" />
+                  )}
                 </Link>
               ))}
             </nav>
 
             {/* Right Side */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-5">
 
-              {/* Notifications - Separate with Indicator */}
-              <Link to="/notifications" className="relative">
-                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md gov-transition-colors ${isActive('/notifications')
-                    ? 'bg-blue-800 text-white'
-                    : 'text-blue-100 hover:bg-blue-800 hover:text-white'
-                  }`}>
-                  <div className="relative">
-                    <svg
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                      />
-                    </svg>
+              {/* Notifications - Minimalist Bell */}
+              <Link to="/notifications" className="relative group p-2 hover:bg-white/10 rounded-full transition-colors">
+                <svg
+                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${isActive('/notifications') ? 'text-white' : 'text-teal-50 group-hover:text-white'}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
 
-                    {/* Notification Badge - Only number */}
-                    {unreadNotifications > 0 && (
-                      <span className="notification-badge absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-blue-900">
-                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {/* Notification Badge */}
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-[#09637E]">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
               </Link>
 
               {/* User Menu or Login Buttons */}
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md hover:bg-blue-800 transition-colors">
-                      <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border border-orange-300">
+                    <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/10 bg-white/5 transition-all">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage src={user.avatar} alt={getUserName()} />
-                        <AvatarFallback className="text-xs font-semibold bg-orange-500 text-white">
+                        <AvatarFallback className="text-xs font-semibold bg-white text-[#09637E]">
                           {getUserInitials()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="hidden sm:block text-sm font-medium text-white">
+                      <span className="hidden sm:block text-sm font-bold text-white">
                         {getUserName().split(' ')[0]}
                       </span>
-                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200" />
+                      <ChevronDown className="h-4 w-4 text-teal-200" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-60" align="end">
+                  <DropdownMenuContent className="w-64 mt-2 rounded-xl shadow-xl border-gray-100" align="end">
                     <DropdownMenuLabel>
-                      <div className="p-2 bg-gray-50 rounded">
-                        <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-bold text-gray-900">{getUserName()}</p>
+                        <p className="text-xs text-gray-500 font-medium">{user.email}</p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-gray-100" />
 
                     {user.membership_no && user.has_active_membership && (
                       <>
                         <DropdownMenuItem className="cursor-default">
                           <div className="flex items-center justify-center w-full">
-                            <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
+                            <Badge variant="outline" className="text-xs border-[#09637E]/20 bg-[#09637E]/5 text-[#09637E] font-bold py-1">
                               Membership: {user.membership_no}
                             </Badge>
                           </div>
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="bg-gray-100" />
                       </>
                     )}
 
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer py-2 focus:bg-gray-50">
+                      <LayoutDashboard className="mr-3 h-4 w-4 text-gray-500" />
+                      <span className="font-medium text-gray-700">Dashboard</span>
                     </DropdownMenuItem>
 
                     {user.role === 'admin' && (
-                      <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Admin Panel</span>
+                      <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer py-2 focus:bg-gray-50">
+                        <Settings className="mr-3 h-4 w-4 text-gray-500" />
+                        <span className="font-medium text-gray-700">Admin Panel</span>
                       </DropdownMenuItem>
                     )}
 
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Logout</span>
+                    <DropdownMenuSeparator className="bg-gray-100" />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer py-2 focus:bg-red-50">
+                      <LogOut className="mr-3 h-4 w-4" />
+                      <span className="font-medium">Logout</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Link to="/login">
-                    <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9">
-                      Login
+                <div className="flex items-center gap-3">
+                  <Link to="/login" className="hidden sm:block">
+                    <Button variant="ghost" className="text-white hover:text-white hover:bg-white/10 text-sm font-semibold">
+                      Log in
                     </Button>
                   </Link>
-                  <span className="text-blue-400 text-xs">|</span>
                   <Link to="/admin/login">
-                    <Button variant="ghost" size="sm" className="gov-button text-blue-100 hover:bg-blue-800 hover:text-white text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9">
-                      Admin
+                    <Button className="bg-white hover:bg-gray-100 text-[#09637E] text-sm font-bold rounded-full px-5 shadow-sm transition-all hover:-translate-y-0.5">
+                      Admin Portal
                     </Button>
                   </Link>
                 </div>
@@ -401,70 +394,59 @@ export function Navbar() {
 
               {/* Mobile Menu */}
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild className="lg:hidden ml-1 sm:ml-2">
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-blue-800 h-8 w-8 sm:h-9 sm:w-9">
-                    <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                <SheetTrigger asChild className="lg:hidden ml-1">
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-10 w-10">
+                    <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] sm:w-[300px]">
-                  <div className="flex flex-col gap-1 mt-4 sm:mt-6">
+                <SheetContent side="right" className="w-[300px] sm:w-[320px] bg-white">
+                  <div className="flex flex-col gap-2 mt-6">
 
                     {/* Mobile User Info */}
                     {user && (
-                      <div className="mb-4 sm:mb-6">
-                        <div className="flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-4 bg-gray-50 rounded-lg border">
-                          <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-orange-400">
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3 px-4 py-4 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+                          <Avatar className="h-12 w-12 shadow-sm">
                             <AvatarImage src={user.avatar} alt={getUserName()} />
-                            <AvatarFallback className="bg-orange-500 text-white font-semibold text-sm">
+                            <AvatarFallback className="bg-[#09637E] text-white font-bold">
                               {getUserInitials()}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col overflow-hidden">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
-                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            <p className="text-sm font-bold text-gray-900 truncate">{getUserName()}</p>
+                            <p className="text-xs text-gray-500 font-medium truncate">{user.email}</p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Mobile Notifications - Separate */}
+                    {/* Mobile Notifications */}
                     <Link
                       to="/notifications"
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 text-sm font-medium rounded-lg border-2 transition-colors ${isActive('/notifications')
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'text-gray-700 hover:bg-gray-50 border-gray-200'
+                      className={`flex items-center justify-between px-4 py-3 mb-4 text-sm font-bold rounded-xl border transition-colors ${isActive('/notifications')
+                          ? 'bg-[#09637E]/5 text-[#09637E] border-[#09637E]/20'
+                          : 'text-gray-700 hover:bg-gray-50 border-gray-100'
                         }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <svg
-                            className="h-4 w-4 sm:h-5 sm:w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                            />
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                           </svg>
-                          {/* Pulsing indicator for mobile */}
                           {unreadNotifications > 0 && (
                             <div className="absolute -top-1 -right-1">
-                              <span className="flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+                              <span className="flex h-2.5 w-2.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                               </span>
                             </div>
                           )}
                         </div>
-                        <span className="text-sm">Notifications</span>
+                        <span>Notifications</span>
                       </div>
                       {unreadNotifications > 0 && (
-                        <Badge className="h-5 px-2 text-xs bg-red-600 text-white font-bold border-2 border-white">
+                        <Badge className="bg-red-500 text-white font-bold rounded-full px-2">
                           {unreadNotifications > 9 ? '9+' : unreadNotifications}
                         </Badge>
                       )}
@@ -477,9 +459,9 @@ export function Navbar() {
                           key={item.path}
                           to={item.path}
                           onClick={() => setMobileOpen(false)}
-                          className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-medium rounded-lg transition-colors ${isActive(item.path)
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50'
+                          className={`flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${isActive(item.path)
+                              ? 'bg-gray-50 text-[#09637E]'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         >
                           <span>{item.label}</span>
@@ -488,44 +470,44 @@ export function Navbar() {
                     </div>
 
                     {/* Mobile User Actions */}
-                    <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                    <div className="mt-6 pt-6 border-t border-gray-100">
                       {user ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {user.membership_no && user.has_active_membership && (
-                            <div className="flex items-center justify-center mb-3">
-                              <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700">
+                            <div className="flex items-center justify-center mb-4">
+                              <Badge variant="outline" className="text-xs border-[#09637E]/20 bg-[#09637E]/5 text-[#09637E] font-bold py-1">
                                 Membership: {user.membership_no}
                               </Badge>
                             </div>
                           )}
                           <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                            <Button variant="outline" className="w-full justify-start text-sm h-9">
-                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <Button variant="outline" className="w-full justify-start text-sm font-semibold rounded-xl h-11 border-gray-200">
+                              <LayoutDashboard className="mr-3 h-4 w-4" />
                               Dashboard
                             </Button>
                           </Link>
                           <Button
-                            variant="destructive"
-                            className="w-full justify-start bg-red-50 text-red-600 hover:bg-red-100 border-0 text-sm h-9"
+                            variant="ghost"
+                            className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 font-semibold rounded-xl h-11"
                             onClick={() => {
                               handleLogout();
                               setMobileOpen(false);
                             }}
                           >
-                            <LogOut className="mr-2 h-4 w-4" />
+                            <LogOut className="mr-3 h-4 w-4" />
                             Logout
                           </Button>
                         </div>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <Link to="/login" onClick={() => setMobileOpen(false)}>
-                            <Button variant="outline" className="w-full text-sm h-9">
-                              Login
+                            <Button variant="outline" className="w-full text-sm font-semibold rounded-xl h-11 border-gray-200">
+                              Log in
                             </Button>
                           </Link>
                           <Link to="/admin/login" onClick={() => setMobileOpen(false)}>
-                            <Button className="w-full bg-blue-600 text-white hover:bg-blue-700 text-sm h-9">
-                              Admin Login
+                            <Button className="w-full bg-[#09637E] text-white hover:bg-[#088395] text-sm font-semibold rounded-xl h-11 shadow-md shadow-[#09637E]/20">
+                              Admin Portal
                             </Button>
                           </Link>
                         </div>
@@ -538,7 +520,7 @@ export function Navbar() {
           </div>
         </div>
       </header>
-    </>
+    </div>
   );
 }
 

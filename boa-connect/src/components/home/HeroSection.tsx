@@ -58,7 +58,7 @@ export function HeroSection() {
   const defaultImage = config.hero_circle_image_url || "https://images.unsplash.com/photo-1576091160550-2173ff9e5e3c?auto=format&fit=crop&q=80";
 
   return (
-    <section className="relative py-16 lg:py-24 overflow-hidden">
+    <section className="relative py-12 lg:py-20 overflow-hidden">
       {/* Full Width Background Image */}
       <div className="absolute inset-0 z-0">
         <img 
@@ -71,7 +71,7 @@ export function HeroSection() {
       </div>
 
       <div className="container relative z-20 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           
           {/* Left Column: Text Content */}
           <div className="flex flex-col text-center lg:text-left">
@@ -90,18 +90,18 @@ export function HeroSection() {
               )}
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-3">
               Ophthalmic
               <span className="block text-[#09637E] mt-2">Association</span>
               <span className="block text-gray-800 mt-2">Of Bihar</span>
             </h1>
             
-            <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
+            <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-4 lg:mb-6 max-w-xl mx-auto lg:mx-0">
               Advancing eye care excellence through education, research, and collaboration since 2021. Join our mission to preserve vision.
             </p>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-4 lg:mb-6">
               {activeSeminar && activeSeminar.online_registration_enabled === 1 ? (
                 <>
                   <Link to={`/seminar/${activeSeminar.id}/register`} className="w-full sm:w-auto">
@@ -136,7 +136,7 @@ export function HeroSection() {
             </div>
 
             {/* Stats */}
-            <div className="pt-8 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200">
               <HeroStatsSection />
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Eye, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, Eye, ArrowRight, Newspaper, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
@@ -101,75 +101,84 @@ export function NewsGallerySection() {
     <>
       {/* News Section */}
       {news.length > 0 && (
-        <section className="gov-section">
-          <div className="container px-2 sm:px-4 md:px-6">
-            <div className="text-center mb-6 sm:mb-8">
-              <h2 className="gov-section-title p-2 bg-[#09638E] text-white flex items-center justify-center gap-2">
-                
-                Media Coverage
+        <section className="py-12 lg:py-20 bg-gray-50/50">
+          <div className="container px-4 sm:px-6 mx-auto max-w-7xl">
+            <div className="text-center mb-8 lg:mb-16">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="h-[2px] w-8 md:w-12 bg-blue-200"></div>
+                <div className="flex items-center gap-2 text-blue-600 font-bold tracking-[0.2em] text-xs md:text-sm uppercase">
+                  <Newspaper className="h-4 w-4" />
+                  Latest Updates
+                </div>
+                <div className="h-[2px] w-8 md:w-12 bg-blue-200"></div>
+              </div>
+              <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B1B3D] tracking-tight leading-[1.15]">
+                Media <span className="text-blue-600">Coverage</span>
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
               {news.slice(0, 3).map((item) => (
-                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-                  <div className="aspect-video overflow-hidden">
+                <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group flex flex-col">
+                  <div className="aspect-[16/10] overflow-hidden relative">
                     {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/api/placeholder/400/250';
-                        }}
-                      />
+                      <>
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/api/placeholder/400/250';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </>
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        <Eye className="h-12 w-12 text-blue-500" />
+                      <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                        <Eye className="h-12 w-12 text-blue-300" />
                       </div>
                     )}
                   </div>
 
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="secondary" className="text-xs">
+                  <div className="p-3 lg:p-6 flex flex-col flex-grow">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600">
                         News
-                      </Badge>
-                      <div className="flex items-center text-xs text-gray-500 gap-1">
-                        <Clock className="h-3 w-3" />
+                      </span>
+                      <div className="flex items-center text-xs font-semibold text-gray-400 gap-1.5 uppercase tracking-wider">
+                        <Clock className="h-3.5 w-3.5" />
                         {getTimeAgo(item.created_at)}
                       </div>
                     </div>
                     
-                    <h4 className="font-semibold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    <h4 className="font-bold text-xl text-[#0B1B3D] mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug">
                       {item.title}
                     </h4>
                     
-                    <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 mb-6 flex-grow">
                       {truncateContent(item.content)}
                     </p>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Calendar className="h-3 w-3" />
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        <Calendar className="h-3.5 w-3.5" />
                         {formatDate(item.created_at)}
                       </div>
                       
-                      <Link to="/news" className="text-xs text-primary hover:text-primary/80 font-medium">
-                        Read More →
+                      <Link to="/news" className="text-sm text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 transition-colors group/link">
+                        Read More <ArrowRight className="h-4 w-4 transform group-hover/link:translate-x-1 transition-transform" />
                       </Link>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
 
-            <div className="text-center">
+            <div className="text-center mt-12">
               <Link to="/news">
-                <Button className="bg-[#09637E] hover:bg-[#088395] text-white">
-                  See More News
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                <Button className="bg-[#09637E] hover:bg-[#088395] text-white px-6 py-6 text-base font-medium rounded-lg shadow-sm transition-all">
+                  View All News
                 </Button>
               </Link>
             </div>
@@ -179,35 +188,43 @@ export function NewsGallerySection() {
 
       {/* Gallery Section */}
       {galleryImages.length > 0 && (
-        <section className="gov-section bg-gradient-to-br from-[#EBF4F6] via-white to-[#7AB2B2]/20">
-          <div className="container px-2 sm:px-4 md:px-6">
-            <div className="text-center mb-4 sm:mb-8">
-              <h2 className="gov-section-title p-2 bg-[#09638E] text-white flex items-center justify-center gap-2">
-                Gallery Highlights
+        <section className="py-12 lg:py-20 bg-white">
+          <div className="container px-4 sm:px-6 mx-auto max-w-7xl">
+            <div className="text-center mb-8 lg:mb-16">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="h-[2px] w-8 md:w-12 bg-blue-200"></div>
+                <div className="flex items-center gap-2 text-blue-600 font-bold tracking-[0.2em] text-xs md:text-sm uppercase">
+                  <ImageIcon className="h-4 w-4" />
+                  Memories
+                </div>
+                <div className="h-[2px] w-8 md:w-12 bg-blue-200"></div>
+              </div>
+              <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B1B3D] tracking-tight leading-[1.15]">
+                Gallery <span className="text-blue-600">Highlights</span>
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 mt-12 gap-3 md:gap-4">
-  {galleryImages.slice(0, 3).map((image, index) => (
-    <div key={index} className="w-full overflow-hidden rounded-lg">
-      <img
-        src={image.image_url}
-        alt={`Gallery ${index + 1}`}
-        className="w-full h-auto object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.src = '/api/placeholder/400/400';
-        }}
-      />
-    </div>
-  ))}
-</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
+              {galleryImages.slice(0, 3).map((image, index) => (
+                <div key={index} className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md bg-gray-100 hover:shadow-lg transition-shadow duration-300 group">
+                  <img
+                    src={image.image_url}
+                    alt={`Gallery ${index + 1}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/api/placeholder/400/400';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+                </div>
+              ))}
+            </div>
 
-            <div className="text-center mt-10">
+            <div className="text-center mt-12">
               <Link to="/gallery">
-                <Button className="bg-[#09637E] hover:bg-[#088395] text-white">
-                  See More Gallery
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                <Button className="bg-[#09637E] hover:bg-[#088395] text-white px-6 py-6 text-base font-medium rounded-lg shadow-sm transition-all">
+                  View Full Gallery
                 </Button>
               </Link>
             </div>

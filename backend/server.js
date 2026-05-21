@@ -21,6 +21,7 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://boabihar.org',
   'https://www.boabihar.org',
+  'http://localhost:8000',
   'http://localhost:8080',
   'https://api.boabihar.org'
 ].filter(Boolean); // Remove any undefined values
@@ -234,12 +235,30 @@ try {
          ORDER BY deadline ASC 
          LIMIT 5`
       );
+
+      // Get upcoming events from upcoming_events table
+      const [upcomingEvents] = await promisePool.query(
+        `SELECT id, title, description, location, start_date, end_date,
+                image_url, link_url, "event" as event_type, display_order
+         FROM upcoming_events 
+         WHERE is_active = TRUE 
+         ORDER BY display_order ASC, id ASC 
+         LIMIT 10`
+      );
       
-      // Combine seminars and elections only (no upcoming_events table)
-      const allEvents = [...seminars, ...elections];
+      // Combine all events
+      const allEvents = [...upcomingEvents, ...seminars, ...elections];
       
-      // Sort by start_date
+      // Sort by display_order first (for upcoming_events), then by start_date
       allEvents.sort((a, b) => {
+        // Upcoming events with display_order come first
+        if (a.display_order !== undefined && b.display_order === undefined) return -1;
+        if (a.display_order === undefined && b.display_order !== undefined) return 1;
+        if (a.display_order !== undefined && b.display_order !== undefined) {
+          return a.display_order - b.display_order;
+        }
+        
+        // Then sort by start_date
         const dateA = new Date(a.start_date || '9999-12-31');
         const dateB = new Date(b.start_date || '9999-12-31');
         return dateA - dateB;
@@ -858,6 +877,10 @@ const startServer = async () => {
   try {
     await testConnection();
     const server = app.listen(PORT, () => {
+      console.log(`🚀 BOA Backend Server running on port ${PORT}`);
+      console.log(`📍 Server URL: http://localhost:${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      
       // Start BOA Member Sync Service
       boaSyncService.start();
     });

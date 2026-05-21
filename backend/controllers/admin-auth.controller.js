@@ -215,11 +215,37 @@ exports.uploadImage = async (req, res) => {
 
     const cloudinary = require('../config/cloudinary');
     
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'seminars',
-      resource_type: 'image'
-    });
+    let result;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production, upload from memory buffer to Cloudinary
+      result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            folder: 'boa-seminars',
+            resource_type: 'image',
+            transformation: [
+              { width: 1200, height: 800, crop: 'limit' },
+              { quality: 'auto:good' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+    } else {
+      // In development, upload from file path
+      result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'boa-seminars',
+        resource_type: 'image',
+        transformation: [
+          { width: 1200, height: 800, crop: 'limit' },
+          { quality: 'auto:good' }
+        ]
+      });
+    }
 
     res.json({
       success: true,

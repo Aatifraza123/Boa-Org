@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, FileText, ExternalLink, Clock, Vote, Briefcase } from 'lucide-react';
+import { Calendar, MapPin, ExternalLink, Clock, Vote, Briefcase, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/utils';
@@ -131,7 +131,16 @@ export function UpcomingEventsCarousel() {
     );
   };
 
-  const getEventTypeInfo = (eventType: string) => {
+  const getEventTypeInfo = (eventType: string, title?: string) => {
+    // Check if it's a hotel
+    if (title && (title.toLowerCase().includes('hotel') || title.toLowerCase().includes('forresta'))) {
+      return { 
+        icon: Star, 
+        label: 'Premium Hotel', 
+        color: 'bg-amber-100 text-amber-800 border-amber-200' 
+      };
+    }
+
     const types = {
       seminar: { 
         icon: Calendar, 
@@ -159,6 +168,14 @@ export function UpcomingEventsCarousel() {
   };
 
   const handleEventAction = (event: any, actionType: 'details' | 'download') => {
+    // Special handling for hotels - direct link to Google location
+    if (event.title && (event.title.toLowerCase().includes('hotel') || event.title.toLowerCase().includes('forresta'))) {
+      if (event.link_url) {
+        window.open(event.link_url, '_blank');
+        return;
+      }
+    }
+
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
 
@@ -201,16 +218,18 @@ export function UpcomingEventsCarousel() {
   };
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container max-w-7xl mx-auto px-4">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-1 w-12 bg-blue-600"></div>
-            <h2 className="text-2xl font-bold text-white p-2 bg-[#0B3C5D]" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+    <section className="py-12 lg:py-20 bg-white">
+      <div className="container px-4 sm:px-6 mx-auto max-w-7xl">
+        <div className="text-center mb-8 lg:mb-16">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-[2px] w-8 md:w-12 bg-blue-200"></div>
+            <div className="flex items-center gap-2 text-blue-600 font-bold tracking-[0.2em] text-xs md:text-sm uppercase">
+              <Star className="h-4 w-4" />
               Upcoming Events {isLoading ? '(Loading...)' : `(${events.length} events)`}
-            </h2>
+            </div>
+            <div className="h-[2px] w-8 md:w-12 bg-blue-200"></div>
           </div>
-          <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
+          <p className="text-base text-gray-500 leading-relaxed max-w-3xl mx-auto">
             Stay informed about seminars, elections, and important announcements from Ophthalmic Association Of Bihar
           </p>
         </div>
@@ -240,15 +259,16 @@ export function UpcomingEventsCarousel() {
               {events.map((event, index) => {
                 const status = getEventStatus(event.start_date, event.end_date);
                 const countdown = countdowns[index] || { days: 0, hours: 0, minutes: 0, seconds: 0 };
-                const eventTypeInfo = getEventTypeInfo(event.event_type || 'event');
+                const eventTypeInfo = getEventTypeInfo(event.event_type || 'event', event.title);
                 const EventIcon = eventTypeInfo.icon;
+                const isHotel = event.title && (event.title.toLowerCase().includes('hotel') || event.title.toLowerCase().includes('forresta'));
 
                 return (
                   <CarouselItem key={index} className="pl-2 md:pl-4 basis-full">
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-full flex flex-col md:flex-row">
+                    <div className={`bg-white border rounded-2xl shadow-md overflow-hidden h-full flex flex-col md:flex-row ${isHotel ? 'border-amber-200 shadow-amber-100' : 'border-gray-100'}`}>
                       {/* Left - Event Image */}
                       <div className="md:w-1/2 lg:w-2/3">
-                        <div className="relative h-64 md:h-full min-h-[400px] bg-gray-100">
+                        <div className={`relative h-40 md:h-full min-h-[250px] lg:min-h-[300px] ${isHotel ? 'bg-gradient-to-br from-amber-50 to-amber-100' : 'bg-gray-100'}`}>
                           {event.image_url ? (
                             <img
                               src={event.image_url}
@@ -260,8 +280,8 @@ export function UpcomingEventsCarousel() {
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-                              <EventIcon className="h-24 w-24 text-blue-300" />
+                            <div className={`w-full h-full flex items-center justify-center ${isHotel ? 'bg-gradient-to-br from-amber-50 to-amber-100' : 'bg-gradient-to-br from-blue-50 to-blue-100'}`}>
+                              <EventIcon className={`h-24 w-24 ${isHotel ? 'text-amber-300' : 'text-blue-300'}`} />
                             </div>
                           )}
                           
@@ -270,47 +290,87 @@ export function UpcomingEventsCarousel() {
                               <EventIcon className="h-4 w-4" />
                               {eventTypeInfo.label}
                             </span>
-                            {getStatusBadge(status)}
+                            {!isHotel && getStatusBadge(status)}
+                            {isHotel && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border bg-green-100 text-green-800 border-green-200">
+                                Available Now
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
 
                       {/* Right - Event Details */}
-                      <div className="md:w-1/2 lg:w-1/3 p-6 flex flex-col justify-between">
-                        {status === 'upcoming' && (countdown.days > 0 || countdown.hours > 0) && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="md:w-1/2 lg:w-1/3 p-3 lg:p-4 flex flex-col justify-between">
+                        {/* Hotel special features or countdown for events */}
+                        {isHotel ? (
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
                             <div className="flex items-center gap-2 mb-3">
-                              <Clock className="h-4 w-4 text-blue-600" />
-                              <h4 className="text-sm font-semibold text-blue-900">Starts In</h4>
+                              <Star className="h-4 w-4 text-amber-600" />
+                              <h4 className="text-sm font-semibold text-amber-900">Premium Features</h4>
                             </div>
-                            <div className="grid grid-cols-4 gap-2">
-                              <div className="bg-white border border-blue-200 rounded p-2 text-center">
-                                <div className="text-2xl font-bold text-blue-600">{countdown.days}</div>
-                                <div className="text-xs text-blue-700 font-medium">Days</div>
+                            <div className="space-y-2 text-sm text-amber-800">
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-amber-600 rounded-full"></div>
+                                <span>4-Star Luxury Hotel</span>
                               </div>
-                              <div className="bg-white border border-blue-200 rounded p-2 text-center">
-                                <div className="text-2xl font-bold text-blue-600">{countdown.hours}</div>
-                                <div className="text-xs text-blue-700 font-medium">Hrs</div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-amber-600 rounded-full"></div>
+                                <span>Conference Facilities</span>
                               </div>
-                              <div className="bg-white border border-blue-200 rounded p-2 text-center">
-                                <div className="text-2xl font-bold text-blue-600">{countdown.minutes}</div>
-                                <div className="text-xs text-blue-700 font-medium">Min</div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-amber-600 rounded-full"></div>
+                                <span>BOA Event Venue</span>
                               </div>
-                              <div className="bg-white border border-blue-200 rounded p-2 text-center">
-                                <div className="text-2xl font-bold text-blue-600">{countdown.seconds}</div>
-                                <div className="text-xs text-blue-700 font-medium">Sec</div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-amber-600 rounded-full"></div>
+                                <span>Modern Amenities</span>
                               </div>
                             </div>
                           </div>
+                        ) : (
+                          status === 'upcoming' && (countdown.days > 0 || countdown.hours > 0) && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Clock className="h-4 w-4 text-blue-600" />
+                                <h4 className="text-sm font-semibold text-blue-900">Starts In</h4>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                <div className="bg-white border border-blue-200 rounded p-2 text-center">
+                                  <div className="text-2xl font-bold text-blue-600">{countdown.days}</div>
+                                  <div className="text-xs text-blue-700 font-medium">Days</div>
+                                </div>
+                                <div className="bg-white border border-blue-200 rounded p-2 text-center">
+                                  <div className="text-2xl font-bold text-blue-600">{countdown.hours}</div>
+                                  <div className="text-xs text-blue-700 font-medium">Hrs</div>
+                                </div>
+                                <div className="bg-white border border-blue-200 rounded p-2 text-center">
+                                  <div className="text-2xl font-bold text-blue-600">{countdown.minutes}</div>
+                                  <div className="text-xs text-blue-700 font-medium">Min</div>
+                                </div>
+                                <div className="bg-white border border-blue-200 rounded p-2 text-center">
+                                  <div className="text-2xl font-bold text-blue-600">{countdown.seconds}</div>
+                                  <div className="text-xs text-blue-700 font-medium">Sec</div>
+                                </div>
+                              </div>
+                            </div>
+                          )
                         )}
 
                         <div className="space-y-4 flex-grow">
-                          <h3 className="text-xl font-bold text-gray-900 leading-tight" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
+                          <h3 className="text-xl font-semibold text-gray-900 leading-tight">
                             {event.title || event.name || 'Official Event'}
                           </h3>
 
+                          {/* Hotel description or event details */}
+                          {isHotel && event.description && (
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                              {event.description}
+                            </p>
+                          )}
+
                           <div className="space-y-2 text-sm">
-                            {event.start_date && (
+                            {!isHotel && event.start_date && (
                               <div className="flex items-center gap-2 text-gray-700">
                                 <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
                                 <span className="font-medium">
@@ -325,7 +385,7 @@ export function UpcomingEventsCarousel() {
                               </div>
                             )}
 
-                            {event.event_type === 'election' && event.deadline && (
+                            {!isHotel && event.event_type === 'election' && event.deadline && (
                               <div className="flex items-center gap-2 text-gray-700">
                                 <Clock className="h-4 w-4 text-red-600 flex-shrink-0" />
                                 <span className="font-medium">Deadline:</span>
@@ -333,7 +393,7 @@ export function UpcomingEventsCarousel() {
                               </div>
                             )}
 
-                            {event.event_type === 'seminar' && (event.registration_start || event.registration_end) && (
+                            {!isHotel && event.event_type === 'seminar' && (event.registration_start || event.registration_end) && (
                               <div className="flex items-center gap-2 text-gray-700">
                                 <Clock className="h-4 w-4 text-green-600 flex-shrink-0" />
                                 <span className="font-medium">Registration:</span>
@@ -352,17 +412,36 @@ export function UpcomingEventsCarousel() {
                                 <span>{event.location}</span>
                               </div>
                             )}
+
+                            {/* Hotel link for Siliguri seminars */}
+                            {(event.location && event.location.toLowerCase().includes('siliguri')) && (
+                              <div className="flex items-center gap-2 text-gray-700">
+                                <Star className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                                <span className="font-medium">Hotel:</span>
+                                <a 
+                                  href="https://share.google/C8TVPTNQfZPOcL2oY"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-amber-600 hover:text-amber-700 font-medium underline decoration-amber-600/30 hover:decoration-amber-700 transition-colors"
+                                >
+                                  The FORRESTA, Siliguri
+                                </a>
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-2 pt-4 border-t border-gray-100 mt-4">
                           <button
                             onClick={() => handleEventAction(event, 'details')}
-                            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg h-11 px-6 text-sm transition-colors"
-                            style={{ fontFamily: 'Noto Sans, sans-serif' }}
+                            className={`inline-flex items-center justify-center gap-2 font-medium rounded-lg h-11 px-6 text-sm transition-colors ${
+                              isHotel 
+                                ? 'bg-amber-600 hover:bg-amber-700 text-white' 
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
                           >
                             <ExternalLink className="h-4 w-4" />
-                            View Details
+                            {isHotel ? 'View Location' : 'View Details'}
                           </button>
                         </div>
                       </div>
