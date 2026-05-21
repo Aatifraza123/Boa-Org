@@ -333,12 +333,12 @@ export default function Membership() {
               {benefits.map((benefit, index) => {
                 const Icon = benefit.icon;
                 return (
-                  <div key={index} className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 hover:shadow-md transition-shadow">
-                    <div className={`w-12 h-12 ${benefit.bgColor} rounded-xl flex items-center justify-center mb-5`}>
-                      <Icon className={`h-6 w-6 ${benefit.color}`} />
+                  <div key={index} className="group bg-white rounded-xl p-8 border border-gray-200 hover:border-[#09637E] hover:shadow-md transition-all duration-200 flex flex-col">
+                    <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center mb-6 border border-gray-100 group-hover:bg-blue-50 transition-colors">
+                      <Icon className="h-6 w-6 text-[#09637E]" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{benefit.title}</h3>
-                    <p className="text-gray-600 leading-relaxed text-sm lg:text-base">{benefit.description}</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 group-hover:text-[#09637E] transition-colors">{benefit.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed flex-grow">{benefit.description}</p>
                   </div>
                 );
               })}
@@ -371,48 +371,91 @@ export default function Membership() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#09637E]"></div>
               </div>
             ) : (
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200 text-gray-700">
-                          <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider">Type</th>
-                          <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider whitespace-nowrap">Passout Fee</th>
-                          <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider whitespace-nowrap">Student Fee</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {categories.map((category, index) => (
-                          <tr key={index} className="hover:bg-blue-50/30 transition-colors">
-                            <td className="px-6 py-4 text-gray-900 font-medium">
-                              {category.title}
-                            </td>
-                            <td className="px-6 py-4 text-gray-700">
-                              <span className="inline-flex items-center px-3 py-1 bg-gray-100 rounded-md font-semibold text-gray-900 text-sm">
-                                ₹{category.price.toLocaleString()}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-gray-700">
-                              {category.student_price && parseFloat(category.student_price) > 0 ? (
-                                <span className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-md font-semibold text-sm">
-                                  ₹{parseFloat(category.student_price).toLocaleString()}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400 font-medium px-3 py-1 text-sm">N/A</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              <div className="max-w-6xl mx-auto">
+                <div className="grid md:grid-cols-3 gap-8">
+                  {/* Yearly Plan */}
+                  <div className="relative group bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">Yearly</h3>
+                      <p className="text-sm text-gray-500">Perfect for getting started</p>
+                    </div>
+                    <div className="mb-8 flex-grow">
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="text-4xl font-extrabold text-[#09637E]">₹1,200</span>
+                        <span className="text-sm font-medium text-gray-500">/ Passout</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-gray-700">₹600</span>
+                        <span className="text-sm font-medium text-gray-500">/ Student</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full bg-[#09637E]/10 hover:bg-[#09637E] text-[#09637E] hover:text-white border-0 transition-colors h-12 rounded-xl"
+                      onClick={handleMembershipFormClick}
+                    >
+                      Choose Plan
+                    </Button>
+                  </div>
+
+                  {/* 5-Yearly Plan - Contrast Card */}
+                  <div className="relative group bg-gradient-to-br from-[#09637E] to-[#053d4f] rounded-3xl p-8 shadow-2xl transform md:-translate-y-4 hover:-translate-y-6 transition-all duration-300 border border-[#09637E] flex flex-col text-white">
+                    <div className="absolute top-0 right-8 transform -translate-y-1/2">
+                      <span className="bg-yellow-400 text-yellow-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                        Most Popular
+                      </span>
+                    </div>
+                    <div className="mb-6">
+                      <h3 className="text-xl font-bold text-white mb-2">5-Yearly</h3>
+                      <p className="text-sm text-blue-100">Best value for professionals</p>
+                    </div>
+                    <div className="mb-8 flex-grow">
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="text-5xl font-extrabold text-white">₹5,000</span>
+                        <span className="text-sm font-medium text-blue-200">/ Passout</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-blue-100">₹2,000</span>
+                        <span className="text-sm font-medium text-blue-200">/ Student</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full bg-white hover:bg-gray-100 text-[#09637E] transition-colors h-12 rounded-xl font-bold shadow-lg"
+                      onClick={handleMembershipFormClick}
+                    >
+                      Choose Plan
+                    </Button>
+                  </div>
+
+                  {/* Lifetime Plan */}
+                  <div className="relative group bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 to-transparent opacity-50 rounded-3xl pointer-events-none"></div>
+                    <div className="mb-6 relative z-10">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">Lifetime</h3>
+                      <p className="text-sm text-gray-500">One-time payment, forever access</p>
+                    </div>
+                    <div className="mb-8 flex-grow relative z-10">
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="text-4xl font-extrabold text-[#09637E]">₹8,000</span>
+                        <span className="text-sm font-medium text-gray-500">/ Passout</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-gray-400">N/A</span>
+                        <span className="text-sm font-medium text-gray-500">/ Student</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-yellow-950 border-0 transition-colors h-12 rounded-xl font-semibold relative z-10 shadow-md"
+                      onClick={handleMembershipFormClick}
+                    >
+                      Choose Plan
+                    </Button>
                   </div>
                 </div>
 
-                <div className="mt-8 text-center bg-blue-50 p-4 rounded-xl border border-blue-100">
-                  <p className="text-sm text-blue-800 font-medium">
-                    <Star className="inline-block w-4 h-4 mr-2 mb-0.5" />
-                    Offer: Pay membership fees with conference registration or before the conference
+                <div className="mt-12 text-center bg-blue-50/80 p-6 rounded-2xl border border-blue-100 max-w-3xl mx-auto shadow-sm">
+                  <p className="text-sm md:text-base text-blue-800 font-medium flex items-center justify-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    Special Offer: Pay membership fees with conference registration or before the conference
                   </p>
                 </div>
               </div>

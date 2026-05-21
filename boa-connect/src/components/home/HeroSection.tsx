@@ -90,10 +90,9 @@ export function HeroSection() {
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-3">
-              Ophthalmic
-              <span className="block text-[#09637E] mt-2">Association</span>
-              <span className="block text-gray-800 mt-2">Of Bihar</span>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-3">
+              <span className="block text-gray-900">Ophthalmic Association</span>
+              <span className="block text-[#09637E] mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold">Of Bihar</span>
             </h1>
             
             <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-4 lg:mb-6 max-w-xl mx-auto lg:mx-0">

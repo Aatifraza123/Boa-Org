@@ -7,22 +7,29 @@ export default function About() {
   const [certification, setCertification] = useState<any>(null);
   const [committeeMembers, setCommitteeMembers] = useState<any[]>([]);
   const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [storyImage, setStoryImage] = useState<string | null>(null);
 
   useEffect(() => {
     loadCertification();
     loadCommitteeMembers();
-    loadHeroImage();
+    loadImages();
   }, []);
 
-  const loadHeroImage = async () => {
+  const loadImages = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/gallery-images?limit=1`);
+      const response = await fetch(`${API_BASE_URL}/api/gallery-images?limit=5`);
       const data = await response.json();
       if (data.success && data.images && data.images.length > 0) {
         setHeroImage(data.images[0].image_url);
+        if (data.images.length > 1) {
+          // Find an image that's good for the story section, or just use the second one
+          setStoryImage(data.images[1].image_url);
+        } else {
+          setStoryImage(data.images[0].image_url);
+        }
       }
     } catch (error) {
-      console.error('Failed to load hero image:', error);
+      console.error('Failed to load images:', error);
     }
   };
 
@@ -171,74 +178,103 @@ export default function About() {
               </h2>
             </div>
             
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-              <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 mt-1">
-                    <CheckCircle2 className="h-6 w-6 text-[#09637E]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">Establishment</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      The Ophthalmic Association Of Bihar (BOA) was established in 2021 as a professional medical association
-                      to serve the ophthalmic community across the state of Bihar.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 mt-1">
-                    <CheckCircle2 className="h-6 w-6 text-[#09637E]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">Government Recognition</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Operating under the jurisdiction of the Government of Bihar, BOA functions as the official representative body for ophthalmologists and eye care professionals in the region.
-                    </p>
+            <div className="grid lg:grid-cols-12 gap-12 items-center">
+              {/* Image Side - Simple & Clean */}
+              <div className="lg:col-span-5">
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white p-2">
+                  <div className="rounded-xl overflow-hidden relative group">
+                    <img 
+                      src={storyImage || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80"} 
+                      alt="BOA Team Members" 
+                      className="w-full object-cover aspect-[4/5] group-hover:scale-105 transition-transform duration-700 ease-out"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80";
+                      }}
+                    />
+                    <div className="absolute inset-0 border border-black/5 rounded-xl pointer-events-none"></div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 mt-1">
-                    <CheckCircle2 className="h-6 w-6 text-[#09637E]" />
+              {/* Cards Side */}
+              <div className="lg:col-span-7">
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all">
+                    <div className="flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-[#09637E]" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Establishment</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          The Ophthalmic Association Of Bihar (BOA) was established in 2021 as a professional medical association to serve the ophthalmic community.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">Coverage & Service</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      The association serves all 38 districts of Bihar, providing professional development opportunities,
-                      continuing medical education, and advocacy for improved eye care services throughout the state.
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 mt-1">
-                    <CheckCircle2 className="h-6 w-6 text-[#09637E]" />
+                  <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all">
+                    <div className="flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-[#09637E]" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Government Recognition</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          Operating under the Government of Bihar, BOA functions as the official representative body for eye care professionals.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">Professional Standards</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      BOA operates in accordance with medical ethics and professional standards as prescribed by the
-                      Medical Council of India and relevant regulatory authorities.
-                    </p>
+
+                  <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all">
+                    <div className="flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-[#09637E]" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Coverage & Service</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          Serving all 38 districts of Bihar, providing professional development opportunities and advocating for improved eye care.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all">
+                    <div className="flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-[#09637E]" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Professional Standards</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          BOA operates in accordance with medical ethics and standards as prescribed by the Medical Council of India.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-12">
-              <div className="bg-blue-50/50 p-6 lg:p-8 rounded-2xl border border-blue-100 max-w-4xl mx-auto text-center">
-                <p className="text-gray-700 leading-relaxed">
-                  As a registered society under the <strong className="text-[#09637E]">Societies Registration Act, 1860</strong>, BOA maintains transparency
-                  in its operations and adheres to all statutory requirements for professional medical associations
-                  in India.
-                </p>
+            <div className="mt-16">
+              <div className="relative bg-gradient-to-br from-[#09637E] to-[#053d4f] p-10 lg:p-14 rounded-3xl shadow-xl max-w-4xl mx-auto text-center overflow-hidden">
+                {/* Large Background Quote Marks */}
+                <div className="absolute top-2 left-6 text-[120px] leading-none text-white opacity-10 font-serif select-none pointer-events-none">
+                  &ldquo;
+                </div>
+                <div className="absolute -bottom-12 right-6 text-[120px] leading-none text-white opacity-10 font-serif select-none pointer-events-none rotate-180">
+                  &ldquo;
+                </div>
+                
+                <div className="relative z-10">
+                  <p className="text-white text-lg lg:text-xl leading-relaxed font-medium">
+                    As a registered society under the <span className="text-yellow-400 font-bold border-b border-yellow-400/30 pb-0.5">Societies Registration Act, 1860</span>, BOA maintains transparency
+                    in its operations and adheres to all statutory requirements for professional medical associations
+                    in India.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -262,83 +298,98 @@ export default function About() {
             </div>
 
             {certification ? (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden max-w-5xl mx-auto">
-                {certification.certificate_image_url && (
-                  <div className="p-6 lg:p-10 bg-gray-50 border-b border-gray-100">
-                    <div className="max-w-3xl mx-auto">
-                      <img
-                        src={certification.certificate_image_url}
-                        alt="BOA Certification"
-                        className="w-full h-auto rounded-xl shadow-sm border border-gray-200"
-                      />
-                    </div>
+              <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden max-w-6xl mx-auto">
+                <div className="grid lg:grid-cols-2 items-stretch">
+                  {/* Left Side: Image */}
+                  <div className="p-8 lg:p-12 bg-gray-50/80 flex flex-col justify-center border-r border-gray-100 relative overflow-hidden">
+                    {/* Subtle decorative background pattern */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40"></div>
+                    
+                    {certification.certificate_image_url ? (
+                      <div className="relative z-10 rounded-2xl overflow-hidden shadow-lg border border-white group bg-white p-2">
+                        <div className="rounded-xl overflow-hidden relative">
+                          <img
+                            src={certification.certificate_image_url}
+                            alt="BOA Certification"
+                            className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-400 py-12 relative z-10">
+                        <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                        <p>Certificate Image Not Available</p>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                <div className="p-8 lg:p-12">
-                  {certification.organization_name && (
-                    <div className="text-center mb-10">
-                      <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">{certification.organization_name}</h3>
-                      <div className="h-1 w-16 bg-[#09637E] mx-auto rounded-full"></div>
-                    </div>
-                  )}
+                  
+                  {/* Right Side: Content */}
+                  <div className="p-8 lg:p-12">
+                    {certification.organization_name && (
+                      <div className="mb-8">
+                        <h3 className="text-2xl lg:text-3xl font-bold text-[#0B1B3D] mb-4 leading-tight">{certification.organization_name}</h3>
+                        <div className="h-1 w-16 bg-blue-600 rounded-full"></div>
+                      </div>
+                    )}
 
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                       {certification.registration_number && (
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-blue-50/50 transition-all duration-300 border border-transparent hover:border-blue-100">
+                          <div className="p-3 bg-white shadow-sm border border-gray-100 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 flex-shrink-0">
                             <Scale className="h-5 w-5" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-1">Registration Number</h4>
-                            <p className="text-gray-600">{certification.registration_number}</p>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Registration Number</h4>
+                            <p className="text-gray-900 text-lg font-bold">{certification.registration_number}</p>
                           </div>
                         </div>
                       )}
+                      
                       {certification.certificate_number && (
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-blue-50/50 transition-all duration-300 border border-transparent hover:border-blue-100">
+                          <div className="p-3 bg-white shadow-sm border border-gray-100 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 flex-shrink-0">
                             <Award className="h-5 w-5" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-1">Certificate Number</h4>
-                            <p className="text-gray-600">{certification.certificate_number}</p>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Certificate Number</h4>
+                            <p className="text-gray-700 text-lg tracking-wide">{certification.certificate_number}</p>
                           </div>
                         </div>
                       )}
+
                       {certification.registration_act && (
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-blue-50/50 transition-all duration-300 border border-transparent hover:border-blue-100">
+                          <div className="p-3 bg-white shadow-sm border border-gray-100 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 flex-shrink-0">
                             <Building className="h-5 w-5" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-1">Registration Act</h4>
-                            <p className="text-gray-600">{certification.registration_act}</p>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Registration Act</h4>
+                            <p className="text-gray-700 font-medium leading-relaxed">{certification.registration_act}</p>
                           </div>
                         </div>
                       )}
-                    </div>
-                    <div className="space-y-6">
+                      
                       {certification.registration_date && (
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-blue-50/50 transition-all duration-300 border border-transparent hover:border-blue-100">
+                          <div className="p-3 bg-white shadow-sm border border-gray-100 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 flex-shrink-0">
                             <Star className="h-5 w-5" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-1">Registration Date</h4>
-                            <p className="text-gray-600">{new Date(certification.registration_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Registration Date</h4>
+                            <p className="text-gray-900 font-bold">{new Date(certification.registration_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                           </div>
                         </div>
                       )}
+
                       {certification.registered_office && (
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-blue-50/50 transition-all duration-300 border border-transparent hover:border-blue-100">
+                          <div className="p-3 bg-white shadow-sm border border-gray-100 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 flex-shrink-0">
                             <Target className="h-5 w-5" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-1">Registered Office</h4>
-                            <p className="text-gray-600 whitespace-pre-line">{certification.registered_office}</p>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Registered Office</h4>
+                            <p className="text-gray-700 font-medium leading-relaxed whitespace-pre-line">{certification.registered_office}</p>
                           </div>
                         </div>
                       )}
